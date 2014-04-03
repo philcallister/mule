@@ -1,0 +1,63 @@
+allprojects {
+    group = 'org.mule'
+    version = '3.5.0-M5-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    tasks.withType(Compile) {
+        options.encoding = 'ISO-8859-1'
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url "http://repository.codehaus.org"  }
+        maven { url "http://snapshots.repository.codehaus.org" }
+        maven { url "http://download.java.net/maven/2" }
+        maven { url "http://repository.jboss.org/nexus/content/groups/public-jboss" }
+        maven { url "http://dist.codehaus.org/mule/dependencies/maven2" }
+    }
+
+    configurations {
+        log 
+        testFixtures {
+           extendsFrom testRuntime
+        }
+
+        all {
+            resolutionStrategy {
+                eachDependency { details ->
+                    if (details.requested.group == 'org.springframework') {
+                        details.useVersion springVersion
+                    }
+                }
+            }
+        }
+    }
+    dependencies {
+        log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+            "org.slf4j:slf4j-api:$slf4jVersion",
+            "org.slf4j:slf4j-log4j12:$slf4jVersion",
+            'log4j:log4j:1.2.16'
+
+    testCompile 'org.mockito:mockito-all:1.9.0',
+            'com.googlecode.multithreadedtc:multithreadedtc:1.01',
+            'junit:junit:4.9',
+            'xmlunit:xmlunit:1.1'
+    }
+}
+
+def exportTestFixture(project) {
+    project.tasks.create(name: 'testJar', type: Jar) {
+         from project.sourceSets.test.output
+         classifier = 'test'
+    }
+
+    project.artifacts {
+         testFixtures project.testJar
+    }
+}

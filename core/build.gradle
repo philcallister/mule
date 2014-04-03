@@ -1,0 +1,21 @@
+dependencies {
+    compile 'commons-beanutils:commons-beanutils:1.8.0',
+            'org.safehaus.jug:jug:2.0.0:asl',
+            'commons-cli:commons-cli:1.2',
+            'commons-collections:commons-collections:3.2.1',
+            'commons-io:commons-io:1.4',
+            'commons-lang:commons-lang:2.4',
+            'commons-pool:commons-pool:1.6',
+            'org.apache.geronimo.specs:geronimo-jta_1.1_spec:1.1.1',
+            'org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec:1.1',
+            'javax.annotation:jsr250-api:1.0',
+            'asm:asm:3.1',
+            'asm:asm-commons:3.1',
+            'org.mule.mvel:mule-mvel2:2.1.9-MULE-001-SNAPSHOT',
+            'org.jgrapht:jgrapht-jdk1.5:0.7.3',
+            "org.mule.common:mule-common:$version",
+            'com.google.guava:guava:16.0.1',
+            configurations.log
+}
+
+exportTestFixture project

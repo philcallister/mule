@@ -1,0 +1,15 @@
+include 'core'
+includeNested 'modules', ['target', 'all-modules']
+includeNested 'transports', ['target', 'all-transports']
+includeNested 'examples', ['target', 'all-examples']
+includeNested 'distributions', ['target']
+includeNested 'tests', ['target']
+
+
+def includeNested(relativePath, blackList = []) {
+   def projectPath = relativePath.replace('/', ':')
+   new File(rootDir, relativePath).eachDirMatch({ !blackList.contains(it) }) { dir ->
+      include "$projectPath:$dir.name"
+   }
+}
+
