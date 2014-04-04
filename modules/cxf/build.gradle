@@ -1,6 +1,6 @@
 group = 'org.mule.modules'
-archivesBaseName = 'mule-module-atom'
-description = 'Mule ATOM Endpoints and Serivce Component'
+archivesBaseName = 'mule-module-cxf'
+description = 'A Mule module for web service connectivity using CXF.'
 
 
 dependencies {

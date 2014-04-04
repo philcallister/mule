@@ -1,0 +1,14 @@
+group = 'org.mule.transports'
+archivesBaseName = 'mule-transport-file'
+description = 'A Mule transport for File Connectivity'
+
+
+dependencies {
+    compile project(':modules:spring-config')
+
+    testCompile project(':tests:functional'),
+        project(':transports:vm')
+}
+
+
+

@@ -37,6 +37,8 @@ subprojects {
                 }
             }
         }
+
+        all*.exclude group:'xerces'
     }
     dependencies {
         log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
