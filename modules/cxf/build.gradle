@@ -2,28 +2,93 @@ group = 'org.mule.modules'
 archivesBaseName = 'mule-module-cxf'
 description = 'A Mule module for web service connectivity using CXF.'
 
+configurations {
+    cxf {
+        visible = false
+    }
 
-dependencies {
-    compile project(':core'),
-        project(':transports:http'),
-        project(':transports:quartz'),
-        project(':modules:spring-config'),
-        'org.codehaus.woodstox:woodstox-core-asl:4.1.4',
-        "org.apache.abdera:abdera-client:$abderaVersion",
-        "org.apache.abdera:abdera-spring:$abderaVersion"
+    all*.exclude group:'org.apache.geronimo.specs', module: 'geronimo-activation_1.1_spec'
+    all*.exclude group:'org.apache.geronimo.specs', module: 'geronimo-javamail_1.4_spec'
+    all*.exclude group:'org.apache.geronimo.specs', module: 'geronimo-stax-api_1.0_spec'
+    all*.exclude group:'org.apache.geronimo.specs', module: 'geronimo-jaxws_2.1_spec'
+    all*.exclude group:'org.apache.geronimo.specs', module: 'geronimo-j2ee-management_1.1_spec'
+    all*.exclude group:'commons-logging'
+    compile.exclude group:'org.apache.velocity'
+    testCompile.exclude group:'org.apache.velocity'
+    all*.exclude group:'javax.activation'
+    all*.exclude group:'org.eclipse.jetty.orbit'
+    all*.exclude group:'org.jibx', module: 'jibx-tools'
+    all*.exclude group:'org.jibx', module: 'jibx-bind'
+}
 
-    testCompile project(':tests:functional'),
-        project(':transports:vm'),
-        project(':transports:file'),
-        "org.apache.activemq:activemq-core:$activeMQVersion",
-//        'tm-extractors:org.textmining:0.4',
-        'pdfbox:pdfbox:0.7.3',
-        "org.apache.abdera:abdera-jcr:$abderaVersion",
-        "org.apache.abdera:abdera-server:$abderaVersion"
-
-
-
+ext {
+    cxfWSDLArtifacts = [
+        'cxf-tools-wsdlto-frontend-jaxws',
+        'cxf-tools-wsdlto-databinding-jaxb',
+        'cxf-tools-common',
+        'cxf-tools-wsdlto-core'
+    ]
 }
 
 
+dependencies {
+    compile "org.apache.cxf:cxf-rt-core:$cxfVersion",
+            "org.apache.cxf:cxf-rt-bindings-soap:$cxfVersion",
+            "org.apache.cxf:cxf-rt-frontend-simple:$cxfVersion",
+            "org.apache.cxf:cxf-rt-frontend-jaxws:$cxfVersion",
+            "org.apache.cxf:cxf-rt-databinding-aegis:$cxfVersion",
+            "org.apache.cxf:cxf-rt-databinding-jaxb:$cxfVersion",
+            "org.apache.cxf:cxf-rt-databinding-jibx:$cxfVersion",
+            "org.apache.cxf:cxf-rt-transports-local:$cxfVersion",
+            "org.apache.cxf:cxf-rt-ws-security:$cxfVersion",
+            "org.apache.cxf:cxf-rt-ws-rm:$cxfVersion",
+            "org.apache.cxf:cxf-rt-ws-addr:$cxfVersion",
+            "org.apache.cxf:cxf-rt-transports-http:$cxfVersion",
+            "org.apache.cxf:cxf-wstx-msv-validation:$cxfVersion",
+            "com.sun.xml.messaging.saaj:saaj-impl:1.3",
+        project(':transports:http'),
+        project(':modules:xml'),
+        project(':modules:spring-security')
 
+    testCompile project(':tests:functional'),
+        project(':modules:scripting'),
+        project(":transports:servlet"),
+        project(":transports:jetty"),
+        project(":transports:jms"),
+        project(":transports:quartz"),
+        project(":transports:vm"),
+        "org.apache.cxf:cxf-testutils:$cxfVersion",
+        "org.apache.activemq:activemq-core:5.5.0"
+
+
+    cxfWSDLArtifacts.each { artifact ->
+        cxf "org.apache.cxf:$artifact:$cxfVersion"
+    }
+}
+
+task wsdl2java(type: JavaExec) {
+    ext {
+        wsdlFile = 'src/test/resources/employeeDirectory.wsdl'
+        outputDir = file("$buildDir/generated/src/test/java")
+    }
+
+    inputs.file file(wsdlFile)
+    outputs.dir outputDir
+
+    // Main Java class to invoke.
+    main = 'org.apache.cxf.tools.wsdlto.WSDLToJava'
+
+    // Set classpath to dependencies assigned
+    // to the cxf configuration.
+    classpath = configurations.cxf
+
+    // Arguments to be passed to WSDLToJava.
+    args '-d', outputDir
+    args '-client'
+    args '-verbose'
+    args '-validate'
+    args wsdlFile
+}
+
+compileTestJava.dependsOn wsdl2java
+compileTestJava.source wsdl2java.outputs.files

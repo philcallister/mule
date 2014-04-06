@@ -5,8 +5,8 @@ description = ' A Mule transport for Http Connectivity. This transport supplies 
 
 dependencies {
     compile project(':transports:ssl'),
-        "commons-codec:commons-codec",
-        "commons-httpclient:commons-httpclient",
+//        "commons-codec:commons-codec",
+//        "commons-httpclient:commons-httpclient",
         "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0", // provided
         "tomcat:tomcat-util:5.5.23",
         "org.samba.jcifs:jcifs:1.3.3",
@@ -27,4 +27,5 @@ dependencies {
 }
 
 
+exportTestFixture project
 

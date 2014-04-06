@@ -1,0 +1,14 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-logging'
+description = 'Mule Logging.'
+
+dependencies {
+    compile project(':core'),
+        configurations.log
+
+
+    testCompile project(':tests:functional')
+}
+
+
+

@@ -39,6 +39,10 @@ subprojects {
         }
 
         all*.exclude group:'xerces'
+
+        // Excluded as we use canonical versions for those APIs
+        // TODO: Verify if it? possible to exclude ALL specs from the group
+
     }
     dependencies {
         log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
