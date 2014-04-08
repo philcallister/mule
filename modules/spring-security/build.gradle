@@ -18,5 +18,7 @@ dependencies {
 
 }
 
+// Only required for Integration project
+exportTestFixture project
 
 

@@ -1,0 +1,13 @@
+group = 'org.mule.tests'
+archivesBaseName = 'mule-tests-integration-axis'
+description = 'Integration Tests for the Axis transport'
+
+dependencies {
+
+    testCompile project(':tests:functional'),
+        project(":core"),
+        project(':patterns').subprojects,
+        project(':transports').subprojects,
+        project(':modules').subprojects,
+        "org.apache.activemq:activemq-core:$activeMQVersion"
+}

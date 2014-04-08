@@ -4,7 +4,7 @@ includeNested 'transports', ['target', 'all-transports']
 includeNested 'examples', ['target', 'all-examples']
 includeNested 'patterns', ['target', 'all-patterns']
 //includeNested 'distributions', ['target']
-includeNested 'tests', ['target']
+includeNested 'tests', ['target', 'archetypes', 'manual', 'performance']
 
 
 def includeNested(relativePath, blackList = []) {

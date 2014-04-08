@@ -15,5 +15,6 @@ dependencies {
         "com.icegreen:greenmail:1.3"
 }
 
-
+// Only required for Integration project
+exportTestFixture project
 
