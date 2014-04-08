@@ -1,0 +1,17 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-json'
+description = 'Implementation of JSON transformers for Mule.'
+
+dependencies {
+    compile project(':modules:spring-config'),
+        project(":modules:xml"),
+
+        "org.codehaus.jackson:jackson-core-asl:$jacksonVersion",
+        "org.codehaus.jackson:jackson-mapper-asl:$jacksonVersion",
+        "de.odysseus.staxon:staxon:1.2",
+        "org.kitchen-eel:json-schema-validator:1.2.2"
+
+
+    testCompile project(":tests:functional"),
+        "org.skyscreamer:jsonassert:1.1.1"
+}

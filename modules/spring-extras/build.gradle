@@ -1,0 +1,15 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-spring-extras'
+description = 'Non-core functionality provided by Spring such as transactions, remoting, data sources, etc.'
+
+dependencies {
+    compile project(':modules:spring-config'),
+        "org.springframework:spring-jdbc:$springVersion",
+        "org.springframework:spring-jms:$springVersion",
+        "org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1"
+
+    testCompile project(":tests:functional"),
+        project(":transports:vm"),
+        project(":transports:http")
+}
+

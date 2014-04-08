@@ -1,0 +1,14 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-devkit-support'
+description = 'Interfaces and classes required by Devkit.'
+
+dependencies {
+    compile project(':core'),
+        project(':modules:spring-config'),
+        "oauth.signpost:signpost-core:1.2.1.2"
+
+
+    testCompile project(path: ':core', configuration: 'testFixtures'),
+        project(":transports:http")
+}
+

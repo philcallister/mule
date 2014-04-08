@@ -1,6 +1,6 @@
 group = 'org.mule.transports'
-archivesBaseName = 'mule-transport-file'
-description = 'A Mule transport for File Connectivity'
+archivesBaseName = 'mule-transport-rmi'
+description = 'A Mule transport for RMI Connectivity.'
 
 
 dependencies {
@@ -11,4 +11,3 @@ dependencies {
 }
 
 exportTestFixture project
-

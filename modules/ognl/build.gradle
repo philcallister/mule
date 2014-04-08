@@ -1,0 +1,14 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-ognl'
+description = 'Support for filtering events using OGNL notation.'
+
+dependencies {
+    compile project(':modules:spring-config'),
+        project(":modules:xml"),
+        "ognl:ognl:2.7.3"
+
+
+    testCompile project(":tests:functional"),
+        project(":transports:vm")
+}
+

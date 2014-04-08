@@ -2,7 +2,8 @@ include 'core'
 includeNested 'modules', ['target', 'all-modules']
 includeNested 'transports', ['target', 'all-transports']
 includeNested 'examples', ['target', 'all-examples']
-includeNested 'distributions', ['target']
+includeNested 'patterns', ['target', 'all-patterns']
+//includeNested 'distributions', ['target']
 includeNested 'tests', ['target']
 
 

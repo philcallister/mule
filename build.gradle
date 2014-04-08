@@ -39,17 +39,19 @@ subprojects {
         }
 
         all*.exclude group:'xerces'
+        all*.exclude group:'org.eclipse.jetty.orbit'
 
         // Excluded as we use canonical versions for those APIs
         // TODO: Verify if it? possible to exclude ALL specs from the group
 
     }
     dependencies {
-        log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+    log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
             "org.slf4j:slf4j-api:$slf4jVersion",
             "org.slf4j:slf4j-log4j12:$slf4jVersion",
             'log4j:log4j:1.2.16'
 
+    compile configurations.log
     testCompile 'org.mockito:mockito-all:1.9.0',
             'com.googlecode.multithreadedtc:multithreadedtc:1.01',
             'junit:junit:4.9',
@@ -57,6 +59,7 @@ subprojects {
     }
 }
 
+// Used in specific projects that need to export test classes
 def exportTestFixture(project) {
     project.tasks.create(name: 'testJar', type: Jar) {
          from project.sourceSets.test.output
@@ -65,5 +68,33 @@ def exportTestFixture(project) {
 
     project.artifacts {
          testFixtures project.testJar
+    }
+}
+
+// Used in specific project that need slightly different configurations based on the
+// JDK they are compiled with
+def perJdkSources(project) {
+    project.sourceSets {
+        jdk6 { java { srcDir "src/main/jdk6" } }
+        testJdk6 { java { srcDir "src/test/jdk6" }}
+        jdk7 { java { srcDir "src/main/jdk7" } }
+        testJdk7 { java { srcDir "src/test/jdk7" }}
+
+    }
+
+    def version = System.getProperty("java.version")
+    if (version.startsWith("1.6")) {
+        project.compileJava.doFirst {
+            println "Using JDK6 specific code"
+        }
+        project.compileJava.source project.sourceSets.jdk6.java
+        project.compileTestJava.source project.sourceSets.testJdk6.java
+    }
+    else {
+        project.compileJava.doFirst {
+            println "Using JDK7 specific code"
+        }
+        project.compileJava.source project.sourceSets.jdk7.java
+        project.compileTestJava.source project.sourceSets.testJdk7.java
     }
 }

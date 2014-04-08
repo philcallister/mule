@@ -1,0 +1,13 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-guice'
+description = 'Allows users to configure Mule to use Guice for DI/object creation.'
+
+dependencies {
+    compile project(':core'),
+        project(':modules:spring-config'),
+        "org.guiceyfruit:guice-all:2.0",
+        "org.guiceyfruit:guiceyfruit-core:2.0",
+        "javax.annotation:jsr250-api:1.0"
+
+    testCompile project(":tests:functional")
+}

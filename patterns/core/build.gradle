@@ -1,0 +1,11 @@
+group = 'org.mule.patterns'
+archivesBaseName = 'mule-pattern-core'
+description = 'Mule Core Configuration Patterns.'
+
+dependencies {
+    compile project(':modules:spring-config'),
+        project(":transports:http"),
+        project(":modules:ws")
+
+    testCompile project(":tests:functional")
+}

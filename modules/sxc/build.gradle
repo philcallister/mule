@@ -1,0 +1,17 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-sxc'
+description = 'Efficiently route messages using streaming XPath.'
+
+dependencies {
+    compile project(':modules:spring-config'),
+        project(":modules:xml"),
+        "com.envoisolutions.sxc:sxc-xpath:0.7.3",
+        "com.envoisolutions.sxc:sxc-runtime:0.7.3",
+        "com.envoisolutions.sxc:sxc-core:0.7.3"
+
+
+    testCompile project(":tests:functional"),
+        project(":transports:vm"),
+        project(":transports:http")
+}
+

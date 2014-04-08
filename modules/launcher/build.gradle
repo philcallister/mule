@@ -1,0 +1,19 @@
+group = 'org.mule.modules'
+archivesBaseName = 'mule-module-launcher'
+description = 'Mule 3 Launcher.'
+
+// TODO: Maven pom contains integration tests for the classloader.
+// Those tests can probably be rewritten as part of unit tests in gradle
+
+dependencies {
+    compile project(':core'),
+        project(":modules:reboot"),
+        "tanukisoft:wrapper:3.2.3",
+        "commons-collections:commons-collections:3.2.1"
+
+
+    testCompile project(":tests:functional"),
+        project(":transports:vm"),
+        project(":transports:http")
+}
+
