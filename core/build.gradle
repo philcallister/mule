@@ -1,3 +1,7 @@
+group = 'org.mule'
+archivesBaseName = 'mule-core'
+description = 'Mule server and core classes.'
+
 dependencies {
     compile 'commons-beanutils:commons-beanutils:1.8.0',
             'org.safehaus.jug:jug:2.0.0:asl',
@@ -11,7 +15,7 @@ dependencies {
             'javax.annotation:jsr250-api:1.0',
             'asm:asm:3.1',
             'asm:asm-commons:3.1',
-            'org.mule.mvel:mule-mvel2:2.1.9-MULE-001-SNAPSHOT',
+            "org.mule.mvel:mule-mvel2:$muleMvelVersion",
             'org.jgrapht:jgrapht-jdk1.5:0.7.3',
             "org.mule.common:mule-common:$version",
             'com.google.guava:guava:16.0.1',

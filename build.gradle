@@ -1,19 +1,17 @@
-allprojects {
-    group = 'org.mule'
-    version = '3.5.0-M5-SNAPSHOT'
+import org.mule.gradle.ContentsVerifierTask
+
+project.ext {
+    dummyProjects = [ project(":modules"), project(":transports"), project(":patterns"), project(":tests") ]
 }
 
-subprojects {
-    apply plugin: 'java'
+allprojects {
     apply plugin: 'maven'
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
 
-    tasks.withType(Compile) {
-        options.encoding = 'ISO-8859-1'
-    }
+    group = 'org.mule'
+    version = '3.5.0-M5-SNAPSHOT'
 
     repositories {
+        mavenLocal()
         mavenCentral()
         maven { url "http://repository.codehaus.org"  }
         maven { url "http://snapshots.repository.codehaus.org" }
@@ -21,9 +19,21 @@ subprojects {
         maven { url "http://repository.jboss.org/nexus/content/groups/public-jboss" }
         maven { url "http://dist.codehaus.org/mule/dependencies/maven2" }
     }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    tasks.withType(Compile) {
+        options.encoding = 'ISO-8859-1'
+    }
 
     configurations {
-        log 
+        log
         testFixtures {
            extendsFrom testRuntime
         }
@@ -38,20 +48,18 @@ subprojects {
             }
         }
 
-        all*.exclude group:'xerces'
+//        all*.exclude group:'xerces'
         all*.exclude group:'org.eclipse.jetty.orbit'
-
-        // Excluded as we use canonical versions for those APIs
-        // TODO: Verify if it? possible to exclude ALL specs from the group
-
     }
+
+
     dependencies {
     log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
             "org.slf4j:slf4j-api:$slf4jVersion",
             "org.slf4j:slf4j-log4j12:$slf4jVersion",
             'log4j:log4j:1.2.16'
 
-    compile configurations.log
+//    compile configurations.log
     testCompile 'org.mockito:mockito-all:1.9.0',
             'com.googlecode.multithreadedtc:multithreadedtc:1.01',
             'junit:junit:4.9',
@@ -98,3 +106,98 @@ def perJdkSources(project) {
         project.compileTestJava.source project.sourceSets.testJdk7.java
     }
 }
+
+configure(dummyProjects) {
+
+}
+
+// Distributions: built directly from the top level project
+apply plugin: 'distribution'
+
+configurations {
+    allMule
+
+    libBoot
+    libBoot.exclude module:'core'
+}
+
+dependencies {
+    allMule project(':core')
+    allMule project(':tests:functional')
+    allMule project(':modules').subprojects
+    allMule project(':transports').subprojects
+    allMule project(':patterns').subprojects
+
+    libBoot project(':modules:boot')
+    libBoot project(':modules:reboot')
+    libBoot project(':modules:logging')
+}
+
+def realProjects = subprojects - dummyProjects
+
+
+distributions {
+    embedded {
+        baseName = 'embedded'
+        contents {
+            into('') {
+                from "src/dist/standalone"
+            }
+            into('mule') {
+                from configurations.allMule
+                include "mule*.jar"
+            }
+            into('deps') {
+                from configurations.allMule
+                exclude "mule*.jar"
+            }
+
+        }
+    }
+
+    main {
+        baseName = 'standalone'
+        contents {
+            def muleMask = ["mule*.jar"]
+            def userMask = ["junit*.jar", "xmlunit*.jar", "mule-tests-functional*.jar"]
+            def endorsedMask = ["xalan*.jar", "xml-apis*.jar", "xercesImpl*.jar", "xml-serializer*.jar"]
+
+            into('') {
+                //from "src/dist/standalone"
+                from "distributions/standalone/src/main/resources"
+            }
+            into('lib/boot') {
+                from configurations.libBoot
+            }
+
+            into('lib/mule') {
+                from configurations.allMule - configurations.libBoot
+                include muleMask
+                exclude userMask
+            }
+            into('lib/user') {
+                from configurations.allMule
+                include userMask
+            }
+            into('lib/endorsed') {
+                from configurations.allMule
+                include endorsedMask
+            }
+
+            into('lib/opt') {
+                from configurations.allMule
+                exclude userMask
+                exclude muleMask
+                exclude endorsedMask
+            }
+
+        }
+    }
+}
+
+task verify(type: ContentsVerifierTask) {
+    whitelist= file("whitelist.test")
+    projectOutputFolder = file("$buildDir/tmp")
+}
+
+//distTar.dependsOn subProjects.assemble

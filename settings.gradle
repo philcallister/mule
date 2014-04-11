@@ -1,16 +1,15 @@
 include 'core'
-includeNested 'modules', ['target', 'all-modules']
-includeNested 'transports', ['target', 'all-transports']
-includeNested 'examples', ['target', 'all-examples']
-includeNested 'patterns', ['target', 'all-patterns']
-//includeNested 'distributions', ['target']
-includeNested 'tests', ['target', 'archetypes', 'manual', 'performance']
-
+includeNested 'transports', ['build', 'target', 'all-transports']
+includeNested 'modules', ['build', 'target', 'all-modules']
+includeNested 'patterns', ['build', 'target', 'all-patterns']
+includeNested 'tests', ['build', 'target', 'archetypes', 'manual', 'performance']
+//includeNested 'examples', ['build', 'target', 'all-examples']
 
 def includeNested(relativePath, blackList = []) {
    def projectPath = relativePath.replace('/', ':')
    new File(rootDir, relativePath).eachDirMatch({ !blackList.contains(it) }) { dir ->
       include "$projectPath:$dir.name"
    }
+
 }
 
