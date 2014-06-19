@@ -7,23 +7,21 @@
 package org.mule.extensions.internal;
 
 import static org.mule.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
+import static org.mule.extensions.internal.MuleExtensionUtils.toClassMap;
 import static org.mule.extensions.internal.MuleExtensionUtils.toMap;
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.extensions.introspection.api.Extension;
+import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
-import org.mule.extensions.introspection.api.Capability;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.MuleExtensionType;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -36,20 +34,18 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
 {
 
     private final String version;
-    private final MuleExtensionType extensionType;
     private final String minMuleVersion;
     private final Map<String, ExtensionConfiguration> configurations;
     private final Map<String, ExtensionOperation> operations;
-    private Map<Class<? extends Capability>, Capability> capabilities;
+    private Map<Class<? extends Object>, Object> capabilities;
 
     protected ImmutableExtension(String name,
                                  String description,
                                  String version,
-                                 MuleExtensionType extensionType,
                                  String minMuleVersion,
                                  List<ExtensionConfiguration> configurations,
                                  List<ExtensionOperation> operations,
-                                 Map<Class<? extends Capability>, Capability> capabilities)
+                                 Set<Object> capabilities)
     {
         super(name, description);
 
@@ -62,12 +58,9 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
         checkArgument(!StringUtils.isBlank(minMuleVersion), "minMuleVersion cannot be blank");
         this.minMuleVersion = minMuleVersion;
 
-        checkArgument(extensionType != null, "extensionType cannot be null");
-        this.extensionType = extensionType;
-
         this.configurations = toMap(configurations);
         this.operations = toMap(operations);
-        this.capabilities = ImmutableMap.copyOf(capabilities);
+        this.capabilities = toClassMap(capabilities);
     }
 
 
@@ -122,14 +115,6 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
         return minMuleVersion;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MuleExtensionType getExtensionType()
-    {
-        return extensionType;
-    }
 
     /**
      * {@inheritDoc}
@@ -150,10 +135,11 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
      * {@inheritDoc}
      */
     @Override
-    public <T extends Capability> Optional<T> getCapability(Class<T> capabilityType)
+    public <T> T getCapability(Class<T> capabilityType)
     {
-        return (Optional<T>) Optional.fromNullable(capabilities.get(capabilityType));
+        return (T) capabilities.get(capabilityType);
     }
+
 
     /**
      * Defines equality by matching the extension's {@link #getName()} and

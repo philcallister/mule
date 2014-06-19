@@ -20,10 +20,10 @@ public interface ExtensionOperation extends Described
      * Returns the parameters that this operation takes.
      *
      * @return an immutable {@link java.util.List} with instances of
-     * {@link org.mule.extensions.introspection.api.MuleExtensionParameter}. It might be
+     * {@link ExtensionParameter}. It might be
      * empty if the operation takes no parameters, but it will never be {@code null}
      */
-    List<MuleExtensionParameter> getParameters();
+    List<ExtensionParameter> getParameters();
 
     /**
      * Returns the data types that are considered valid as input
@@ -36,15 +36,15 @@ public interface ExtensionOperation extends Described
      * it works solely on the parameters, then it must contain
      * at least the {@link java.lang.Class} corresponding to the {@link java.lang.Object} type
      *
-     * @return an immutable {@link java.util.List} containing instances of {@link java.lang.Class}.
+     * @return an immutable {@link java.util.List} containing instances of {@link org.mule.extensions.introspection.api.DataType}.
      */
-    List<Class<?>> getInputTypes();
+    List<DataType> getInputTypes();
 
     /**
      * Returns the possible output types for this operation.
      * This list will not be {@code null} and will have at least one element
      *
-     * @return a immutable {@link java.util.List} with instances of {@link java.lang.Class}
+     * @return a {@link org.mule.extensions.introspection.api.DataType}
      */
-    Class<?> getOutputType(Class<?> input);
+    DataType getOutputType();
 }

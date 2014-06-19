@@ -9,22 +9,22 @@ package org.mule.extensions.introspection.api;
 /**
  * A parameter of an operation or configuration
  * <p>
- *     A parameter provides a name and
+ * A parameter provides a name and
  * </p>
  * It can apply either to a {@link ExtensionConfiguration} or a
  * {@link ExtensionOperation}
  *
  * @since 1.0
  */
-public interface MuleExtensionParameter extends Described
+public interface ExtensionParameter extends Described
 {
 
     /**
      * Returns the type of the operation
      *
-     * @return a not {@code null} {@link java.lang.Class}
+     * @return a not {@code null} {@link org.mule.extensions.introspection.api.DataType}
      */
-    Class<?> getType();
+    DataType getType();
 
     /**
      * Whether or not this parameter is required. This method is exclusive with

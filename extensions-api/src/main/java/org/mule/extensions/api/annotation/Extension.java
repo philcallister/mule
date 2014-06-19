@@ -6,9 +6,6 @@
  */
 package org.mule.extensions.api.annotation;
 
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,7 +25,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Module
+public @interface Extension
 {
 
     /**
@@ -37,11 +34,6 @@ public @interface Module
     String name();
 
     String version();
-
-    /**
-     * Name of the configuration element
-     */
-    String configElementName() default "";
 
     /**
      * Short description about the annotated module.

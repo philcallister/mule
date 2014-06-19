@@ -6,7 +6,7 @@
  */
 package org.mule.extensions.internal;
 
-import org.mule.extensions.api.MuleExtensionsManager;
+import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.util.Preconditions;
 
@@ -17,10 +17,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-final class DefaultMuleExtensionsManager implements MuleExtensionsManager
+final class DefaultExtensionsManager implements ExtensionsManager
 {
 
-    private final List<Extension> extensions = new LinkedList<Extension>();
+    private final List<Extension> extensions = new LinkedList<>();
 
     @Override
     public void register(Extension extension)

@@ -9,7 +9,7 @@ package org.mule.extensions.internal;
 import static org.mule.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
 import static org.mule.extensions.internal.MuleExtensionUtils.immutableList;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.MuleExtensionParameter;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 
 import java.util.List;
 
@@ -21,9 +21,9 @@ import java.util.List;
 final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed implements ExtensionConfiguration
 {
 
-    private final List<MuleExtensionParameter> parameters;
+    private final List<ExtensionParameter> parameters;
 
-    protected ImmutableExtensionConfiguration(String name, String description, List<MuleExtensionParameter> parameters)
+    protected ImmutableExtensionConfiguration(String name, String description, List<ExtensionParameter> parameters)
     {
         super(name, description);
         checkNullOrRepeatedNames(parameters, "parameters");
@@ -34,7 +34,7 @@ final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed i
      * {@inheritDoc}
      */
     @Override
-    public final List<MuleExtensionParameter> getParameters()
+    public final List<ExtensionParameter> getParameters()
     {
         return parameters;
     }

@@ -15,14 +15,14 @@ import static org.mule.extensions.HeisenbergModule.EXTENSION_NAME;
 import static org.mule.extensions.HeisenbergModule.EXTENSION_VERSION;
 import static org.mule.extensions.HeisenbergModule.HEISENBERG;
 import org.mule.extensions.HeisenbergModule;
-import org.mule.extensions.internal.DefaultMuleExtensionBuilder;
+import org.mule.extensions.internal.DefaultExtensionBuilder;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.api.MuleExtensionParameter;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.api.MuleExtensionType;
-import org.mule.extensions.introspection.spi.MuleExtensionBuilder;
-import org.mule.extensions.introspection.spi.MuleExtensionDescriber;
+import org.mule.extensions.introspection.spi.ExtensionBuilder;
+import org.mule.extensions.introspection.spi.ExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -42,18 +42,18 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     private static final String HIDE_METH_IN_EVENT_OPERATION = "hideMethInEvent";
     private static final String HIDE_METH_IN_MESSAGE_OPERATION = "hideMethInMessage";
 
-    private MuleExtensionBuilder builder;
+    private ExtensionBuilder builder;
 
     @Before
     public void setUp()
     {
-        builder = DefaultMuleExtensionBuilder.newBuilder();
+        builder = DefaultExtensionBuilder.newBuilder();
     }
 
     @Test
     public void describeTestModule() throws Exception
     {
-        MuleExtensionDescriber describer = new DefaultMuleExtensionDescriber(HeisenbergModule.class);
+        ExtensionDescriber describer = new DefaultExtensionDescriber(HeisenbergModule.class);
         describer.describe(builder);
 
         Extension extension = builder.build();
@@ -75,7 +75,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         ExtensionConfiguration conf = extension.getConfigurations().get(0);
         assertSame(conf, extension.getConfiguration(ExtensionConfiguration.DEFAULT_NAME));
 
-        List<MuleExtensionParameter> parameters = conf.getParameters();
+        List<ExtensionParameter> parameters = conf.getParameters();
         assertEquals(2, parameters.size());
 
         assertParameter(parameters.get(0), "name", "", String.class, false, true, HEISENBERG);
@@ -145,7 +145,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 
     }
 
-    private void assertParameter(MuleExtensionParameter param,
+    private void assertParameter(ExtensionParameter param,
                                  String name,
                                  String description,
                                  Class<?> type,

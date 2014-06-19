@@ -10,11 +10,10 @@ import static org.mule.util.Preconditions.checkState;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.extensions.api.annotation.Configurable;
-import org.mule.extensions.api.annotation.Module;
+import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
-import org.mule.extensions.spi.NestedProcessor;
 import org.mule.util.ClassUtils;
 import org.mule.util.ParamReader;
 
@@ -57,7 +56,7 @@ final class MuleExtensionAnnotationParser
 
     private static ExtensionDescriptor resolveExtensionType(Class<?> extensionType)
     {
-        Module module = extensionType.getAnnotation(Module.class);
+        Extension module = extensionType.getAnnotation(Extension.class);
         ExtensionDescriptor extension = null;
 
         if (module != null)

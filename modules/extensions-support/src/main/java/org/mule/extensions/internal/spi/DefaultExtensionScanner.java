@@ -8,11 +8,11 @@ package org.mule.extensions.internal.spi;
 
 import org.mule.api.MuleRuntimeException;
 import org.mule.config.i18n.MessageFactory;
-import org.mule.extensions.api.MuleExtensionsManager;
-import org.mule.extensions.internal.DefaultMuleExtensionBuilder;
+import org.mule.extensions.api.ExtensionsManager;
+import org.mule.extensions.internal.DefaultExtensionBuilder;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.spi.MuleExtensionBuilder;
-import org.mule.extensions.spi.MuleExtensionScanner;
+import org.mule.extensions.introspection.spi.ExtensionBuilder;
+import org.mule.extensions.spi.ExtensionScanner;
 import org.mule.util.ClassUtils;
 import org.mule.util.IOUtils;
 import org.mule.util.StringUtils;
@@ -26,7 +26,7 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class DefaultMuleExtensionScanner implements MuleExtensionScanner
+public final class DefaultExtensionScanner implements ExtensionScanner
 {
 
     private static final String EXTENSIONS_PROPERTIES = "META-INF/extensions/mule.extensions";
@@ -56,12 +56,12 @@ public final class DefaultMuleExtensionScanner implements MuleExtensionScanner
     }
 
     @Override
-    public List<Extension> scanAndRegister(MuleExtensionsManager muleExtensionsManager)
+    public List<Extension> scanAndRegister(ExtensionsManager extensionsManager)
     {
         List<Extension> extensions = scan();
         for (Extension extension : extensions)
         {
-            muleExtensionsManager.register(extension);
+            extensionsManager.register(extension);
         }
 
         return extensions;
@@ -73,8 +73,8 @@ public final class DefaultMuleExtensionScanner implements MuleExtensionScanner
         {
             Class<?> extensionClass = ClassUtils.loadClass(extensionClassname.trim(), getClass());
 
-            MuleExtensionBuilder builder = DefaultMuleExtensionBuilder.newBuilder();
-            new DefaultMuleExtensionDescriber(extensionClass).describe(builder);
+            ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
+            new DefaultExtensionDescriber(extensionClass).describe(builder);
 
             return builder.build();
         }

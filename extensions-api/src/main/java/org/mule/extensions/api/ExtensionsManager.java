@@ -18,7 +18,7 @@ import java.util.Iterator;
  *
  * @since 1.0
  */
-public interface MuleExtensionsManager
+public interface ExtensionsManager
 {
 
     /**

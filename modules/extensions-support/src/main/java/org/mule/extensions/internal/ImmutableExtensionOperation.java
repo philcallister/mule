@@ -6,26 +6,62 @@
  */
 package org.mule.extensions.internal;
 
-import org.mule.extensions.introspection.api.MuleExtensionParameter;
+import static org.mule.extensions.internal.MuleExtensionUtils.immutableList;
+import org.mule.extensions.introspection.api.DataType;
+import org.mule.extensions.introspection.api.ExtensionOperation;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Immutable concrete implementation of {@link org.mule.extensions.introspection.api.ExtensionOperation}
  *
  * @since 1.0
  */
-final class ImmutableExtensionOperation extends AbstractExtensionOperation
+final class ImmutableExtensionOperation extends AbstractImmutableDescribed implements ExtensionOperation
 {
+
+    private final List<DataType> inputTypes;
+    private final DataType outputType;
+    private final List<ExtensionParameter> parameters;
 
     ImmutableExtensionOperation(String name,
                                 String description,
-                                Set<String> ownerConfigurations,
-                                List<Class<?>> inputTypes,
-                                List<Class<?>> outputTypes,
-                                List<MuleExtensionParameter> parameters)
+                                List<DataType> inputTypes,
+                                DataType outputType,
+                                List<ExtensionParameter> parameters)
     {
-        super(name, description, ownerConfigurations, inputTypes, outputTypes, parameters);
+        super(name, description);
+
+        this.inputTypes = immutableList(inputTypes);
+        this.outputType = outputType;
+        this.parameters = immutableList(parameters);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<ExtensionParameter> getParameters()
+    {
+        return parameters;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<DataType> getInputTypes()
+    {
+        return inputTypes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataType getOutputType()
+    {
+        return outputType;
     }
 }

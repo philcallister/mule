@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
  * {@link org.mule.extensions.introspection.api.ExtensionOperation}.
  * <p/>
  * Each argument on this method will be featured as an
- * {@link org.mule.extensions.introspection.api.MuleExtensionParameter}
+ * {@link org.mule.extensions.introspection.api.ExtensionParameter}
  *
  * @since 1.0
  */

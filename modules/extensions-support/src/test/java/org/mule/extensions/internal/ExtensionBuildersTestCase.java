@@ -13,6 +13,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import org.mule.extensions.introspection.api.ExtensionOperation;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.api.ExtensionScope;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
@@ -20,9 +21,8 @@ import org.mule.extensions.introspection.api.Capability;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.MuleExtensionOperationGroup;
-import org.mule.extensions.introspection.api.MuleExtensionParameter;
 import org.mule.extensions.introspection.api.MuleExtensionType;
-import org.mule.extensions.introspection.spi.MuleExtensionBuilder;
+import org.mule.extensions.introspection.spi.ExtensionBuilder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -63,9 +63,9 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 
     private Extension extension;
 
-    private MuleExtensionBuilder populatedBuilder()
+    private ExtensionBuilder populatedBuilder()
     {
-        MuleExtensionBuilder builder = DefaultMuleExtensionBuilder.newBuilder();
+        ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
         return builder.setName(WS_CONSUMER)
                 .setDescription(WS_CONSUMER_DESCRIPTION)
                 .setVersion(VERSION)
@@ -172,7 +172,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         assertEquals(ExtensionConfiguration.DEFAULT_NAME, configuration.getName());
         assertEquals(ExtensionConfiguration.DEFAULT_DESCRIPTION, configuration.getDescription());
 
-        List<MuleExtensionParameter> parameters = configuration.getParameters();
+        List<ExtensionParameter> parameters = configuration.getParameters();
         assertEquals(4, parameters.size());
         assertParameter(parameters.get(0), WSDL_LOCATION, URI_TO_FIND_THE_WSDL, false, true, String.class, null);
         assertParameter(parameters.get(1), SERVICE, SERVICE_NAME, true, true, String.class, null);
@@ -243,7 +243,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         strictTypeAssert(operation.getInputTypes(), String.class);
         strictTypeAssert(operation.getOutputTypes(), String.class);
 
-        List<MuleExtensionParameter> parameters = operation.getParameters();
+        List<ExtensionParameter> parameters = operation.getParameters();
         assertEquals(2, parameters.size());
         assertParameter(parameters.get(0), OPERATION, THE_OPERATION_TO_USE, true, true, String.class, null);
         assertParameter(parameters.get(1), MTOM_ENABLED, MTOM_DESCRIPTION, true, false, Boolean.class, true);
@@ -259,7 +259,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         strictTypeAssert(operation.getInputTypes(), String.class);
         strictTypeAssert(operation.getOutputTypes(), List.class);
 
-        List<MuleExtensionParameter> parameters = operation.getParameters();
+        List<ExtensionParameter> parameters = operation.getParameters();
         assertEquals(2, parameters.size());
         assertParameter(parameters.get(0), OPERATION, THE_OPERATION_TO_USE, true, true, List.class, null);
         assertParameter(parameters.get(1), MTOM_ENABLED, MTOM_DESCRIPTION, true, false, Boolean.class, true);
@@ -275,7 +275,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         assertEquals(MuleExtensionOperationGroup.AllowedChildsType.ANY, group.getAllowedChildsType());
     }
 
-    private void assertParameter(MuleExtensionParameter parameter,
+    private void assertParameter(ExtensionParameter parameter,
                                  String name,
                                  String description,
                                  boolean acceptsExpressions,

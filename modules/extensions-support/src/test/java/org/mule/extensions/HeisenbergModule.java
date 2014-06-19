@@ -10,16 +10,15 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.api.annotation.Configurable;
-import org.mule.extensions.api.annotation.Module;
+import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
-import org.mule.extensions.spi.NestedProcessor;
 
 import java.util.LinkedList;
 import java.util.List;
 
-@Module(name = HeisenbergModule.EXTENSION_NAME, description = HeisenbergModule.EXTENSION_DESCRIPTION, version = HeisenbergModule.EXTENSION_VERSION)
+@Extension(name = HeisenbergModule.EXTENSION_NAME, description = HeisenbergModule.EXTENSION_DESCRIPTION, version = HeisenbergModule.EXTENSION_VERSION)
 public class HeisenbergModule
 {
 

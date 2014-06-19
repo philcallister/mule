@@ -12,7 +12,8 @@ package org.mule.extensions.introspection.api;
 public final class NoSuchConfigurationException extends IllegalArgumentException
 {
 
-    public NoSuchConfigurationException(Extension extension, String configName) {
+    public NoSuchConfigurationException(Extension extension, String configName)
+    {
         super(String.format("Configuration '%s' does not exists in extension '%s'", configName, extension.getName()));
     }
 }

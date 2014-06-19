@@ -10,10 +10,10 @@ import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.spi.MuleExtensionBuilder;
-import org.mule.extensions.introspection.spi.MuleExtensionConfigurationBuilder;
-import org.mule.extensions.introspection.spi.MuleExtensionDescriber;
-import org.mule.extensions.introspection.spi.MuleExtensionOperationBuilder;
+import org.mule.extensions.introspection.spi.ExtensionBuilder;
+import org.mule.extensions.introspection.spi.ExtensionConfigurationBuilder;
+import org.mule.extensions.introspection.spi.ExtensionDescriber;
+import org.mule.extensions.introspection.spi.ExtensionOperationBuilder;
 import org.mule.util.Preconditions;
 
 import java.lang.reflect.Field;
@@ -22,19 +22,19 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-final class DefaultMuleExtensionDescriber implements MuleExtensionDescriber
+final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
     private final Class<?> extensionType;
 
-    public DefaultMuleExtensionDescriber(Class<?> extensionType)
+    public DefaultExtensionDescriber(Class<?> extensionType)
     {
         Preconditions.checkArgument(extensionType != null, "extensionType cannot be null");
         this.extensionType = extensionType;
     }
 
     @Override
-    public void describe(MuleExtensionBuilder builder)
+    public void describe(ExtensionBuilder builder)
     {
         ExtensionDescriptor descriptor = MuleExtensionAnnotationParser.parseExtensionDescriptor(extensionType);
         describeExtension(builder, descriptor);
@@ -42,7 +42,7 @@ final class DefaultMuleExtensionDescriber implements MuleExtensionDescriber
         describeOperations(builder, descriptor);
     }
 
-    private void describeExtension(MuleExtensionBuilder builder, ExtensionDescriptor descriptor)
+    private void describeExtension(ExtensionBuilder builder, ExtensionDescriptor descriptor)
     {
         builder.setName(descriptor.getName())
                 .setDescription(descriptor.getDescription())
@@ -52,10 +52,10 @@ final class DefaultMuleExtensionDescriber implements MuleExtensionDescriber
     }
 
 
-    private void describeConfigurations(MuleExtensionBuilder builder, ExtensionDescriptor descriptor)
+    private void describeConfigurations(ExtensionBuilder builder, ExtensionDescriptor descriptor)
     {
         // TODO: for now we add only one configuration, when we do OAuth or when we resolve the question around config representations this has to change
-        MuleExtensionConfigurationBuilder configuration = builder.newConfiguration()
+        ExtensionConfigurationBuilder configuration = builder.newConfiguration()
                 .setName(descriptor.getConfigElementName())
                 .setDescription(ExtensionConfiguration.DEFAULT_DESCRIPTION);
 
@@ -76,12 +76,12 @@ final class DefaultMuleExtensionDescriber implements MuleExtensionDescriber
         }
     }
 
-    private void describeOperations(MuleExtensionBuilder builder, ExtensionDescriptor extension)
+    private void describeOperations(ExtensionBuilder builder, ExtensionDescriptor extension)
     {
         for (Method method : extension.getOperationMethods())
         {
             Operation annotation = method.getAnnotation(Operation.class);
-            MuleExtensionOperationBuilder operation = builder.newOperation();
+            ExtensionOperationBuilder operation = builder.newOperation();
             builder.addOperation(operation);
 
             operation.setName(resolveOperationName(method, annotation))
@@ -94,8 +94,8 @@ final class DefaultMuleExtensionDescriber implements MuleExtensionDescriber
     }
 
     private void parseOperationParameters(Method method,
-                                          MuleExtensionBuilder builder,
-                                          MuleExtensionOperationBuilder operation,
+                                          ExtensionBuilder builder,
+                                          ExtensionOperationBuilder operation,
                                           ExtensionDescriptor extension)
     {
         List<ParameterDescriptor> descriptors = MuleExtensionAnnotationParser.parseParameter(method, extension);

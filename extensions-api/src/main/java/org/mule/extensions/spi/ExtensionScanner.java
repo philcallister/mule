@@ -6,7 +6,7 @@
  */
 package org.mule.extensions.spi;
 
-import org.mule.extensions.api.MuleExtensionsManager;
+import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  * When an extension is found, it will parse the Annotations in it to generate an instance of
  * {@link org.mule.extensions.introspection.api.Extension} that describes it.
  * <p/>
- * Optionally, it can also register those extensions in a {@link org.mule.extensions.api.MuleExtensionsManager}
+ * Optionally, it can also register those extensions in a {@link org.mule.extensions.api.ExtensionsManager}
  * <p/>
  * The scanning process works as follows:
  * <ul>
@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @since 1.0
  */
-public interface MuleExtensionScanner
+public interface ExtensionScanner
 {
 
     /**
@@ -42,11 +42,11 @@ public interface MuleExtensionScanner
 
     /**
      * Calls {@link #scan()} but also registers the found exceptions in the given {@code muleExtensionsManager}
-     * by invoking {@link org.mule.extensions.api.MuleExtensionsManager#register(org.mule.extensions.introspection.api.Extension)}
+     * by invoking {@link org.mule.extensions.api.ExtensionsManager#register(org.mule.extensions.introspection.api.Extension)}
      *
-     * @param muleExtensionsManager a {@link org.mule.extensions.api.MuleExtensionsManager}
+     * @param extensionsManager a {@link org.mule.extensions.api.ExtensionsManager}
      * @return a {@link java.util.List} of {@link org.mule.extensions.introspection.api.Extension}
      */
-    List<Extension> scanAndRegister(MuleExtensionsManager muleExtensionsManager);
+    List<Extension> scanAndRegister(ExtensionsManager extensionsManager);
 
 }

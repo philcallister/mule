@@ -12,12 +12,12 @@ import java.util.List;
  * A named configuration for an extension
  * <p/>
  * <p>
- *     Configurations describe different ways to intialize a scope for operations.
- *     Upon execution, each operation will be associated to a given configuration, so configurations define both
- *     a set of shared properties used in operations, and a common context to relate operations.
+ * Configurations describe different ways to intialize a scope for operations.
+ * Upon execution, each operation will be associated to a given configuration, so configurations define both
+ * a set of shared properties used in operations, and a common context to relate operations.
  * </p>
  * <p>
- *     For example, an extension that provides access to an external resource may provide
+ * For example, an extension that provides access to an external resource may provide
  * </p>
  * The configuration can also imply different implicit behaviors not strictly attached to the operations
  * (e.g.: A connector supporting both stateful connections an OAuth2 authentication. Depending on the
@@ -32,13 +32,14 @@ import java.util.List;
  */
 public interface ExtensionConfiguration extends Described
 {
+
     /**
-     * Returns the {@link org.mule.extensions.introspection.api.MuleExtensionParameter}s
+     * Returns the {@link ExtensionParameter}s
      * available for this configuration
      *
-     * @return a immutable {@link java.util.List} with {@link org.mule.extensions.introspection.api.MuleExtensionParameter}
+     * @return a immutable {@link java.util.List} with {@link ExtensionParameter}
      * instances. It might be empty but it will never be {@code null}
      */
-    List<MuleExtensionParameter> getParameters();
+    List<ExtensionParameter> getParameters();
 
 }

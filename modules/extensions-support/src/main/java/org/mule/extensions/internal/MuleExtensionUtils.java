@@ -6,8 +6,8 @@
  */
 package org.mule.extensions.internal;
 
-import org.mule.extensions.introspection.spi.Builder;
 import org.mule.extensions.introspection.api.Described;
+import org.mule.extensions.introspection.spi.Builder;
 import org.mule.util.Preconditions;
 
 import com.google.common.base.Joiner;
@@ -92,6 +92,17 @@ abstract class MuleExtensionUtils
         for (T object : objects)
         {
             map.put(object.getName(), object);
+        }
+
+        return map.build();
+    }
+
+    static <K extends Object, T extends Object> Map<Class<K>, T> toClassMap(Collection<T> objects)
+    {
+        ImmutableMap.Builder<Class<K>, T> map = ImmutableMap.builder();
+        for (T object : objects)
+        {
+            map.put((Class<K>) object.getClass(), object);
         }
 
         return map.build();

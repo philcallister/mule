@@ -35,7 +35,7 @@ public interface OperationContext
      *
      * @since 1.0
      */
-    OperationContext setParameter(MuleExtensionParameter param, Object value);
+    OperationContext setParameter(ExtensionParameter param, Object value);
 
     ExtensionOperation getOperation();
 

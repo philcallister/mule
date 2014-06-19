@@ -6,7 +6,7 @@
  */
 package org.mule.extensions.internal.spi;
 
-import org.mule.extensions.api.annotation.Module;
+import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.introspection.api.MuleExtensionType;
 
 import java.lang.reflect.Field;
@@ -27,7 +27,7 @@ class ExtensionDescriptor
     private List<Field> configurableFields = new LinkedList<Field>();
     private List<Method> operationMethods = new LinkedList<Method>();
 
-    ExtensionDescriptor(Module module)
+    ExtensionDescriptor(Extension module)
     {
         name = module.name();
         description = module.description();

@@ -6,28 +6,29 @@
  */
 package org.mule.extensions.internal;
 
-import org.mule.extensions.introspection.api.MuleExtensionParameter;
+import org.mule.extensions.introspection.api.DataType;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.util.Preconditions;
 
 /**
- * Immutable implementation of {@link org.mule.extensions.introspection.api.MuleExtensionParameter}
+ * Immutable implementation of {@link org.mule.extensions.introspection.api.ExtensionParameter}
  *
  * @since 1.0
  */
-final class ImmutableMuleExtensionParameter extends AbstractImmutableDescribed implements MuleExtensionParameter
+final class ImmutableExtensionParameter extends AbstractImmutableDescribed implements ExtensionParameter
 {
 
-    private final Class<?> type;
+    private final DataType type;
     private final boolean required;
     private final boolean dynamic;
     private final Object defaultValue;
 
-    protected ImmutableMuleExtensionParameter(String name,
-                                              String description,
-                                              Class<?> type,
-                                              boolean required,
-                                              boolean dynamic,
-                                              Object defaultValue)
+    protected ImmutableExtensionParameter(String name,
+                                          String description,
+                                          DataType type,
+                                          boolean required,
+                                          boolean dynamic,
+                                          Object defaultValue)
     {
         super(name, description);
 
@@ -49,7 +50,7 @@ final class ImmutableMuleExtensionParameter extends AbstractImmutableDescribed i
      * {@inheritDoc}
      */
     @Override
-    public Class<?> getType()
+    public DataType getType()
     {
         return type;
     }

@@ -8,9 +8,9 @@ package org.mule.extensions.internal.spi;
 
 import static junit.framework.Assert.assertEquals;
 import org.mule.extensions.HeisenbergModule;
-import org.mule.extensions.api.MuleExtensionsManager;
+import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.spi.MuleExtensionScanner;
+import org.mule.extensions.spi.ExtensionScanner;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -30,14 +30,14 @@ public class DefaultExtensionScannerTestCase extends AbstractMuleTestCase
 {
 
     @Mock
-    private MuleExtensionsManager extensionsManager;
+    private ExtensionsManager extensionsManager;
 
-    private MuleExtensionScanner scanner;
+    private ExtensionScanner scanner;
 
     @Before
     public void setUp()
     {
-        scanner = new DefaultMuleExtensionScanner();
+        scanner = new DefaultExtensionScanner();
     }
 
     @Test

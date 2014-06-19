@@ -8,13 +8,13 @@ package org.mule.extensions.introspection.spi;
 
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 
-public interface MuleExtensionConfigurationBuilder extends Builder<ExtensionConfiguration>
+public interface ExtensionConfigurationBuilder extends Builder<ExtensionConfiguration>
 {
 
-    MuleExtensionConfigurationBuilder setName(String name);
+    ExtensionConfigurationBuilder setName(String name);
 
-    MuleExtensionConfigurationBuilder setDescription(String description);
+    ExtensionConfigurationBuilder setDescription(String description);
 
-    MuleExtensionConfigurationBuilder addParameter(MuleExtensionParameterBuilder parameter);
+    ExtensionConfigurationBuilder addParameter(ExtensionParameterBuilder parameter);
 
 }
