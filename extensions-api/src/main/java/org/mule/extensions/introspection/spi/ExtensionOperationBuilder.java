@@ -6,6 +6,7 @@
  */
 package org.mule.extensions.introspection.spi;
 
+import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 
 public interface ExtensionOperationBuilder extends Builder<ExtensionOperation>
@@ -15,11 +16,9 @@ public interface ExtensionOperationBuilder extends Builder<ExtensionOperation>
 
     ExtensionOperationBuilder setDescription(String description);
 
-    ExtensionOperationBuilder addInputType(Class<?> type);
+    ExtensionOperationBuilder addInputType(DataType... type);
 
-    ExtensionOperationBuilder addInputType(Class<?> type, Class<?>... genericTypes);
-
-    ExtensionOperationBuilder setOutputType(Class<?> type, Class<?>... genericTypes);
+    ExtensionOperationBuilder setOutputType(DataType type);
 
     ExtensionOperationBuilder addParameter(ExtensionParameterBuilder parameter);
 

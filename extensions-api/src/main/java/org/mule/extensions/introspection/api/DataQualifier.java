@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.extensions.introspection.api;
 
 public enum DataQualifier
@@ -5,7 +11,6 @@ public enum DataQualifier
 
     VOID,
     BOOLEAN,
-    NUMBER,
     INTEGER,
     DOUBLE,
     DECIMAL,
@@ -20,5 +25,6 @@ public enum DataQualifier
     DATE_TIME,
     POJO,
     LIST,
-    MAP;
+    MAP,
+    OPERATION;
 }

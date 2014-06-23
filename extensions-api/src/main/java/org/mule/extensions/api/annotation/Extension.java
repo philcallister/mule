@@ -35,8 +35,19 @@ public @interface Extension
 
     String version();
 
+    String minMuleVersion() default MIN_MULE_VERSION;
+
+    /**
+     * Name of the configuration element
+     */
+    String configElementName() default DEFAULT_CONFIG_NAME;
+
     /**
      * Short description about the annotated module.
      */
     String description() default "";
+
+    String DEFAULT_CONFIG_NAME = "config";
+
+    String MIN_MULE_VERSION = "3.6.0";
 }

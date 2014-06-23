@@ -22,7 +22,7 @@ public interface ExtensionParameter extends Described
     /**
      * Returns the type of the operation
      *
-     * @return a not {@code null} {@link org.mule.extensions.introspection.api.DataType}
+     * @return a not {@code null} {@link ImmutableDataType}
      */
     DataType getType();
 

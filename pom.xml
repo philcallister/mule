@@ -1340,6 +1340,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.mule</groupId>
+                <artifactId>mule-extensions-api</artifactId>
+                <version>${muleExtensionsApiVersion}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.mule.mvel</groupId>
                 <artifactId>mule-mvel2</artifactId>
                 <version>${muleMvelVersion}</version>
@@ -1597,6 +1603,7 @@
                         <skip>${skipVerifications}</skip>
                         <header>${licensePath}</header>
                         <excludes>
+                            <exclude>**/org/mule/repackaged/**</exclude>
                             <exclude>target/**</exclude>
                             <exclude>**/.gitignore</exclude>
                             <exclude>**/*.txt</exclude>

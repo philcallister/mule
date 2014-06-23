@@ -6,57 +6,16 @@
  */
 package org.mule.extensions.introspection.api;
 
-public final class DataType
+public interface DataType
 {
 
-    private final Class<?> type;
-    private final Class<?>[] genericTypes;
-    private final DataQualifier qualifier;
+    String getName();
 
-    public static DataType of(Class<?> clazz)
-    {
-        return of(clazz, null);
-    }
+    boolean isInstance(Object object);
 
-    public static DataType of(Class<?> clazz, Class<?>... genericTypes)
-    {
-        return new DataType(clazz, genericTypes, DataQualifierFactory.getQualifier(clazz));
-    }
+    Class<?> getType();
 
-    private DataType(Class<?> type, Class<?>[] genericTypes, DataQualifier qualifier)
-    {
-        this.type = type;
-        this.genericTypes = genericTypes;
-        this.qualifier = qualifier;
-    }
+    DataType[] getGenericTypes();
 
-    public String getName()
-    {
-        return type.getName();
-    }
-
-    public boolean isAssignableFrom(DataType dataType)
-    {
-        return type.isAssignableFrom(dataType.getType());
-    }
-
-    public boolean isInstance(Object object)
-    {
-        return type.isInstance(object);
-    }
-
-    public Class<?> getType()
-    {
-        return type;
-    }
-
-    public Class<?>[] getGenericTypes()
-    {
-        return genericTypes;
-    }
-
-    public DataQualifier getQualifier()
-    {
-        return qualifier;
-    }
+    DataQualifier getQualifier();
 }

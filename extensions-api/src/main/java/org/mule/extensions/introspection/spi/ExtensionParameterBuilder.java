@@ -6,6 +6,7 @@
  */
 package org.mule.extensions.introspection.spi;
 
+import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 
 public interface ExtensionParameterBuilder extends Builder<ExtensionParameter>
@@ -15,9 +16,7 @@ public interface ExtensionParameterBuilder extends Builder<ExtensionParameter>
 
     ExtensionParameterBuilder setDescription(String description);
 
-    ExtensionParameterBuilder setType(Class<?> type);
-
-    ExtensionParameterBuilder addGenericType(Class<?> genericType);
+    ExtensionParameterBuilder setType(DataType type);
 
     ExtensionParameterBuilder setRequired(boolean required);
 
