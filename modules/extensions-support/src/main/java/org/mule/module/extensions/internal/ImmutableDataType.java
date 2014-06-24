@@ -14,6 +14,11 @@ import org.mule.util.Preconditions;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Immutable implementation of {@link org.mule.extensions.introspection.api.DataType}
+ *
+ * @since 3.6.0
+ */
 public final class ImmutableDataType implements DataType
 {
 
@@ -21,11 +26,29 @@ public final class ImmutableDataType implements DataType
     private final DataType[] genericTypes;
     private final DataQualifier qualifier;
 
+    /**
+     * Returns a new {@link org.mule.extensions.introspection.api.DataType} that
+     * represents the given type. The returned instance will return an empty array
+     * when queried for {@link #getGenericTypes()}
+     *
+     * @param clazz a not {@code null} {@link java.lang.Class}
+     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @throws java.lang.IllegalArgumentException if the argument is null
+     */
     public static DataType of(Class<?> clazz)
     {
         return of(clazz, (DataType[]) null);
     }
 
+    /**
+     * Returns a new {@link org.mule.extensions.introspection.api.DataType} that
+     * represents the given type with the optional generic types.
+     *
+     * @param clazz        a not {@code null} {@link java.lang.Class}
+     * @param genericTypes an optional array of generic types accessible through {@link #getGenericTypes()}
+     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @throws java.lang.IllegalArgumentException if the argument is null
+     */
     public static DataType of(Class<?> clazz, Class<?>... genericTypes)
     {
         DataType[] types;
@@ -45,7 +68,16 @@ public final class ImmutableDataType implements DataType
         return of(clazz, types);
     }
 
-
+    /**
+     * Returns a new {@link org.mule.extensions.introspection.api.DataType} that
+     * represents the given class and has the already provided {@link org.mule.extensions.introspection.api.DataType}s
+     * as {@link #getGenericTypes()}
+     *
+     * @param clazz        a not {@code null} {@link java.lang.Class}
+     * @param genericTypes an optional array of {@link org.mule.extensions.introspection.api.DataType} types accessible through {@link #getGenericTypes()}
+     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @throws java.lang.IllegalArgumentException if the argument is null
+     */
     public static DataType of(Class<?> clazz, DataType... genericTypes)
     {
         if (genericTypes == null)
@@ -64,41 +96,66 @@ public final class ImmutableDataType implements DataType
         this.qualifier = qualifier;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName()
     {
         return type.getName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public boolean isAssignableFrom(DataType dataType)
     {
         return type.isAssignableFrom(dataType.getType());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isInstance(Object object)
     {
         return type.isInstance(object);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<?> getType()
     {
         return type;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DataType[] getGenericTypes()
     {
         return genericTypes;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DataQualifier getQualifier()
     {
         return qualifier;
     }
 
+    /**
+     * Defines equality by checking that the given object is a
+     * {@link org.mule.extensions.introspection.api.DataType} with matching
+     * {@link #getType()} and {@link #getQualifier()}, which also
+     * returns a {@link #getGenericTypes()} which every element (if any) also matches
+     * the one in this instance
+     */
     @Override
     public boolean equals(Object obj)
     {
@@ -113,9 +170,21 @@ public final class ImmutableDataType implements DataType
         return false;
     }
 
+    /**
+     * Calculates this instance's hash code by considering
+     * the {@link #getType()}, {@link #getQualifier()} and the individual
+     * hashCode of each element in {@link #getGenericTypes()}. If the generic types
+     * array is empty, then it's not considered.
+     */
     @Override
     public int hashCode()
     {
-        return Objects.hash(type, genericTypes, qualifier);
+        int genericTypesHash = Arrays.hashCode(genericTypes);
+
+        if (genericTypesHash == 0)
+        {
+            genericTypesHash = 1; //neutralize factor
+        }
+        return genericTypesHash * Objects.hash(type, qualifier) * 31;
     }
 }

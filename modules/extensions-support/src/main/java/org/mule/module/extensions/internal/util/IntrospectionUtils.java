@@ -23,17 +23,38 @@ import java.lang.reflect.Method;
 public class IntrospectionUtils
 {
 
+    /**
+     * Returns a {@link org.mule.extensions.introspection.api.DataType} representing the
+     * given clazz
+     */
     public static DataType getClassDataType(Class<?> clazz)
     {
         return toDataType(ResolvableType.forClass(clazz));
     }
 
+    /**
+     * Returns a {@link org.mule.extensions.introspection.api.DataType} representing
+     * the given {@link java.lang.reflect.Method}'s return type
+     *
+     * @return a {@link org.mule.extensions.introspection.api.DataType}
+     * @throws java.lang.IllegalArgumentException is method is {@code null}
+     */
     public static DataType getMethodReturnType(Method method)
     {
         checkArgument(method != null, "Can't introspect a null method");
         return toDataType(ResolvableType.forMethodReturnType(method));
     }
 
+    /**
+     * Returns an array of {@link org.mule.extensions.introspection.api.DataType}
+     * representing each of the given {@link java.lang.reflect.Method}'s argument
+     * types.
+     *
+     * @param method a not {@code null} {@link java.lang.reflect.Method}
+     * @return an array of {@link org.mule.extensions.introspection.api.DataType} matching
+     * the method's arguments. If the method doesn't take any, then the array will be empty
+     * @throws java.lang.IllegalArgumentException is method is {@code null}
+     */
     public static DataType[] getMethodArgumentTypes(Method method)
     {
         checkArgument(method != null, "Can't introspect a null method");
@@ -53,6 +74,14 @@ public class IntrospectionUtils
         return types;
     }
 
+    /**
+     * Returns a {@link org.mule.extensions.introspection.api.DataType} describing
+     * the given {@link java.lang.reflect.Field}'s type
+     *
+     * @param field a not {@code null} {@link java.lang.reflect.Field}
+     * @return a {@link org.mule.extensions.introspection.api.DataType} matching the field's type
+     * @throws java.lang.IllegalArgumentException if field is {@code null}
+     */
     public static DataType getFieldDataType(Field field)
     {
         checkArgument(field != null, "Can't introspect a null field");

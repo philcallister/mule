@@ -6,16 +6,53 @@
  */
 package org.mule.extensions.introspection.api;
 
+/**
+ * A definition of an abstract data type, which provides information
+ * that goes beyond it's actual {@link java.lang.reflect.Type}, but also
+ * provides information about its parametrized generic types and
+ * {@link org.mule.extensions.introspection.api.DataQualifier}
+ *
+ * @since 1.0
+ */
 public interface DataType
 {
 
+    /**
+     * Returns the type's name
+     *
+     * @return a not {@code null} {@link java.lang.String}
+     */
     String getName();
 
+    /**
+     * Whether the given object is or not an instance of
+     * the type described by this instance
+     *
+     * @param object the object to test
+     * @return {@code true} if the given object is an instance of the type described by this instace
+     */
     boolean isInstance(Object object);
 
+    /**
+     * Returns the {@link java.lang.Class} for the type described by this instance
+     *
+     * @return a not {@code null} {@link java.lang.Class}
+     */
     Class<?> getType();
 
+    /**
+     * An array of nested {@link org.mule.extensions.introspection.api.DataType}s which represent the
+     * parametrized types for the type returned by {@link #getType()}
+     *
+     * @return an array of {@link org.mule.extensions.introspection.api.DataType}. It might be empty but it will not be
+     * {@code null}
+     */
     DataType[] getGenericTypes();
 
+    /**
+     * A qualifier for the represented type
+     *
+     * @return a {@link org.mule.extensions.introspection.api.DataQualifier}
+     */
     DataQualifier getQualifier();
 }

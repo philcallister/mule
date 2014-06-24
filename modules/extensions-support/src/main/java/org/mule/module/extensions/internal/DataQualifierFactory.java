@@ -25,7 +25,14 @@ import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-public final class DataQualifierFactory
+/**
+ * Factory pattern implementation that provides a
+ * {@link org.mule.extensions.introspection.api.DataQualifier} for a given
+ * {@link java.lang.Class}
+ *
+ * @since 3.6.0
+ */
+final class DataQualifierFactory
 {
 
     private interface DataTypeQualifierEvaluator
@@ -92,12 +99,12 @@ public final class DataQualifierFactory
         }
     }
 
-    private static class PojoTypeQualifierEvaluator extends DefaultQualifierEvaluator
+    private static class BeanTypeQualifierEvaluator extends DefaultQualifierEvaluator
     {
 
-        private PojoTypeQualifierEvaluator()
+        private BeanTypeQualifierEvaluator()
         {
-            super(Object.class, DataQualifier.POJO);
+            super(Object.class, DataQualifier.BEAN);
         }
 
         @Override
@@ -152,7 +159,7 @@ public final class DataQualifierFactory
     private static final DataTypeQualifierEvaluator OPERATION_EVALUATOR = new DefaultQualifierEvaluator(
             ExtensionOperation.class, DataQualifier.OPERATION);
 
-    private static final DataTypeQualifierEvaluator POJO_EVALUATOR = new PojoTypeQualifierEvaluator();
+    private static final DataTypeQualifierEvaluator BEAN_EVALUATOR = new BeanTypeQualifierEvaluator();
 
     private static final DataTypeQualifierEvaluator[] evaluators = new DataTypeQualifierEvaluator[] {
             VOID_EVALUATOR,
@@ -170,9 +177,18 @@ public final class DataQualifierFactory
             LIST_EVALUATOR,
             MAP_EVALUATOR,
             OPERATION_EVALUATOR,
-            POJO_EVALUATOR
+            BEAN_EVALUATOR
     };
 
+    /**
+     * Returns a {@link org.mule.extensions.introspection.api.DataQualifier}
+     * that corresponds to the given {@link java.lang.Class}
+     *
+     * @param clazz a not {@code null} {@link java.lang.Class}
+     * @return a not {@code null} {@link org.mule.extensions.introspection.api.DataQualifier}
+     * @throws java.lang.IllegalArgumentException if the argument is {@code null}
+     * @throws java.lang.IllegalArgumentException If no qualifier can be assigned to the given type
+     */
     public static DataQualifier getQualifier(Class<?> clazz)
     {
         Preconditions.checkArgument(clazz != null, "Can't get qualifier for a null class");

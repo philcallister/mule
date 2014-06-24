@@ -126,9 +126,9 @@ public class DataQualifierFactoryTestCase extends AbstractMuleTestCase
     }
 
     @Test
-    public void pojo()
+    public void bean()
     {
-        doAssert(DataQualifier.POJO, Apple.class, Banana.class, Object.class);
+        doAssert(DataQualifier.BEAN, Apple.class, Banana.class, Object.class);
     }
 
     private void doAssert(DataQualifier expected, Class<?>... types)
