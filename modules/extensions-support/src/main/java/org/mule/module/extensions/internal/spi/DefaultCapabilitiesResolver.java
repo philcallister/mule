@@ -9,7 +9,7 @@ package org.mule.module.extensions.internal.spi;
 import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.introspection.spi.CapabilityAwareBuilder;
 import org.mule.extensions.spi.CapabilitiesResolver;
-import org.mule.module.extensions.internal.ImmutableXmlCapability;
+import org.mule.module.extensions.internal.capability.xml.ImmutableXmlCapability;
 import org.mule.util.Preconditions;
 
 import java.util.Arrays;
