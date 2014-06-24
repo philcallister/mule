@@ -10,11 +10,13 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
 
+import org.apache.commons.lang.StringUtils;
+
 final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilder
 {
 
     private String name;
-    private String description;
+    private String description = StringUtils.EMPTY;
     private DataType type;
     private boolean required = false;
     private boolean dynamic = true;

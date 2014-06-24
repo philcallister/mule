@@ -7,7 +7,6 @@
 package org.mule.module.extensions.internal;
 
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.toClassMap;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.toMap;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.Extension;
@@ -18,7 +17,9 @@ import org.mule.extensions.introspection.api.NoSuchOperationException;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,7 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
     private final String minMuleVersion;
     private final Map<String, ExtensionConfiguration> configurations;
     private final Map<String, ExtensionOperation> operations;
-    private Map<Class<?>, ?> capabilities;
+    private Set<Object> capabilities;
 
     protected ImmutableExtension(String name,
                                  String description,
@@ -60,7 +61,7 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
 
         this.configurations = toMap(configurations);
         this.operations = toMap(operations);
-        this.capabilities = toClassMap(capabilities);
+        this.capabilities = ImmutableSet.copyOf(capabilities);
     }
 
 
@@ -135,9 +136,18 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
      * {@inheritDoc}
      */
     @Override
-    public <T> T getCapability(Class<T> capabilityType)
+    public <T> Set<T> getCapabilities(Class<T> capabilityType)
     {
-        return (T) capabilities.get(capabilityType);
+        Set<T> matches = new HashSet<>();
+        for (Object capability : capabilities)
+        {
+            if (capabilityType.isInstance(capability))
+            {
+                matches.add((T) capability);
+            }
+        }
+
+        return ImmutableSet.copyOf(matches);
     }
 
 

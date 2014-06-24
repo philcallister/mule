@@ -21,10 +21,8 @@ import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -34,7 +32,7 @@ import org.apache.commons.lang.StringUtils;
  *
  * @since 1.0
  */
-public final class DefaultExtensionBuilder implements ExtensionBuilder
+public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilder<Extension, ExtensionBuilder> implements ExtensionBuilder
 {
 
     private static final String MIN_MULE_VERSION = "3.6.0";
@@ -46,7 +44,6 @@ public final class DefaultExtensionBuilder implements ExtensionBuilder
     private String minMuleVersion;
     private List<ExtensionConfigurationBuilder> configurations = new LinkedList<>();
     private List<Builder<ExtensionOperation>> operations = new LinkedList<>();
-    private Set<Object> capabilities = new HashSet<>();
 
     public static ExtensionBuilder newBuilder()
     {
@@ -121,18 +118,6 @@ public final class DefaultExtensionBuilder implements ExtensionBuilder
         return this;
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public <T extends Object> ExtensionBuilder addCapablity(T capability)
-    {
-        checkArgument(capability != null, "capability cannot be null");
-        capabilities.add(capability);
-
-        return this;
-    }
 
     /**
      * {@inheritDoc}

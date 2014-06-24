@@ -34,11 +34,6 @@ public @interface Operation
      */
     String name() default "";
 
-    /**
-     * A user-friendly name for this processor.
-     */
-    String description() default "";
-
     Class<?>[] acceptedPayloadTypes() default Object.class;
 
 }

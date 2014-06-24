@@ -15,11 +15,13 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
+
 final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilder
 {
 
     private String name;
-    private String description;
+    private String description = StringUtils.EMPTY;
     private List<DataType> inputTypes = new LinkedList<>();
     private DataType outputType = null;
     private List<ExtensionParameterBuilder> parameters = new LinkedList<>();

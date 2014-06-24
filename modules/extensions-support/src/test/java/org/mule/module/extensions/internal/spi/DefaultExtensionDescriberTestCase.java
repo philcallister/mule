@@ -10,30 +10,32 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_DESCRIPTION;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_NAME;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_VERSION;
-import static org.mule.module.extensions.HeisenbergModule.HEISENBERG;
 import static org.mule.extensions.api.annotation.Extension.DEFAULT_CONFIG_NAME;
 import static org.mule.extensions.api.annotation.Extension.MIN_MULE_VERSION;
 import static org.mule.extensions.introspection.api.DataQualifier.INTEGER;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
 import static org.mule.extensions.introspection.api.DataQualifier.STRING;
-import org.mule.module.extensions.HeisenbergModule;
-import org.mule.module.extensions.internal.DefaultExtensionBuilder;
+import static org.mule.module.extensions.HeisenbergModule.EXTENSION_DESCRIPTION;
+import static org.mule.module.extensions.HeisenbergModule.EXTENSION_NAME;
+import static org.mule.module.extensions.HeisenbergModule.EXTENSION_VERSION;
+import static org.mule.module.extensions.HeisenbergModule.HEISENBERG;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.extensions.introspection.api.capability.XmlCapability;
 import org.mule.extensions.introspection.spi.ExtensionBuilder;
 import org.mule.extensions.introspection.spi.ExtensionDescriber;
+import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.internal.DefaultExtensionBuilder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -73,6 +75,8 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 
         assertTestModuleConfiguration(extension);
         assertTestModuleOperations(extension);
+
+        assertCapabilities(extension);
     }
 
     private void assertTestModuleConfiguration(Extension extension) throws Exception
@@ -159,6 +163,23 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertEquals(required, param.isRequired());
         assertEquals(dynamic, param.isDynamic());
         assertEquals(defaultValue, param.getDefaultValue());
+    }
+
+    private void assertCapabilities(Extension extension)
+    {
+        assertXmlCapability(extension);
+    }
+
+    private void assertXmlCapability(Extension extension)
+    {
+        Set<XmlCapability> capabilities = extension.getCapabilities(XmlCapability.class);
+        assertNotNull(capabilities);
+        assertEquals(1, capabilities.size());
+
+        XmlCapability xml = capabilities.iterator().next();
+        assertEquals(HeisenbergModule.SCHEMA_LOCATION, xml.getSchemaLocation());
+        assertEquals(HeisenbergModule.SCHEMA_VERSION, xml.getSchemaVersion());
+        assertEquals(HeisenbergModule.NAMESPACE, xml.getNamespace());
     }
 
     private <T> void match(List<DataType> dataTypes, T[] array)

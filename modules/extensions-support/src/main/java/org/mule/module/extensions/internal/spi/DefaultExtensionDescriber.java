@@ -13,6 +13,7 @@ import org.mule.extensions.introspection.spi.ExtensionBuilder;
 import org.mule.extensions.introspection.spi.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.spi.ExtensionDescriber;
 import org.mule.extensions.introspection.spi.ExtensionOperationBuilder;
+import org.mule.extensions.spi.CapabilitiesResolver;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.Preconditions;
 
@@ -26,8 +27,9 @@ final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
     private final Class<?> extensionType;
+    private CapabilitiesResolver capabilitiesResolver = new DefaultCapabilitiesResolver();
 
-    public DefaultExtensionDescriber(Class<?> extensionType)
+    DefaultExtensionDescriber(Class<?> extensionType)
     {
         Preconditions.checkArgument(extensionType != null, "extensionType cannot be null");
         this.extensionType = extensionType;
@@ -40,6 +42,7 @@ final class DefaultExtensionDescriber implements ExtensionDescriber
         describeExtension(builder, descriptor);
         describeConfigurations(builder, descriptor);
         describeOperations(builder, descriptor);
+        describeCapabilities(builder);
     }
 
     private void describeExtension(ExtensionBuilder builder, ExtensionDescriptor descriptor)
@@ -67,7 +70,7 @@ final class DefaultExtensionDescriber implements ExtensionDescriber
 
             configuration.addParameter(builder.newParameter()
                                                .setName(field.getName())
-                                               .setDescription(configurable.description())
+                                                       //.setDescription(from java doc) TODO: get this from java doc
                                                .setType(IntrospectionUtils.getFieldDataType(field))
                                                .setDynamic(configurable.isDynamic())
                                                .setRequired(optional == null)
@@ -84,7 +87,7 @@ final class DefaultExtensionDescriber implements ExtensionDescriber
             builder.addOperation(operation);
 
             operation.setName(resolveOperationName(method, annotation))
-                    .setDescription(annotation.description())
+                    //.setDescription() TODO: take this from java doc
                     .setOutputType(IntrospectionUtils.getMethodReturnType(method));
 
             resolveOperationInputTypes(annotation, operation);
@@ -127,5 +130,10 @@ final class DefaultExtensionDescriber implements ExtensionDescriber
                 builder.addInputType(IntrospectionUtils.getClassDataType(type));
             }
         }
+    }
+
+    private void describeCapabilities(ExtensionBuilder builder)
+    {
+        capabilitiesResolver.resolveCapabilities(extensionType, builder);
     }
 }

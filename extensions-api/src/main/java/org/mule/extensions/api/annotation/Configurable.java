@@ -26,7 +26,5 @@ import java.lang.annotation.Target;
 public @interface Configurable
 {
 
-    String description() default "";
-
     boolean isDynamic() default true;
 }

@@ -30,6 +30,7 @@ import org.mule.tck.size.SmallTest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -162,8 +163,10 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         assertEquals(MIN_MULE_VERSION, extension.getMinMuleVersion());
         assertEquals(1, extension.getConfigurations().size());
 
-        Date capability = extension.getCapability(Date.class);
-        assertNotNull(capability);
+        Set<Date> capabilities = extension.getCapabilities(Date.class);
+        assertNotNull(capabilities);
+        assertEquals(1, capabilities.size());
+        Date capability = capabilities.iterator().next();
         assertTrue(capability instanceof Date);
     }
 
@@ -205,8 +208,9 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Test
     public void noSuchCapability()
     {
-        String capability = extension.getCapability(String.class);
-        assertNull(capability);
+        Set<String> capabilities = extension.getCapabilities(String.class);
+        assertNotNull(capabilities);
+        assertTrue(capabilities.isEmpty());
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -18,7 +18,7 @@ import org.mule.extensions.introspection.api.Extension;
  *
  * @since 1.0
  */
-public interface ExtensionBuilder extends Builder<Extension>
+public interface ExtensionBuilder extends CapabilityAwareBuilder<Extension, ExtensionBuilder>
 {
 
     ExtensionBuilder setName(String name);
@@ -32,8 +32,6 @@ public interface ExtensionBuilder extends Builder<Extension>
     ExtensionBuilder addConfiguration(ExtensionConfigurationBuilder configuration);
 
     ExtensionBuilder addOperation(ExtensionOperationBuilder operation);
-
-    <T extends Object> ExtensionBuilder addCapablity(T capability);
 
     ExtensionConfigurationBuilder newConfiguration();
 

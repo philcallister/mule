@@ -13,6 +13,7 @@ import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
+import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
 
@@ -20,8 +21,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Extension(name = HeisenbergModule.EXTENSION_NAME, description = HeisenbergModule.EXTENSION_DESCRIPTION, version = HeisenbergModule.EXTENSION_VERSION)
+@Xml(schemaLocation = HeisenbergModule.SCHEMA_LOCATION, namespace = HeisenbergModule.NAMESPACE, schemaVersion = HeisenbergModule.SCHEMA_VERSION)
 public class HeisenbergModule
 {
+
+    public static final String SCHEMA_LOCATION = "Jesse's motor home";
+    public static final String NAMESPACE = "ww";
+    public static final String SCHEMA_VERSION = "1.0-blue";
 
     public static final String HEISENBERG = "Heisenberg";
     public static final String EXTENSION_NAME = "HeisenbergExtension";

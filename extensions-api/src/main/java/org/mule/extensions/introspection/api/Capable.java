@@ -6,6 +6,8 @@
  */
 package org.mule.extensions.introspection.api;
 
+import java.util.Set;
+
 /**
  * An object is capable if it may provide different facet of additional information.
  * <p>
@@ -32,10 +34,14 @@ public interface Capable
 {
 
     /**
-     * Returns the capability associated with the {@code capability} if present, and absent if not.
+     * Returns a {@link java.util.Set} with the capabilities
+     * which are an instance of the given {@code capability} type.
+     * If no match is found, then an empty {@link java.util.Set} is
+     * returned
      *
      * @param capabilityType the capability to be obtained.
+     * @return a {@link java.util.Set}. Might be empty but will never be {@code null}
      * @since 1.0
      */
-    <T> T getCapability(Class<T> capabilityType);
+    <T> Set<T> getCapabilities(Class<T> capabilityType);
 }
