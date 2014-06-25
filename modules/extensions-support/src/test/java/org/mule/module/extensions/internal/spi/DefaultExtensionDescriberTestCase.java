@@ -143,7 +143,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertEquals(operationName, operation.getName());
         assertEquals(operationDescription, operation.getDescription());
         match(operation.getInputTypes(), inputTypes);
-        assertEquals(outputType, operation.getOutputType().getType());
+        assertEquals(outputType, operation.getOutputType().getRawType());
     }
 
     private void assertParameter(ExtensionParameter param,
@@ -158,7 +158,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 
         assertEquals(name, param.getName());
         assertEquals(description, param.getDescription());
-        assertEquals(type, param.getType().getType());
+        assertEquals(type, param.getType().getRawType());
         assertSame(qualifier, param.getType().getQualifier());
         assertEquals(required, param.isRequired());
         assertEquals(dynamic, param.isDynamic());
@@ -188,7 +188,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 
         for (int i = 0; i < array.length; i++)
         {
-            assertEquals(dataTypes.get(i).getType(), array[i]);
+            assertEquals(dataTypes.get(i).getRawType(), array[i]);
         }
     }
 

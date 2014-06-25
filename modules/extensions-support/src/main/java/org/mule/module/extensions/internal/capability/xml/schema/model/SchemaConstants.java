@@ -18,7 +18,6 @@ public final class SchemaConstants
     public static final String SPRING_FRAMEWORK_NAMESPACE = "http://www.springframework.org/schema/beans";
     public static final String SPRING_FRAMEWORK_SCHEMA_LOCATION = "http://www.springframework.org/schema/beans/spring-beans-3.0.xsd";
     public static final String MULE_NAMESPACE = "http://www.mulesoft.org/schema/mule/core";
-    public static final String MULE_DEVKIT_NAMESPACE = "http://www.mulesoft.org/schema/mule/devkit";
     public static final String MULE_SCHEMA_LOCATION = "http://www.mulesoft.org/schema/mule/core/current/mule.xsd";
     public static final QName MULE_ABSTRACT_EXTENSION = new QName(MULE_NAMESPACE, "abstract-extension", "mule");
     public static final QName MULE_PROPERTY_PLACEHOLDER_TYPE = new QName(MULE_NAMESPACE, "propertyPlaceholderType", "mule");
@@ -36,7 +35,6 @@ public final class SchemaConstants
     public static final QName MULE_POOLING_PROFILE_TYPE = new QName(MULE_NAMESPACE, "poolingProfileType", "mule");
     public static final QName MULE_ABSTRACT_RECONNECTION_STRATEGY = new QName(MULE_NAMESPACE, "abstract-reconnection-strategy", "mule");
     public static final QName MULE_MESSAGE_PROCESSOR_OR_OUTBOUND_ENDPOINT_TYPE = new QName(MULE_NAMESPACE, "messageProcessorOrOutboundEndpoint", "mule");
-    public static final QName MULE_DEVKIT_JAVA_CLASS_TYPE = new QName(MULE_DEVKIT_NAMESPACE, "javaClass", "devkit");
     public static final QName STRING = new QName(XSD_NAMESPACE, "string", "xs");
     public static final QName DECIMAL = new QName(XSD_NAMESPACE, "decimal", "xs");
     public static final QName FLOAT = new QName(XSD_NAMESPACE, "float", "xs");

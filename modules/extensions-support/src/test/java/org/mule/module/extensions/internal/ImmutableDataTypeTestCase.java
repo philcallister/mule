@@ -32,7 +32,7 @@ public class ImmutableDataTypeTestCase extends AbstractMuleTestCase
     public void simpleType()
     {
         DataType type = ImmutableDataType.of(String.class);
-        assertEquals(String.class, type.getType());
+        assertEquals(String.class, type.getRawType());
         assertNoGenericTypes(type);
         assertEquals(DataQualifier.STRING, type.getQualifier());
     }
@@ -118,24 +118,24 @@ public class ImmutableDataTypeTestCase extends AbstractMuleTestCase
 
     private void assertList(DataType type, Class<?> valueType, DataQualifier valueQualifierType)
     {
-        assertEquals(List.class, type.getType());
+        assertEquals(List.class, type.getRawType());
         assertEquals(1, type.getGenericTypes().length);
         assertEquals(DataQualifier.LIST, type.getQualifier());
-        assertEquals(valueType, type.getGenericTypes()[0].getType());
+        assertEquals(valueType, type.getGenericTypes()[0].getRawType());
         assertEquals(valueQualifierType, type.getGenericTypes()[0].getQualifier());
     }
 
 
     private void assertMap(DataType type, Class<?> keyType, DataQualifier keyQualifier, Class<?> valueType, DataQualifier valueQualifier)
     {
-        assertEquals(Map.class, type.getType());
+        assertEquals(Map.class, type.getRawType());
         assertEquals(2, type.getGenericTypes().length);
         assertEquals(DataQualifier.MAP, type.getQualifier());
 
-        assertEquals(keyType, type.getGenericTypes()[0].getType());
+        assertEquals(keyType, type.getGenericTypes()[0].getRawType());
         assertEquals(keyQualifier, type.getGenericTypes()[0].getQualifier());
 
-        assertEquals(valueType, type.getGenericTypes()[1].getType());
+        assertEquals(valueType, type.getGenericTypes()[1].getRawType());
         assertEquals(valueQualifier, type.getGenericTypes()[1].getQualifier());
     }
 

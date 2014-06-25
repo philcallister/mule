@@ -249,7 +249,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         assertEquals(1, inputTypes.size());
 
         DataType type = inputTypes.get(0);
-        assertEquals(Object.class, type.getType());
+        assertEquals(Object.class, type.getRawType());
         assertTrue(Arrays.equals(new Class<?>[] {}, type.getGenericTypes()));
     }
 
@@ -332,7 +332,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 
     private void strictTypeAssert(DataType type, Class<?> expected, Class<?>[]... genericTypes)
     {
-        assertEquals(expected, type.getType());
+        assertEquals(expected, type.getRawType());
         Arrays.equals(genericTypes, type.getGenericTypes());
     }
 

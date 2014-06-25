@@ -135,7 +135,7 @@ final class MuleExtensionAnnotationParser
 
     private static boolean isParametrizable(DataType type, Annotation[] annotations)
     {
-        if (notParametrizableTypes.contains(type.getType()))
+        if (notParametrizableTypes.contains(type.getRawType()))
         {
             return false;
         }
@@ -145,7 +145,7 @@ final class MuleExtensionAnnotationParser
 
     private static DataType adaptType(DataType type)
     {
-        if (NestedProcessor.class.equals(type.getType()))
+        if (NestedProcessor.class.equals(type.getRawType()))
         {
             return ImmutableDataType.of(ExtensionOperation.class);
         }

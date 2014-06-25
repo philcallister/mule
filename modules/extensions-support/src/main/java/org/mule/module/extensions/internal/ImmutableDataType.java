@@ -110,23 +110,14 @@ public final class ImmutableDataType implements DataType
      */
     public boolean isAssignableFrom(DataType dataType)
     {
-        return type.isAssignableFrom(dataType.getType());
+        return type.isAssignableFrom(dataType.getRawType());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isInstance(Object object)
-    {
-        return type.isInstance(object);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Class<?> getType()
+    public Class<?> getRawType()
     {
         return type;
     }
@@ -149,10 +140,20 @@ public final class ImmutableDataType implements DataType
         return qualifier;
     }
 
+    @Override
+    public DataType getSuperclass()
+    {
+        if (Object.class.equals(type) || Object.class.equals(type.getSuperclass())) {
+            return null;
+        }
+
+        return ImmutableDataType.of(type.getSuperclass());
+    }
+
     /**
      * Defines equality by checking that the given object is a
      * {@link org.mule.extensions.introspection.api.DataType} with matching
-     * {@link #getType()} and {@link #getQualifier()}, which also
+     * {@link #getRawType()} and {@link #getQualifier()}, which also
      * returns a {@link #getGenericTypes()} which every element (if any) also matches
      * the one in this instance
      */
@@ -162,7 +163,7 @@ public final class ImmutableDataType implements DataType
         if (obj instanceof DataType)
         {
             DataType other = (DataType) obj;
-            return type.equals(other.getType()) &&
+            return type.equals(other.getRawType()) &&
                    Arrays.equals(genericTypes, other.getGenericTypes()) &&
                    qualifier.equals(other.getQualifier());
         }
@@ -172,7 +173,7 @@ public final class ImmutableDataType implements DataType
 
     /**
      * Calculates this instance's hash code by considering
-     * the {@link #getType()}, {@link #getQualifier()} and the individual
+     * the {@link #getRawType()}, {@link #getQualifier()} and the individual
      * hashCode of each element in {@link #getGenericTypes()}. If the generic types
      * array is empty, then it's not considered.
      */

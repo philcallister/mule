@@ -6,21 +6,43 @@
  */
 package org.mule.module.extensions.internal.capability.xml.schema;
 
+import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
+import static org.mule.extensions.introspection.api.DataQualifier.LIST;
+import static org.mule.extensions.introspection.api.DataQualifier.MAP;
 import org.mule.api.callback.HttpCallback;
+import org.mule.extensions.introspection.api.DataType;
+import org.mule.extensions.introspection.api.ExtensionConfiguration;
+import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Any;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Attribute;
+import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexContent;
+import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexType;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Documentation;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Element;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ExplicitGroup;
+import org.mule.module.extensions.internal.capability.xml.schema.model.ExtensionType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.FormChoice;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Import;
+import org.mule.module.extensions.internal.capability.xml.schema.model.LocalComplexType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalSimpleType;
+import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NumFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ObjectFactory;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Pattern;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Restriction;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Schema;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants;
+import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaTypeConversion;
+import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleContent;
+import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleExtensionType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleType;
+import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelComplexType;
+import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelElement;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
 import org.mule.security.oauth.OnNoTokenPolicy;
+import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
 
 import java.math.BigInteger;
@@ -30,15 +52,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.lang.model.type.TypeMirror;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 public class SchemaBuilder
 {
 
-    private Set<EnumType> registeredEnums;
-    private Set<ComplexTypeHolder> registeredComplexTypesHolders;
+    private Set<DataType> registeredEnums;
+    private Map<DataType, ComplexTypeHolder> registeredComplexTypesHolders;
     private Set<String> registeredMethods;
     private Schema schema;
     private ObjectFactory objectFactory;
@@ -49,7 +70,7 @@ public class SchemaBuilder
         registeredEnums = new HashSet<>();
         registeredMethods = new HashSet<>();
         objectFactory = new ObjectFactory();
-        registeredComplexTypesHolders = new HashSet<>();
+        registeredComplexTypesHolders = new HashMap<>();
     }
 
     public static SchemaBuilder newSchema(String targetNamespace)
@@ -59,6 +80,10 @@ public class SchemaBuilder
         builder.schema.setTargetNamespace(targetNamespace);
         builder.schema.setElementFormDefault(FormChoice.QUALIFIED);
         builder.schema.setAttributeFormDefault(FormChoice.UNQUALIFIED);
+        builder.importXmlNamespace()
+                .importSpringFrameworkNamespace()
+                .importMuleNamespace();
+
         return builder;
     }
 
@@ -67,7 +92,7 @@ public class SchemaBuilder
         return schema;
     }
 
-    public SchemaBuilder importXmlNamespace()
+    private SchemaBuilder importXmlNamespace()
     {
         Import xmlImport = new Import();
         xmlImport.setNamespace(SchemaConstants.XML_NAMESPACE);
@@ -75,7 +100,7 @@ public class SchemaBuilder
         return this;
     }
 
-    public SchemaBuilder importSpringFrameworkNamespace()
+    private SchemaBuilder importSpringFrameworkNamespace()
     {
         Import springFrameworkImport = new Import();
         springFrameworkImport.setNamespace(SchemaConstants.SPRING_FRAMEWORK_NAMESPACE);
@@ -84,7 +109,7 @@ public class SchemaBuilder
         return this;
     }
 
-    public SchemaBuilder importMuleNamespace()
+    private SchemaBuilder importMuleNamespace()
     {
         Import muleSchemaImport = new Import();
         muleSchemaImport.setNamespace(SchemaConstants.MULE_NAMESPACE);
@@ -171,22 +196,21 @@ public class SchemaBuilder
         return simpleType;
     }
 
-    public SchemaBuilder registerConfigElement(Module module, GeneratedClass moduleClass, Context ctx)
+    public SchemaBuilder registerConfigElement(ExtensionConfiguration configuration)
     {
-        Map<QName, String> otherAttributes = new HashMap<QName, String>();
-        otherAttributes.put(SchemaConstants.MULE_DEVKIT_JAVA_CLASS_TYPE, moduleClass.fullName());
-        ExtensionType config = registerExtension(module.getConfigElementName(), otherAttributes);
+        Map<QName, String> otherAttributes = new HashMap<>();
+        ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
         Attribute nameAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, true, SchemaConstants.STRING, SchemaConstants.ATTRIBUTE_NAME_NAME_DESCRIPTION);
         config.getAttributeOrAttributeGroup().add(nameAttribute);
 
         ExplicitGroup all = new ExplicitGroup();
         config.setSequence(all);
 
-        for (Field variable : module.getConfigurableFields())
+        for (ExtensionParameter parameter : configuration.getParameters())
         {
-            if (variable.asType().isCollection())
+            if (LIST.equals(parameter.getType().getQualifier()))
             {
-                generateCollectionElement(all, variable, false);
+                generateCollectionElement(all, parameter, false);
             }
             else if (variable.asType().isComplexType() && !variable.isRefOnly())
             {
@@ -396,31 +420,23 @@ public class SchemaBuilder
      * @param type
      * @return the reference name of the complexType
      */
-    private String registerComplexType(Type type)
+    private String registerComplexType(DataType type)
     {
-        TopLevelComplexType complexType = new TopLevelComplexType();
-        //TODO: remove all this crap and do it with some nice ood
         //check if the type is already registered
-        for (ComplexTypeHolder typeHolder : registeredComplexTypesHolders)
-        {
-            if (areEquals(type, typeHolder.getType()))
-            {
-                return typeHolder.getComplexType().getName();
-            }
+        if (registeredComplexTypesHolders.containsKey(type)) {
+            return registeredComplexTypesHolders.get(type).getComplexType().getName();
         }
 
-        //check if simple name is available otherwise full name is used
-        String registeredName = checkSimpleName(type.getName()) ? type.getName() + SchemaConstants.OBJECT_TYPE_SUFFIX : type.getPackageName() + "." + type.getName() + SchemaConstants.OBJECT_TYPE_SUFFIX;
-        complexType.setName(registeredName);
-        registeredComplexTypesHolders.add(new ComplexTypeHolder(complexType, type));
+        TopLevelComplexType complexType = new TopLevelComplexType();
+        complexType.setName(type.getName());
+        registeredComplexTypesHolders.put(type, new ComplexTypeHolder(complexType, type));
 
         ExplicitGroup all = new ExplicitGroup();
-        //complexType.setSequence(all);
 
-
-        if (type.hasSuperClass())
+        DataType superclass = type.getSuperclass();
+        if (superclass != null)
         {
-            String superClassName = registerComplexType(type.getSuperClass());
+            String superClassName = registerComplexType(superclass);
             ComplexContent complexContent = new ComplexContent();
             complexType.setComplexContent(complexContent);
             complexType.getComplexContent().setExtension(new ExtensionType());
@@ -433,6 +449,8 @@ public class SchemaBuilder
         {
             complexType.setSequence(all);
         }
+
+        for ()
 
         for (Field field : type.getFields())
         {
@@ -693,17 +711,18 @@ public class SchemaBuilder
         return attribute;
     }
 
-    private void generateCollectionElement(ExplicitGroup all, Variable variable, boolean forceOptional)
+    private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
-        String name = NameUtils.uncamel(variable.getName());
+        String name = NameUtils.uncamel(parameter.getName());
         BigInteger minOccurs = BigInteger.ZERO;
 
-        if (!forceOptional && !variable.isOptional())
+        if (!forceOptional && parameter.isRequired())
         {
             minOccurs = BigInteger.ONE;
         }
+
         String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
-        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, variable);
+        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, parameter.getType());
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
@@ -715,27 +734,27 @@ public class SchemaBuilder
         collectionElement.setComplexType(collectionComplexType);
     }
 
-    private LocalComplexType generateCollectionComplexType(String name, Identifiable type)
+    private LocalComplexType generateCollectionComplexType(String name, DataType type)
     {
         LocalComplexType collectionComplexType = new LocalComplexType();
         ExplicitGroup sequence = new ExplicitGroup();
         ExplicitGroup choice = new ExplicitGroup();
 
-        if (type.asType().isMap())
+        if (MAP.equals(type.getQualifier()))
         {
             collectionComplexType.setChoice(choice);
             choice.getParticle().add(objectFactory.createSequence(sequence));
 
             Any any = new Any();
             any.setProcessContents(SchemaConstants.LAX);
-            any.setMinOccurs(new BigInteger("0"));
+            any.setMinOccurs(BigInteger.ZERO);
             any.setMaxOccurs(SchemaConstants.UNBOUNDED);
 
             ExplicitGroup anySequence = new ExplicitGroup();
             anySequence.getParticle().add(any);
             choice.getParticle().add(objectFactory.createSequence(anySequence));
         }
-        else if (type.asType().isArrayOrList() || type.asType().isSet())
+        else if (LIST.equals(type.getQualifier()))
         {
             collectionComplexType.setSequence(sequence);
         }
@@ -753,24 +772,23 @@ public class SchemaBuilder
         return collectionComplexType;
     }
 
-    private LocalComplexType generateComplexType(String name, Identifiable typeMirror)
+    private LocalComplexType generateComplexType(String name, DataType type)
     {
-        if (typeMirror.asType().isArrayOrList() || typeMirror.asType().isSet())
+        if (LIST.equals(type.getQualifier()))
         {
-            java.util.List<Type> variableTypeParameters = typeMirror.getTypeArguments();
-            if (variableTypeParameters.size() != 0 && variableTypeParameters.get(0) != null)
+            if (!ArrayUtils.isEmpty(type.getGenericTypes()))
             {
-                Type genericType = variableTypeParameters.get(0);
-                if (isTypeSupported(genericType.asTypeMirror()))
+                DataType genericType = type.getGenericTypes()[0];
+                if (isTypeSupported(genericType))
                 {
                     return generateComplexTypeWithRef(genericType);
                 }
-                else if (genericType.isArrayOrList() ||
-                         genericType.isMap() || genericType.isSet())
+                else if (MAP.equals(genericType.getQualifier()) ||
+                         LIST.equals(genericType.getQualifier()))
                 {
                     return generateCollectionComplexType(SchemaConstants.INNER_PREFIX + name, genericType);
                 }
-                else if (genericType.isEnum())
+                else if (ENUM.equals(type.getQualifier()))
                 {
                     return generateEnumComplexType(genericType);
                 }
@@ -835,25 +853,26 @@ public class SchemaBuilder
         return null;
     }
 
-    private LocalComplexType generateEnumComplexType(Identifiable genericType)
+    private LocalComplexType generateEnumComplexType(DataType type)
     {
         LocalComplexType complexType = new LocalComplexType();
         SimpleContent simpleContent = new SimpleContent();
         complexType.setSimpleContent(simpleContent);
         SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        simpleContentExtension.setBase(new QName(schema.getTargetNamespace(), genericType.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
+        simpleContentExtension.setBase(new QName(schema.getTargetNamespace(), type.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
         simpleContent.setExtension(simpleContentExtension);
-        registeredEnums.add((EnumType) genericType.asType());
+        registeredEnums.add(type);
+
         return complexType;
     }
 
-    private LocalComplexType generateComplexTypeWithRef(Identifiable genericType)
+    private LocalComplexType generateComplexTypeWithRef(DataType type)
     {
         LocalComplexType complexType = new LocalComplexType();
         SimpleContent simpleContent = new SimpleContent();
         complexType.setSimpleContent(simpleContent);
         SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), genericType.asTypeMirror().toString());
+        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
         simpleContentExtension.setBase(extensionBase);
         simpleContent.setExtension(simpleContentExtension);
 
@@ -862,7 +881,7 @@ public class SchemaBuilder
         return complexType;
     }
 
-    private LocalComplexType generateExtendedRefComplexType(Type type, String name)
+    private LocalComplexType generateExtendedRefComplexType(DataType type, String name)
     {
         LocalComplexType itemComplexType = new LocalComplexType();
         itemComplexType.setComplexContent(new ComplexContent());
@@ -876,46 +895,6 @@ public class SchemaBuilder
         itemComplexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(refAttribute);
         return itemComplexType;
     }
-
-    private void generateHttpCallbackElement(String elementName, ExplicitGroup all, OAuthModule module)
-    {
-        Attribute domainAttribute = createAttribute(SchemaConstants.DOMAIN_ATTRIBUTE_NAME, true, SchemaConstants.STRING, null);
-        Attribute localPortAttribute = createAttribute(SchemaConstants.LOCAL_PORT_ATTRIBUTE_NAME, true, SchemaConstants.STRING, null);
-        Attribute remotePortAttribute = createAttribute(SchemaConstants.REMOTE_PORT_ATTRIBUTE_NAME, true, SchemaConstants.STRING, null);
-        Attribute asyncAttribute = createAttribute(SchemaConstants.ASYNC_ATTRIBUTE_NAME, true, SchemaConstants.BOOLEAN, null);
-        asyncAttribute.setDefault(SchemaConstants.ASYNC_DEFAULT_VALUE.toString());
-        Attribute pathAttribute = createAttribute(SchemaConstants.PATH_ATTRIBUTE_NAME, true, SchemaConstants.STRING, null);
-        Attribute connectorRefAttribute = createAttribute("connector-ref", true, SchemaConstants.STRING, null);
-
-        TopLevelElement httpCallbackConfig = new TopLevelElement();
-        httpCallbackConfig.setName(elementName);
-        httpCallbackConfig.setMinOccurs(BigInteger.ONE);
-        httpCallbackConfig.setMaxOccurs("1");
-        httpCallbackConfig.setAnnotation(createDocAnnotation("Config for http callbacks."));
-
-        ExtensionType extensionType = new ExtensionType();
-        extensionType.setBase(SchemaConstants.MULE_ABSTRACT_EXTENSION_TYPE);
-        extensionType.getAttributeOrAttributeGroup().add(localPortAttribute);
-        extensionType.getAttributeOrAttributeGroup().add(remotePortAttribute);
-        extensionType.getAttributeOrAttributeGroup().add(domainAttribute);
-        extensionType.getAttributeOrAttributeGroup().add(asyncAttribute);
-        extensionType.getAttributeOrAttributeGroup().add(pathAttribute);
-        extensionType.getAttributeOrAttributeGroup().add(connectorRefAttribute);
-
-        if (module != null && module.getOAuthVersion() == OAuthVersion.V2)
-        {
-            Attribute defaultAccessTokenId = createAttribute("defaultAccessTokenId", true, SchemaConstants.STRING, "A Mule Expression to use as access token id");
-            extensionType.getAttributeOrAttributeGroup().add(defaultAccessTokenId);
-        }
-
-        ComplexContent complexContent = new ComplexContent();
-        complexContent.setExtension(extensionType);
-        LocalComplexType localComplexType = new LocalComplexType();
-        localComplexType.setComplexContent(complexContent);
-        httpCallbackConfig.setComplexType(localComplexType);
-        all.getParticle().add(objectFactory.createElement(httpCallbackConfig));
-    }
-
 
     private LocalComplexType generateRefComplexType(String name)
     {
@@ -1376,9 +1355,9 @@ public class SchemaBuilder
         return annotation;
     }
 
-    private boolean isTypeSupported(TypeMirror typeMirror)
+    private boolean isTypeSupported(DataType type)
     {
-        return SchemaTypeConversion.isSupported(typeMirror.toString());
+        return SchemaTypeConversion.isSupported(type.getRawType().getName());
     }
 
     private boolean skipField(Field field)
@@ -1392,14 +1371,13 @@ public class SchemaBuilder
                                                       && field.getTypeArguments().get(0).isNestedProcessor());
     }
 
-
     private class ComplexTypeHolder
     {
 
         private ComplexType complexType;
-        private Type type;
+        private DataType type;
 
-        public ComplexTypeHolder(ComplexType complexType, Type type)
+        public ComplexTypeHolder(ComplexType complexType, DataType type)
         {
             this.complexType = complexType;
             this.type = type;
@@ -1415,14 +1393,31 @@ public class SchemaBuilder
             this.complexType = complexType;
         }
 
-        public Type getType()
+        public DataType getType()
         {
             return type;
         }
 
-        public void setType(Type type)
+        public void setType(DataType type)
         {
             this.type = type;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof ComplexTypeHolder) {
+                ComplexTypeHolder other = (ComplexTypeHolder) obj;
+                return type.equals(other.getType());
+            }
+
+            return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return type.hashCode();
         }
     }
 }

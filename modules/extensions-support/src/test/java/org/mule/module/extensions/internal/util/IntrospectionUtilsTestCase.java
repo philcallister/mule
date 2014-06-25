@@ -34,7 +34,7 @@ public class IntrospectionUtilsTestCase extends AbstractMuleTestCase
     public void getMethodReturnType() throws Exception
     {
         DataType type = IntrospectionUtils.getMethodReturnType(getMethod("foo"));
-        assertEquals(Map.class, type.getType());
+        assertEquals(Map.class, type.getRawType());
 
         DataType[] genericTypes = type.getGenericTypes();
         assertEquals(2, genericTypes.length);
@@ -90,13 +90,13 @@ public class IntrospectionUtilsTestCase extends AbstractMuleTestCase
 
     private void assertType(DataType type, Class<?> rawType, Class<?>... genericTypes)
     {
-        assertEquals(rawType, type.getType());
+        assertEquals(rawType, type.getRawType());
         if (genericTypes != null)
         {
             assertEquals(genericTypes.length, type.getGenericTypes().length);
             for (int i = 0; i < genericTypes.length; i++)
             {
-                assertEquals(genericTypes[i], type.getGenericTypes()[i].getType());
+                assertEquals(genericTypes[i], type.getGenericTypes()[i].getRawType());
             }
         }
     }
