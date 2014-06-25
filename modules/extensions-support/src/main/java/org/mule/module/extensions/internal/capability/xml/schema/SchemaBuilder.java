@@ -6,12 +6,19 @@
  */
 package org.mule.module.extensions.internal.capability.xml.schema;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.mule.extensions.introspection.api.DataQualifier.BEAN;
 import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.MAP;
-import org.mule.api.callback.HttpCallback;
+import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
+import static org.mule.extensions.introspection.api.DataQualifier.STRING;
+import org.mule.extensions.api.annotation.param.Ignore;
+import org.mule.extensions.api.annotation.param.Optional;
+import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
+import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Any;
@@ -23,10 +30,12 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.Element;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ExplicitGroup;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ExtensionType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.FormChoice;
+import org.mule.module.extensions.internal.capability.xml.schema.model.GroupRef;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Import;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalComplexType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
+import org.mule.module.extensions.internal.capability.xml.schema.model.NoFixedFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NumFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ObjectFactory;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Pattern;
@@ -41,10 +50,16 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelC
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelElement;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
-import org.mule.security.oauth.OnNoTokenPolicy;
+import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,12 +70,17 @@ import java.util.Set;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+/**
+ * @since 3.6.0
+ */
+//TODO: there're A LOT of ifs here... Keeping them just for now since
+// they're inherited from devkit. But we should really implement
+// visitor or double dispatch on the DatQualifier to avoid this madness
 public class SchemaBuilder
 {
 
     private Set<DataType> registeredEnums;
     private Map<DataType, ComplexTypeHolder> registeredComplexTypesHolders;
-    private Set<String> registeredMethods;
     private Schema schema;
     private ObjectFactory objectFactory;
 
@@ -68,7 +88,6 @@ public class SchemaBuilder
     private SchemaBuilder()
     {
         registeredEnums = new HashSet<>();
-        registeredMethods = new HashSet<>();
         objectFactory = new ObjectFactory();
         registeredComplexTypesHolders = new HashMap<>();
     }
@@ -212,205 +231,36 @@ public class SchemaBuilder
             {
                 generateCollectionElement(all, parameter, false);
             }
-            else if (variable.asType().isComplexType() && !variable.isRefOnly())
+            else if (BEAN.equals(parameter.getType().getQualifier()))
             {
-                registerComplexTypeChildElement(all, variable, true);
+                registerComplexTypeChildElement(all,
+                                                parameter.getName(),
+                                                parameter.getDescription(),
+                                                parameter.getType(),
+                                                parameter.isRequired());
             }
             else
             {
-                config.getAttributeOrAttributeGroup().add(createAttribute(variable, false));
+                config.getAttributeOrAttributeGroup().add(createAttribute(parameter.getName(), parameter.getType(), parameter.isRequired()));
             }
         }
 
-        for (Field variable : module.getInjectFields())
-        {
-            if (variable.asTypeMirror().toString().equals("org.mule.api.store.ObjectStore"))
-            {
-                config.getAttributeOrAttributeGroup().add(createAttribute("objectStore-ref", true, SchemaConstants.STRING, variable.getJavaDocSummary()));
-            }
-        }
-
-        if (module instanceof ManagedConnectionModule)
-        {
-            // add a configurable argument for each connectivity variable
-            for (Parameter parameter : ((ManagedConnectionModule) module).getConnectMethod().getParameters())
-            {
-                if (parameter.asType().isCollection())
-                {
-                    generateCollectionElement(all, parameter, true);
-                }
-                else
-                {
-                    config.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, true));
-                }
-            }
-
-            TopLevelElement poolingProfile = new TopLevelElement();
-            poolingProfile.setName(SchemaConstants.CONNECTION_POOLING_PROFILE);
-            poolingProfile.setType(SchemaConstants.MULE_POOLING_PROFILE_TYPE);
-            poolingProfile.setMinOccurs(BigInteger.ZERO);
-            poolingProfile.setAnnotation(createDocAnnotation(SchemaConstants.CONNECTION_POOLING_PROFILE_ELEMENT_DESCRIPTION));
-
-            all.getParticle().add(objectFactory.createElement(poolingProfile));
-
-            TopLevelElement abstractReconnectStrategy = new TopLevelElement();
-            abstractReconnectStrategy.setRef(SchemaConstants.MULE_ABSTRACT_RECONNECTION_STRATEGY);
-            abstractReconnectStrategy.setMinOccurs(BigInteger.ZERO);
-            abstractReconnectStrategy.setAnnotation(createDocAnnotation("Reconnection strategy that defines how Mule should handle a connection failure."));
-
-            all.getParticle().add(objectFactory.createElement(abstractReconnectStrategy));
-        }
-
-        // add oauth callback configuration
-        if (module instanceof OAuthModule)
-        {
-            OAuthModule oAuthModule = (OAuthModule) module;
-            generateHttpCallbackElement(SchemaConstants.OAUTH_CALLBACK_CONFIG_ELEMENT_NAME, all, oAuthModule);
-
-            if (oAuthModule.getOAuthVersion().equals(OAuthVersion.V10A))
-            {
-                generateOauthAccessTokenElement(SchemaConstants.OAUTH_SAVE_ACCESS_TOKEN_ELEMENT, SchemaConstants.OAUTH_SAVE_ACCESS_TOKEN_ELEMENT_DESCRIPTION, all);
-                generateOauthAccessTokenElement(SchemaConstants.OAUTH_RESTORE_ACCESS_TOKEN_ELEMENT, SchemaConstants.OAUTH_RESTORE_ACCESS_TOKEN_ELEMENT_DESCRIPTION, all);
-            }
-            else
-            {
-                generateOAuthStoreConfigElement(all);
-            }
-
-            Attribute accessTokenUrlAttribute = createAttribute("accessTokenUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider to obtain an access token", ((OAuthModule) module).getAccessTokenUrl());
-            config.getAttributeOrAttributeGroup().add(accessTokenUrlAttribute);
-
-
-            Attribute onNoTokenAttribute = createAttribute("onNoToken", true, SchemaConstants.ON_NO_TOKEN_TYPE, "The URL defined by the Service Provider to obtain an access token");
-            config.getAttributeOrAttributeGroup().add(onNoTokenAttribute);
-            onNoTokenAttribute.setDefault("EXCEPTION");
-            onNoTokenAttribute.setType(new QName(schema.getTargetNamespace(), SchemaConstants.ON_NO_TOKEN + SchemaConstants.ENUM_TYPE_SUFFIX));
-
-
-            Attribute authorizationUrlAttribute = createAttribute("authorizationUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider where the resource owner will be redirected to grant authorization to the connector", ((OAuthModule) module).getAuthorizationUrl());
-            config.getAttributeOrAttributeGroup().add(authorizationUrlAttribute);
-
-            if (((OAuthModule) module).getOAuthVersion() == OAuthVersion.V10A)
-            {
-                Attribute requestTokenUrlAttribute = createAttribute("requestTokenUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider used to obtain an un-authorized request token", ((OAuthModule) module).getRequestTokenUrl());
-                config.getAttributeOrAttributeGroup().add(requestTokenUrlAttribute);
-            }
-        }
-        if (module.hasProcessorMethodWithParameter(HttpCallback.class))
-        {
-            generateHttpCallbackElement(SchemaConstants.HTTP_CALLBACK_CONFIG_ELEMENT_NAME, all, null);
-        }
-        config.setAnnotation(createDocAnnotation(module.getJavaDocSummary()));
+        config.setAnnotation(createDocAnnotation(configuration.getDescription()));
 
         if (all.getParticle().size() == 0)
         {
             config.setSequence(null);
         }
-        return this;
 
-    }
-
-    public SchemaBuilder registerProcessorsAndSourcesAndFilters(Module module)
-    {
-        if (module instanceof OAuthModule)
-        {
-            // generate an MP to start the OAuth process
-            registerProcessorElement(false, "authorize", "AuthorizeType", "Starts OAuth authorization process. It must be called from a flow with an http:inbound-endpoint.");
-            registerProcessorElement(false, "unauthorize", "UnauthorizeType", "Unauthorizes the connector, forcing to re-use authorize again before accessing any protected message processor.");
-            registerAuthorizeType(module);
-            registerUnauthorizeType((OAuthModule) module);
-        }
-
-        for (FilterMethod method : module.getFilterMethods())
-        {
-            String name = method.getName();
-            Filter filter = method.getAnnotation(Filter.class);
-            if (filter.name().length() > 0)
-            {
-                name = filter.name();
-            }
-
-            if (!registeredMethods.contains(name))
-            {
-                registeredMethods.add(name);
-
-                String typeName = StringUtils.capitalize(name) + SchemaConstants.TYPE_SUFFIX;
-                registerFilterElement(name, typeName, method.getJavaDocSummary());
-                registerExtendedType(SchemaConstants.MULE_ABSTRACT_FILTER_TYPE, typeName, method);
-            }
-        }
-
-        for (ProcessorMethod method : module.getProcessorMethods())
-        {
-            String name = method.getName();
-            Processor processor = method.getAnnotation(Processor.class);
-            if (processor.name().length() > 0)
-            {
-                name = processor.name();
-            }
-
-            if (!registeredMethods.contains(name))
-            {
-                registeredMethods.add(name);
-
-                String typeName = StringUtils.capitalize(name) + SchemaConstants.TYPE_SUFFIX;
-                registerProcessorElement(method.isIntercepting(), name, typeName, method.getJavaDocSummary());
-                registerProcessorType(method.isIntercepting(), typeName, method);
-            }
-        }
-
-        for (Method method : module.getSourceMethods())
-        {
-            String name = method.getName();
-            Source source = method.getAnnotation(Source.class);
-            if (source.name().length() > 0)
-            {
-                name = source.name();
-            }
-
-            if (!registeredMethods.contains(name))
-            {
-                registeredMethods.add(name);
-                String typeName = StringUtils.capitalize(name) + SchemaConstants.TYPE_SUFFIX;
-                registerSourceElement(name, typeName, method);
-                registerExtendedType(SchemaConstants.MULE_ABSTRACT_INBOUND_ENDPOINT_TYPE, typeName, method);
-            }
-        }
         return this;
     }
 
-    private LocalSimpleType createOnNoTokenPolicyType()
+    public SchemaBuilder registerOperation(ExtensionOperation operation)
     {
-        LocalSimpleType enumValues = new LocalSimpleType();
-        Restriction restriction = new Restriction();
-        enumValues.setRestriction(restriction);
-        restriction.setBase(SchemaConstants.STRING);
+        String typeName = StringUtils.capitalize(operation.getName()) + SchemaConstants.TYPE_SUFFIX;
+        registerProcessorElement(operation.getName(), typeName, operation.getDescription());
+        registerProcessorType(typeName, operation);
 
-
-        NoFixedFacet exceptionPolicy = objectFactory.createNoFixedFacet();
-        exceptionPolicy.setValue(OnNoTokenPolicy.EXCEPTION.toString());
-        JAXBElement<NoFixedFacet> exceptionEnum = objectFactory.createEnumeration(exceptionPolicy);
-        NoFixedFacet noStopPolicy = objectFactory.createNoFixedFacet();
-        noStopPolicy.setValue(OnNoTokenPolicy.STOP_FLOW.toString());
-        JAXBElement<NoFixedFacet> noStopEnum = objectFactory.createEnumeration(noStopPolicy);
-
-
-        enumValues.getRestriction().getFacets().add(exceptionEnum);
-        enumValues.getRestriction().getFacets().add(noStopEnum);
-
-        return enumValues;
-    }
-
-    public SchemaBuilder registerTransformers(Module module)
-    {
-        for (Method method : module.getTransformerMethods())
-        {
-            Element transformerElement = new TopLevelElement();
-            transformerElement.setName(NameUtils.uncamel(method.getName()));
-            transformerElement.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_TRANSFORMER);
-            transformerElement.setType(SchemaConstants.MULE_ABSTRACT_TRANSFORMER_TYPE);
-            schema.getSimpleTypeOrComplexTypeOrGroup().add(transformerElement);
-        }
         return this;
     }
 
@@ -423,7 +273,8 @@ public class SchemaBuilder
     private String registerComplexType(DataType type)
     {
         //check if the type is already registered
-        if (registeredComplexTypesHolders.containsKey(type)) {
+        if (registeredComplexTypesHolders.containsKey(type))
+        {
             return registeredComplexTypesHolders.get(type).getComplexType().getName();
         }
 
@@ -450,106 +301,88 @@ public class SchemaBuilder
             complexType.setSequence(all);
         }
 
-        for ()
-
-        for (Field field : type.getFields())
+        BeanInfo info;
+        try
         {
+            info = Introspector.getBeanInfo(type.getRawType());
+        }
+        catch (IntrospectionException e)
+        {
+            throw new RuntimeException(String.format("Could not register type for class %s", type.getRawType().getName()), e);
+        }
+
+        // use the property descriptors to only get the attributes compliant with the bean contract
+        for (PropertyDescriptor property : info.getPropertyDescriptors())
+        {
+            Field field = ReflectionUtils.findField(type.getRawType(), property.getName());
             if (skipField(field))
             {
                 continue;
             }
-            if (field.asType().isCollection())
+
+            DataType fieldType = IntrospectionUtils.getFieldDataType(field);
+            DataQualifier fieldTypeQualifier = fieldType.getQualifier();
+
+            if (LIST.equals(fieldTypeQualifier))
             {
-                generateCollectionElement(all, field, true);
+                generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
             }
-            else if (generateNestedProcessor(field))
+            else if (OPERATION.equals(fieldTypeQualifier))
             {
-                generateNestedProcessorElement(all, field);
+                generateNestedProcessorElement(all, field.getName(), isRequired(field));
             }
-            else if (field.isText())
+            else if (STRING.equals(fieldType))
             {
-                createParameterElement(all, field);
+                createParameterElement(all,
+                                       field.getName(),
+                                       EMPTY,
+                                       fieldType,
+                                       isRequired(field),
+                                       EMPTY);
             }
-            else if (field.asType().isComplexType())
+            else if (BEAN.equals(fieldTypeQualifier))
             {
-                registerComplexTypeChildElement(all, field, true);
+                registerComplexTypeChildElement(all, field.getName(), EMPTY, fieldType, false);
             }
             else
             {
-                if (type.hasSuperClass())
+                Attribute attribute = createAttribute(field.getName(), fieldType, false);
+                if (fieldType.getSuperclass() != null)
                 {
-                    complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(createAttribute(field, true));
+                    complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
                 }
                 else
                 {
-                    complexType.getAttributeOrAttributeGroup().add(createAttribute(field, true));
+                    complexType.getAttributeOrAttributeGroup().add(attribute);
                 }
             }
         }
 
-        Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_REF, true, SchemaConstants.STRING, "The reference object for this parameter");
-        if (type.hasSuperClass())
+        if (type.getSuperclass() == null)
         {
-            //complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(ref);
-        }
-        else
-        {
+            Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_REF, true, SchemaConstants.STRING, "The reference object for this parameter");
             complexType.getAttributeOrAttributeGroup().add(ref);
         }
 
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
 
-        return registeredName;
+        return type.getName();
     }
-
-    private boolean checkSimpleName(String name)
-    {
-        assert name != null;
-        for (ComplexTypeHolder typeHolder : registeredComplexTypesHolders)
-        {
-            if (name.equals(typeHolder.getType().getName()))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean areEquals(Type type, Type typeHolderType)
-    {
-        return type.getClassName().equals(typeHolderType.getClassName()) && type.getPackage().equals(typeHolderType.getPackage());
-    }
-
 
     public SchemaBuilder registerEnums()
     {
-        for (EnumType enumToBeRegistered : registeredEnums)
+        for (DataType enumToBeRegistered : registeredEnums)
         {
             registerEnum(schema, enumToBeRegistered);
         }
-        registerOnNoTokenPolicyType();
 
         return this;
     }
 
-    private void registerOnNoTokenPolicyType()
-    {
-        TopLevelSimpleType enumSimpleType = new TopLevelSimpleType();
-        enumSimpleType.setName(SchemaConstants.ON_NO_TOKEN + SchemaConstants.ENUM_TYPE_SUFFIX);
-
-        Union union = new Union();
-        union.getSimpleType().add(createOnNoTokenPolicyType());
-        union.getSimpleType().add(createExpressionAndPropertyPlaceHolderSimpleType());
-        enumSimpleType.setUnion(union);
-
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(enumSimpleType);
-    }
-
-    private void registerEnum(Schema schema, EnumType enumType)
+    private void registerEnum(Schema schema, DataType enumType)
     {
         TopLevelSimpleType enumSimpleType = new TopLevelSimpleType();
         enumSimpleType.setName(enumType.getName() + SchemaConstants.ENUM_TYPE_SUFFIX);
-        enumSimpleType.setAnnotation(createDocAnnotation(enumType.getJavaDocSummary()));
 
         Union union = new Union();
         union.getSimpleType().add(createEnumSimpleType(enumType));
@@ -569,18 +402,21 @@ public class SchemaBuilder
         return expression;
     }
 
-    private LocalSimpleType createEnumSimpleType(EnumType enumType)
+    private LocalSimpleType createEnumSimpleType(DataType enumType)
     {
         LocalSimpleType enumValues = new LocalSimpleType();
         Restriction restriction = new Restriction();
         enumValues.setRestriction(restriction);
         restriction.setBase(SchemaConstants.STRING);
 
-        for (Identifiable identifiable : enumType.getEnumConstants())
+
+        Class<? extends Enum> enumClass = (Class<? extends Enum>) enumType.getRawType();
+
+        for (Enum value : enumClass.getEnumConstants())
         {
             NoFixedFacet noFixedFacet = objectFactory.createNoFixedFacet();
-            noFixedFacet.setValue(identifiable.getName());
-            noFixedFacet.setAnnotation(createDocAnnotation(identifiable.getJavaDocSummary()));
+            noFixedFacet.setValue(value.name());
+
             JAXBElement<NoFixedFacet> enumeration = objectFactory.createEnumeration(noFixedFacet);
             enumValues.getRestriction().getFacets().add(enumeration);
         }
@@ -588,29 +424,37 @@ public class SchemaBuilder
         return enumValues;
     }
 
-
-    private void registerComplexTypeChildElement(ExplicitGroup all, Variable variable, boolean forceOptional)
+    private void registerComplexTypeChildElement(ExplicitGroup all, ExtensionParameter parameter)
     {
+        registerComplexTypeChildElement(all,
+                                        parameter.getName(),
+                                        parameter.getDescription(),
+                                        parameter.getType(),
+                                        parameter.isRequired());
+    }
 
-
+    private void registerComplexTypeChildElement(ExplicitGroup all,
+                                                 String name,
+                                                 String description,
+                                                 DataType type,
+                                                 boolean required)
+    {
         LocalComplexType objectComplexType = new LocalComplexType();
         objectComplexType.setComplexContent(new ComplexContent());
         objectComplexType.getComplexContent().setExtension(new ExtensionType());
         objectComplexType.getComplexContent().getExtension().setBase(
-                new QName(schema.getTargetNamespace(), registerComplexType(variable.asType()))
+                new QName(schema.getTargetNamespace(), registerComplexType(type))
         ); // base to the element type
 
         TopLevelElement objectElement = new TopLevelElement();
-        objectElement.setName(NameUtils.uncamel(variable.getName()));
-        objectElement.setMinOccurs((!forceOptional && !variable.isOptional()) ? BigInteger.ONE : BigInteger.ZERO);
+        objectElement.setName(NameUtils.uncamel(name));
+        objectElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
         objectElement.setMaxOccurs("1");
         objectElement.setComplexType(objectComplexType);
-        objectElement.setAnnotation(createDocAnnotation(variable.parent().getJavaDocParameterSummary(variable.getName())));
+        objectElement.setAnnotation(createDocAnnotation(description));
+
         all.getParticle().add(objectFactory.createElement(objectElement));
-
-
     }
-
 
     private ExtensionType registerExtension(String name, Map<QName, String> otherAttributes)
     {
@@ -634,101 +478,54 @@ public class SchemaBuilder
         return complexContentExtension;
     }
 
-    private Attribute createAttribute(Variable variable, boolean forceOptional)
+    private Attribute createAttribute(String name, DataType type, boolean required)
     {
-        return createAttribute(variable, forceOptional, false);
-    }
-
-    private Attribute createParameterAttribute(Variable variable, boolean forceOptional)
-    {
-        return createAttribute(variable, forceOptional, true);
-    }
-
-    private Attribute createAttribute(Variable variable, boolean forceOptional, boolean isParameter)
-    {
-        Named named = variable.getAnnotation(Named.class);
-
-        String name = variable.getName();
-        if (named != null && named.value().length() > 0)
-        {
-            name = named.value();
-        }
         Attribute attribute = new Attribute();
-        String optional = SchemaConstants.USE_OPTIONAL;
-        if (!forceOptional && !variable.isOptional())
-        {
-            optional = SchemaConstants.USE_REQUIRED;
-        }
-        attribute.setUse(optional);
+        attribute.setUse(required ? SchemaConstants.USE_REQUIRED : SchemaConstants.USE_OPTIONAL);
 
-        if (isParameter && variable.asType().isString() && (variable.hasSizeLimit() || variable.hasPattern() || variable.hasEmailPattern()))
-        {
-            if (variable.hasPattern() || variable.hasEmailPattern())
-            {
-                registerType(schema, variable.getName() + SchemaConstants.SIZED_TYPE_SUFFIX, SchemaConstants.STRING,
-                             variable.getMinSizeLimit(), variable.getMaxSizeLimit(), variable.getPattern());
-            }
-            else
-            {
-                registerType(schema, variable.getName() + SchemaConstants.SIZED_TYPE_SUFFIX, SchemaConstants.STRING,
-                             variable.getMinSizeLimit(), variable.getMaxSizeLimit());
-            }
-            attribute.setName(name);
-            attribute.setType(new QName(schema.getTargetNamespace(), variable.getName() + SchemaConstants.SIZED_TYPE_SUFFIX));
-        }
-        else if (isTypeSupported(variable.asTypeMirror()))
+        if (isTypeSupported(type))
         {
             attribute.setName(name);
-            attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), variable.asTypeMirror().toString()));
+            attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
         }
-        else if (variable.asType().isEnum())
+        else if (ENUM.equals(type.getQualifier()))
         {
             attribute.setName(name);
-            attribute.setType(new QName(schema.getTargetNamespace(), variable.asType().getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-            registeredEnums.add((EnumType) variable.asType());
-        }
-        else if (isParameter && variable.asType().isHttpCallback())
-        {
-            attribute.setName(NameUtils.uncamel(name) + SchemaConstants.FLOW_REF_SUFFIX);
-            attribute.setType(SchemaConstants.STRING);
+            attribute.setType(new QName(schema.getTargetNamespace(), type.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
+            registeredEnums.add(type);
         }
         else
         {
             // non-supported types will get "-ref" so beans can be injected
             attribute.setName(name + SchemaConstants.REF_SUFFIX);
             attribute.setType(SchemaConstants.STRING);
-
-            // we need to create a sub element here as well
         }
 
-        String doc = isParameter ? variable.parent().getJavaDocParameterSummary(variable.getName()) : variable.getJavaDocSummary();
-        attribute.setAnnotation(createDocAnnotation(doc));
-        // add default value
-        if (variable.hasDefaultValue())
-        {
-            attribute.setDefault(variable.getDefaultValue());
-        }
         return attribute;
     }
 
     private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
-        String name = NameUtils.uncamel(parameter.getName());
-        BigInteger minOccurs = BigInteger.ZERO;
+        generateCollectionElement(all,
+                                  parameter.getName(),
+                                  parameter.getDescription(),
+                                  parameter.getType(),
+                                  !forceOptional && parameter.isRequired());
+    }
 
-        if (!forceOptional && parameter.isRequired())
-        {
-            minOccurs = BigInteger.ONE;
-        }
+    private void generateCollectionElement(ExplicitGroup all, String name, String description, DataType type, boolean required)
+    {
+        name = NameUtils.uncamel(name);
+        BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
 
         String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
-        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, parameter.getType());
+        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
         collectionElement.setMinOccurs(minOccurs);
         collectionElement.setMaxOccurs("1");
-        collectionElement.setAnnotation(createDocAnnotation(variable.parent().getJavaDocParameterSummary(variable.getName())));
+        collectionElement.setAnnotation(createDocAnnotation(description));
         all.getParticle().add(objectFactory.createElement(collectionElement));
 
         collectionElement.setComplexType(collectionComplexType);
@@ -774,7 +571,8 @@ public class SchemaBuilder
 
     private LocalComplexType generateComplexType(String name, DataType type)
     {
-        if (LIST.equals(type.getQualifier()))
+        DataQualifier typeQualifier = type.getQualifier();
+        if (LIST.equals(typeQualifier))
         {
             if (!ArrayUtils.isEmpty(type.getGenericTypes()))
             {
@@ -788,7 +586,7 @@ public class SchemaBuilder
                 {
                     return generateCollectionComplexType(SchemaConstants.INNER_PREFIX + name, genericType);
                 }
-                else if (ENUM.equals(type.getQualifier()))
+                else if (ENUM.equals(typeQualifier))
                 {
                     return generateEnumComplexType(genericType);
                 }
@@ -802,50 +600,56 @@ public class SchemaBuilder
                 return generateRefComplexType(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF);
             }
         }
-        else if (typeMirror.asType().isMap())
+        else if (MAP.equals(typeQualifier))
         {
-            java.util.List<Type> variableTypeParameters = typeMirror.getTypeArguments();
+            DataType[] genericTypes = type.getGenericTypes();
 
             LocalComplexType mapComplexType = new LocalComplexType();
             Attribute keyAttribute = new Attribute();
-            if (variableTypeParameters.size() > 0 && isTypeSupported(variableTypeParameters.get(0).asTypeMirror()))
-            {
-                keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
-                keyAttribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), variableTypeParameters.get(0).asTypeMirror().toString()));
-            }
-            else if (variableTypeParameters.size() > 0 && variableTypeParameters.get(0).isEnum())
-            {
-                keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
-                keyAttribute.setType(new QName(schema.getTargetNamespace(), variableTypeParameters.get(0).getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-                registeredEnums.add((EnumType) variableTypeParameters.get(0).asType());
-            }
-            else
-            {
-                keyAttribute.setUse(SchemaConstants.USE_REQUIRED);
-                keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY_REF);
-                keyAttribute.setType(SchemaConstants.STRING);
-            }
 
-            QName baseType;
-            if (variableTypeParameters.size() > 1 && isTypeSupported(variableTypeParameters.get(1).asTypeMirror()))
+            if (!ArrayUtils.isEmpty(genericTypes))
             {
-                baseType = SchemaTypeConversion.convertType(schema.getTargetNamespace(), variableTypeParameters.get(1).asTypeMirror().toString());
+                DataType keyType = genericTypes[0];
+                DataQualifier keyQualifier = keyType.getQualifier();
+
+                if (isTypeSupported(keyType))
+                {
+                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
+                    keyAttribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), keyType.getName()));
+                }
+                else if (ENUM.equals(keyQualifier))
+                {
+                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
+                    keyAttribute.setType(new QName(schema.getTargetNamespace(), keyType.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
+                    registeredEnums.add(keyType);
+                }
+                else
+                {
+                    keyAttribute.setUse(SchemaConstants.USE_REQUIRED);
+                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY_REF);
+                    keyAttribute.setType(SchemaConstants.STRING);
+                }
+
+                QName baseType;
+                if (genericTypes.length > 1 && isTypeSupported(genericTypes[1]))
+                {
+                    baseType = SchemaTypeConversion.convertType(schema.getTargetNamespace(), genericTypes[1].getName());
+                }
+                else
+                {
+                    baseType = new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs");
+                }
+
+                SimpleContent simpleContent = new SimpleContent();
+                mapComplexType.setSimpleContent(simpleContent);
+                SimpleExtensionType complexContentExtension = new SimpleExtensionType();
+                complexContentExtension.setBase(baseType);
+                simpleContent.setExtension(complexContentExtension);
+
+                Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
+                complexContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
+                complexContentExtension.getAttributeOrAttributeGroup().add(keyAttribute);
             }
-            else
-            {
-                baseType = new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs");
-            }
-
-            SimpleContent simpleContent = new SimpleContent();
-            mapComplexType.setSimpleContent(simpleContent);
-            SimpleExtensionType complexContentExtension = new SimpleExtensionType();
-            complexContentExtension.setBase(baseType);
-            simpleContent.setExtension(complexContentExtension);
-
-            Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
-            complexContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
-            complexContentExtension.getAttributeOrAttributeGroup().add(keyAttribute);
-
 
             return mapComplexType;
         }
@@ -904,177 +708,18 @@ public class SchemaBuilder
         return itemComplexType;
     }
 
-    private void generateOAuthStoreConfigElement(ExplicitGroup all)
-    {
-        Attribute objectStoreRefAttribute = new Attribute();
-        objectStoreRefAttribute.setUse(SchemaConstants.USE_REQUIRED);
-        objectStoreRefAttribute.setName(SchemaConstants.OBJECT_STORE_REF_ATTRIBUTE_NAME);
-        objectStoreRefAttribute.setType(SchemaConstants.STRING);
-
-        ExtensionType extensionType = new ExtensionType();
-        extensionType.setBase(SchemaConstants.MULE_ABSTRACT_EXTENSION_TYPE);
-        extensionType.getAttributeOrAttributeGroup().add(objectStoreRefAttribute);
-
-        ComplexContent complexContent = new ComplexContent();
-        complexContent.setExtension(extensionType);
-
-        LocalComplexType localComplexType = new LocalComplexType();
-        localComplexType.setComplexContent(complexContent);
-
-        TopLevelElement collectionElement = new TopLevelElement();
-        collectionElement.setName(SchemaConstants.OAUTH_STORE_CONFIG_ELEMENT);
-        collectionElement.setMinOccurs(BigInteger.ZERO);
-        collectionElement.setMaxOccurs("1");
-        collectionElement.setComplexType(localComplexType);
-        collectionElement.setAnnotation(createDocAnnotation(SchemaConstants.OAUTH_STORE_CONFIG_ELEMENT_DESCRIPTION));
-        all.getParticle().add(objectFactory.createElement(collectionElement));
-    }
-
-    private void generateOauthAccessTokenElement(String name, String docDescription, ExplicitGroup all)
-    {
-        LocalComplexType collectionComplexType = new LocalComplexType();
-        GroupRef group = generateNestedProcessorGroup();
-        collectionComplexType.setGroup(group);
-
-        TopLevelElement collectionElement = new TopLevelElement();
-        collectionElement.setName(name);
-        collectionElement.setMinOccurs(BigInteger.ZERO);
-        collectionElement.setMaxOccurs("1");
-        collectionElement.setComplexType(collectionComplexType);
-        collectionElement.setAnnotation(createDocAnnotation(docDescription));
-        all.getParticle().add(objectFactory.createElement(collectionElement));
-    }
-
-
-    private void registerProcessorElement(boolean intercepting, String name, String typeName, String docText)
+    private void registerProcessorElement(String name, String typeName, String docText)
     {
 
         Element element = new TopLevelElement();
         element.setName(NameUtils.uncamel(name));
         element.setType(new QName(schema.getTargetNamespace(), typeName));
         element.setAnnotation(createDocAnnotation(docText));
-        element.setSubstitutionGroup(intercepting ? SchemaConstants.MULE_ABSTRACT_INTERCEPTING_MESSAGE_PROCESSOR : SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR);
+        element.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR);
         schema.getSimpleTypeOrComplexTypeOrGroup().add(element);
     }
 
-    private void registerFilterElement(String name, String typeName, String docText)
-    {
-
-        Element element = new TopLevelElement();
-        element.setName(NameUtils.uncamel(name));
-        element.setType(new QName(schema.getTargetNamespace(), typeName));
-        element.setAnnotation(createDocAnnotation(docText));
-        element.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_FILTER);
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(element);
-    }
-
-    private void registerSourceElement(String name, String typeName, Method executableElement)
-    {
-        Element element = new TopLevelElement();
-        element.setName(NameUtils.uncamel(name));
-        element.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_INBOUND_ENDPOINT);
-        element.setType(new QName(schema.getTargetNamespace(), typeName));
-        element.setAnnotation(createDocAnnotation(executableElement.getJavaDocSummary()));
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(element);
-    }
-
-    private void registerAuthorizeType(Module module)
-    {
-        TopLevelComplexType complexType = new TopLevelComplexType();
-        complexType.setName("AuthorizeType");
-
-        ComplexContent complexContent = new ComplexContent();
-        complexType.setComplexContent(complexContent);
-        ExtensionType complexContentExtension = new ExtensionType();
-        complexContentExtension.setBase(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE);
-        complexContent.setExtension(complexContentExtension);
-
-        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
-        complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
-
-        ExplicitGroup all = new ExplicitGroup();
-        complexContentExtension.setSequence(all);
-
-        if (module instanceof OAuthModule && ((OAuthModule) module).getOAuthVersion() == OAuthVersion.V2)
-        {
-            complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute("state", true,
-                                                                                       new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs"), "Any value that you wish to be sent with the callback"));
-        }
-
-        if (((OAuthModule) module).getAuthorizationParameters() != null)
-        {
-            for (OAuthAuthorizationParameter parameter : ((OAuthModule) module).getAuthorizationParameters())
-            {
-                if (isTypeSupported(parameter.getType().asTypeMirror()) || parameter.getType().isEnum())
-                {
-                    complexContentExtension.getAttributeOrAttributeGroup().add(
-                            createTypeAttribute(parameter.getName(), parameter.getType(), parameter.isOptional(), parameter.getDefaultValue())
-                    );
-                }
-            }
-        }
-
-        Attribute accessTokenUrlAttribute = createAttribute("accessTokenUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider to obtain an access token");
-        complexContentExtension.getAttributeOrAttributeGroup().add(accessTokenUrlAttribute);
-
-        Attribute accessTokenIdAttribute = createAttribute("accessTokenId", true, SchemaConstants.STRING, "The Id with which the obtained access token will be stored. If not provided, then it will be the config name");
-        complexContentExtension.getAttributeOrAttributeGroup().add(accessTokenIdAttribute);
-
-        Attribute authorizationUrlAttribute = createAttribute("authorizationUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider where the resource owner will be redirected to grant authorization to the connector");
-        complexContentExtension.getAttributeOrAttributeGroup().add(authorizationUrlAttribute);
-
-        if (((OAuthModule) module).getOAuthVersion() == OAuthVersion.V10A)
-        {
-            Attribute requestTokenUrlAttribute = createAttribute("requestTokenUrl", true, SchemaConstants.STRING, "The URL defined by the Service Provider used to obtain an un-authorized request token");
-            complexContentExtension.getAttributeOrAttributeGroup().add(requestTokenUrlAttribute);
-        }
-
-        if (all.getParticle().size() == 0)
-        {
-            complexContentExtension.setSequence(null);
-        }
-
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
-
-    }
-
-    private Attribute createTypeAttribute(String name, Type type, boolean isOptional, String defaultValue)
-    {
-        Attribute attribute = new Attribute();
-        attribute.setUse(isOptional ? SchemaConstants.USE_OPTIONAL : SchemaConstants.USE_REQUIRED);
-        if (isTypeSupported(type.asTypeMirror()))
-        {
-            attribute.setName(name);
-            attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.asTypeMirror().toString()));
-        }
-        else if (type.isEnum())
-        {
-            attribute.setName(name);
-            attribute.setType(new QName(schema.getTargetNamespace(), type.asType().getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-            registeredEnums.add((EnumType) type.asType());
-        }
-        attribute.setAnnotation(createDocAnnotation(type.getJavaDocSummary()));
-
-        if (StringUtils.isNotBlank(defaultValue))
-        {
-            attribute.setDefault(defaultValue);
-        }
-        return attribute;
-    }
-
-    private void registerProcessorType(boolean intercepting, String name, Method element)
-    {
-        if (intercepting)
-        {
-            registerExtendedType(SchemaConstants.MULE_ABSTRACT_INTERCEPTING_MESSAGE_PROCESSOR_TYPE, name, element);
-        }
-        else
-        {
-            registerExtendedType(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE, name, element);
-        }
-    }
-
-    private void registerExtendedType(QName base, String name, Method<? extends Type> element)
+    private void registerExtendedType(QName base, String name, List<ExtensionParameter> parameters)
     {
         TopLevelComplexType complexType = new TopLevelComplexType();
         complexType.setName(name);
@@ -1085,124 +730,56 @@ public class SchemaBuilder
         complexContentExtension.setBase(base);
         complexContent.setExtension(complexContentExtension);
 
-        boolean optionalConfig = true;
-        if (!(element.parent() instanceof Module))
-        {
-            optionalConfig = false;
-        }
-
-        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, optionalConfig, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
+        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
         complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
 
         ExplicitGroup all = new ExplicitGroup();
         complexContentExtension.setSequence(all);
 
-        if (element != null)
-        {
-            int requiredChildElements = 0;
-            for (Parameter variable : element.getParameters())
-            {
-                if (variable.shouldBeIgnored())
-                {
-                    continue;
-                }
-                if (variable.asType().isNestedProcessor() ||
-                    (variable.asType().isArrayOrList() &&
-                     variable.getTypeArguments().size() > 0 &&
-                     variable.getTypeArguments().get(0).isNestedProcessor()))
-                {
-                    requiredChildElements++;
-                }
-                else if (variable.asType().isCollection())
-                {
-                    requiredChildElements++;
-                }
-            }
-            for (Parameter variable : element.getParameters())
-            {
-                if (variable.shouldBeIgnored())
-                {
-                    continue;
-                }
-                if (variable.asType().isNestedProcessor() ||
-                    (variable.asType().isArrayOrList() &&
-                     variable.getTypeArguments().size() > 0 &&
-                     variable.getTypeArguments().get(0).isNestedProcessor()))
-                {
-                    if (requiredChildElements == 1)
-                    {
-                        GroupRef groupRef = generateNestedProcessorGroup();
-                        complexContentExtension.setGroup(groupRef);
-                        complexContentExtension.setAll(null);
-                    }
-                    else
-                    {
-                        generateNestedProcessorElement(all, variable);
-                    }
-                }
-                else if (variable.isQuery() && variable.asType().isDsqlQueryObject())
-                {
-                    generateQueryElement(all, variable, complexContentExtension);
+        int requiredChildElements = countRequiredChildElements(parameters);
 
-                }
-                else if (variable.asType().isCollection())
+        for (ExtensionParameter parameter : parameters)
+        {
+            DataType parameterType = parameter.getType();
+            DataQualifier parameterQualifier = parameterType.getQualifier();
+
+            if (requiresChildElements(parameterType))
+            {
+                if (requiredChildElements == 1)
                 {
-                    generateCollectionElement(all, variable, false);
-                }
-                else if (isTypeSupported(variable.asTypeMirror()) || variable.asType().isEnum() || variable.asType().isHttpCallback())
-                {
-                    if (variable.isText())
-                    {
-                        createParameterElement(all, variable);
-                    }
-                    else
-                    {
-                        complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(variable, false));
-                    }
-                }
-                else if (variable.asType().isComplexType() && !variable.isRefOnly())
-                {
-                    registerComplexTypeChildElement(all, variable, false);
+                    GroupRef groupRef = generateNestedProcessorGroup();
+                    complexContentExtension.setGroup(groupRef);
+                    complexContentExtension.setAll(null);
                 }
                 else
                 {
-                    complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(variable, false));
+                    generateNestedProcessorElement(all, parameter.getName(), parameter.isRequired());
                 }
             }
-
-
-            if (element instanceof ProcessorMethod)
+            else
             {
-                ProcessorMethod method = (ProcessorMethod) element;
-
-
-                if (method.canBeUsedInConnectionManagement())
+                if (LIST.equals(parameterQualifier))
                 {
-                    ConnectMethod connectMethod = method.getManagedConnectionModule().getConnectMethod();
-                    if (connectMethod != null)
+                    generateCollectionElement(all, parameter, false);
+                }
+                else if (isTypeSupported(parameterType) || ENUM.equals(parameterQualifier))
+                {
+                    if (STRING.equals(parameterQualifier))
                     {
-                        for (Parameter parameter : connectMethod.getParameters())
-                        {
-                            if (parameter.asType().isCollection())
-                            {
-                                generateCollectionElement(all, parameter, true);
-                            }
-                            else
-                            {
-                                complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, true));
-                            }
-                        }
+                        createParameterElement(all, parameter);
+                    }
+                    else
+                    {
+                        complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
                     }
                 }
-
-                if (method.canBeUsedInOAuthManagement())
+                else if (BEAN.equals(parameterQualifier))
                 {
-                    complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute("accessTokenId", true, SchemaTypeConversion.convertType(schema.getTargetNamespace(), "java.lang.String"), "The id of the access token that will be used to authenticate the call"));
+                    registerComplexTypeChildElement(all, parameter);
                 }
-
-                if (method.isPaged())
+                else
                 {
-                    addPagingAttributes(method, complexContentExtension.getAttributeOrAttributeGroup());
+                    complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
                 }
             }
         }
@@ -1213,107 +790,99 @@ public class SchemaBuilder
         }
 
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
-
     }
 
-    private void addPagingAttributes(ProcessorMethod method, List<Attribute> attributes)
+    private int countRequiredChildElements(List<ExtensionParameter> parameters)
     {
-        Paged cfg = method.getPagingAnnotation();
-        attributes.add(createAttribute("fetchSize", true, SchemaTypeConversion.convertType(schema.getTargetNamespace(), "int"), "The amount of items to fetch on each invocation to the data source", new Integer(cfg.defaultFetchSize()).toString()));
-    }
-
-    private void generateQueryElement(ExplicitGroup all, Parameter variable, ExtensionType complexContentExtension)
-    {
-        complexContentExtension.getAttributeOrAttributeGroup().add(createStringAttribute(variable));
-    }
-
-    private Attribute createStringAttribute(Parameter variable)
-    {
-        String name = variable.getName();
-        Attribute attribute = new Attribute();
-        String optional = SchemaConstants.USE_OPTIONAL;
-        if (!variable.isOptional())
+        int requiredChildElements = 0;
+        for (ExtensionParameter parameter : parameters)
         {
-            optional = SchemaConstants.USE_REQUIRED;
-        }
-        attribute.setUse(optional);
-        attribute.setName(name);
-        attribute.setType(SchemaConstants.STRING);
-
-        // add default value
-        if (variable.hasDefaultValue())
-        {
-            attribute.setDefault(variable.getDefaultValue());
-        }
-        return attribute;
-    }
-
-
-    private void registerUnauthorizeType(OAuthModule module)
-    {
-        TopLevelComplexType complexType = new TopLevelComplexType();
-        complexType.setName("UnauthorizeType");
-
-        ComplexContent complexContent = new ComplexContent();
-        complexType.setComplexContent(complexContent);
-        ExtensionType complexContentExtension = new ExtensionType();
-        complexContentExtension.setBase(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE);
-        complexContent.setExtension(complexContentExtension);
-
-
-        complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute("accessTokenId", true, SchemaTypeConversion.convertType(schema.getTargetNamespace(), "java.lang.String"), "The id of the access token that will be used to authenticate the call"));
-
-
-        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
-        complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
-
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
-    }
-
-    private void createParameterElement(ExplicitGroup all, Variable variable)
-    {
-        Named named = variable.getAnnotation(Named.class);
-        String name = NameUtils.uncamel(variable.getName());
-        if (named != null && named.value().length() > 0)
-        {
-            name = named.value();
+            DataType type = parameter.getType();
+            if (requiresChildElements(type))
+            {
+                requiredChildElements++;
+            }
+            else if (LIST.equals(type.getQualifier()))
+            {
+                requiredChildElements++;
+            }
         }
 
+        return requiredChildElements;
+    }
+
+    private boolean requiresChildElements(DataType type)
+    {
+        DataType[] genericTypes = type.getGenericTypes();
+        DataQualifier qualifier = type.getQualifier();
+
+        return OPERATION.equals(qualifier) ||
+               (LIST.equals(qualifier) &&
+                !ArrayUtils.isEmpty(genericTypes) &&
+                OPERATION.equals(genericTypes[0].getQualifier()));
+    }
+
+    private void registerProcessorType(String name, ExtensionOperation operation)
+    {
+        registerExtendedType(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE, name, operation.getParameters());
+    }
+
+    private void createParameterElement(ExplicitGroup all, ExtensionParameter parameter)
+    {
+        createParameterElement(all,
+                               parameter.getName(),
+                               parameter.getDescription(),
+                               parameter.getType(),
+                               parameter.isRequired(),
+                               parameter.getDefaultValue());
+    }
+
+    private void createParameterElement(ExplicitGroup all,
+                                        String name,
+                                        String description,
+                                        DataType type,
+                                        boolean required,
+                                        Object defaultValue)
+    {
         TopLevelElement textElement = new TopLevelElement();
         textElement.setName(name);
-        textElement.setMinOccurs(variable.isOptional() ? BigInteger.ZERO : BigInteger.ONE);
-        textElement.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), variable.asTypeMirror().toString()));
-        textElement.setDefault(variable.getDefaultValue());
-        textElement.setAnnotation(createDocAnnotation(variable.parent().getJavaDocParameterSummary(variable.getName())));
+        textElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
+        textElement.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
+        textElement.setDefault(defaultValue != null ? defaultValue.toString() : EMPTY);
+        textElement.setAnnotation(createDocAnnotation(description));
         all.getParticle().add(objectFactory.createElement(textElement));
     }
 
-    private void generateNestedProcessorElement(ExplicitGroup all, Variable variable)
+    private void generateNestedProcessorElement(ExplicitGroup all, String name, boolean required)
     {
-
         LocalComplexType collectionComplexType = new LocalComplexType();
         GroupRef group = generateNestedProcessorGroup();
         collectionComplexType.setGroup(group);
 
         TopLevelElement collectionElement = new TopLevelElement();
-        collectionElement.setName(NameUtils.uncamel(variable.getName()));
-        collectionElement.setMinOccurs(variable.isOptional() ? BigInteger.ZERO : BigInteger.ONE);
+        collectionElement.setName(NameUtils.uncamel(name));
+        collectionElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
         collectionElement.setComplexType(collectionComplexType);
-        collectionElement.setAnnotation(createDocAnnotation(variable.parent().getJavaDocParameterSummary(variable.getName())));
+        collectionElement.setAnnotation(createDocAnnotation(EMPTY));
         all.getParticle().add(objectFactory.createElement(collectionElement));
 
         Attribute attribute = createAttribute("text", true, SchemaConstants.STRING, null);
         collectionComplexType.getAttributeOrAttributeGroup().add(attribute);
     }
 
-
     private GroupRef generateNestedProcessorGroup()
     {
         GroupRef group = new GroupRef();
         group.generateNestedProcessorGroup(SchemaConstants.MULE_MESSAGE_PROCESSOR_OR_OUTBOUND_ENDPOINT_TYPE);
-        group.setMinOccurs(BigInteger.valueOf(0L));
+        group.setMinOccurs(BigInteger.ZERO);
         group.setMaxOccurs("unbounded");
+
         return group;
+    }
+
+    private Attribute createParameterAttribute(ExtensionParameter parameter, boolean forceOptional)
+    {
+        return createAttribute(parameter.getName(), parameter.getType(), !forceOptional && parameter.isRequired());
     }
 
     private Attribute createAttribute(String name, boolean optional, QName type, String description)
@@ -1322,10 +891,12 @@ public class SchemaBuilder
         attr.setName(name);
         attr.setUse(optional ? SchemaConstants.USE_OPTIONAL : SchemaConstants.USE_REQUIRED);
         attr.setType(type);
+
         if (description != null)
         {
             attr.setAnnotation(createDocAnnotation(description));
         }
+
         return attr;
     }
 
@@ -1335,14 +906,17 @@ public class SchemaBuilder
         attr.setName(name);
         attr.setUse(optional ? SchemaConstants.USE_OPTIONAL : SchemaConstants.USE_REQUIRED);
         attr.setType(type);
+
         if (description != null)
         {
             attr.setAnnotation(createDocAnnotation(description));
         }
+
         if (defaultValue != null)
         {
             attr.setDefault(defaultValue);
         }
+
         return attr;
     }
 
@@ -1362,13 +936,12 @@ public class SchemaBuilder
 
     private boolean skipField(Field field)
     {
-        return !field.hasGetter() || !field.hasSetter() || field.shouldBeIgnored();
+        return field == null || field.getAnnotation(Ignore.class) != null;
     }
 
-    private boolean generateNestedProcessor(Field field)
+    private boolean isRequired(Field field)
     {
-        return field.asType().isNestedProcessor() || (field.asType().isArrayOrList() && field.getTypeArguments().size() > 0
-                                                      && field.getTypeArguments().get(0).isNestedProcessor());
+        return field.getAnnotation(Optional.class) == null;
     }
 
     private class ComplexTypeHolder
@@ -1406,7 +979,8 @@ public class SchemaBuilder
         @Override
         public boolean equals(Object obj)
         {
-            if (obj instanceof ComplexTypeHolder) {
+            if (obj instanceof ComplexTypeHolder)
+            {
                 ComplexTypeHolder other = (ComplexTypeHolder) obj;
                 return type.equals(other.getType());
             }
