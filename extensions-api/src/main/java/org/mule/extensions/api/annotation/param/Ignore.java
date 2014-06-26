@@ -14,6 +14,8 @@ import java.lang.annotation.Target;
 
 /**
  * Ignores a field inside a complex type. Only usable in complex types.
+ *
+ * @since 1.0
  */
 @Target(value = {ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

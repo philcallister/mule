@@ -18,6 +18,8 @@ import java.lang.annotation.Target;
  * any auto conversions using transformers available inside the Mule container. Mule
  * has a number of standard transformers for dealing with common Java types such as
  * XML documents, streams, byte arrays, strings, etc.
+ *
+ * @since 1.0
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

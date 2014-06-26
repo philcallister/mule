@@ -12,8 +12,19 @@ import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.module.extensions.internal.capability.xml.schema.model.NamespaceFilter;
+import org.mule.module.extensions.internal.capability.xml.schema.model.Schema;
+import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants;
+
+import java.io.StringWriter;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 import org.apache.commons.lang.StringUtils;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 
 public class SchemaGenerator
 {
@@ -25,7 +36,7 @@ public class SchemaGenerator
         checkState(!StringUtils.isBlank(xmlCapability.getNamespace()), "capability can't provide a blank namespace");
     }
 
-    public void generate(Extension extension, XmlCapability xmlCapability)
+    public String generate(Extension extension, XmlCapability xmlCapability)
     {
         validate(extension, xmlCapability);
         SchemaBuilder schemaBuilder = SchemaBuilder.newSchema(xmlCapability.getNamespace());
@@ -43,22 +54,30 @@ public class SchemaGenerator
         schemaBuilder.registerEnums();
         schemaBuilder.registerSimpleTypes();
 
-        String fileName = "META-INF/mule-" + module.getModuleName() + SchemaConstants.XSD_EXTENSION;
+        return renderSchema(schemaBuilder.getSchema());
+    }
 
-        String versionedLocation = module.getVersionedSchemaLocation();
-        String currentLocation = module.getCurrentSchemaLocation();
-        String namespaceHandlerName = ctx().<GeneratedClass>getProduct(Product.NAMESPACE_HANDLER, null, targetNamespace).boxify().fullName();
-        String className = getModuleClass(module).fullName();
-
-        Schema schema = schemaBuilder.getSchema();
-        SchemaLocation versionedSchemaLocation = new SchemaLocation(schema, schema.getTargetNamespace(), fileName, versionedLocation, namespaceHandlerName, className);
-
-        ctx().getSchemaModel().addSchemaLocation(versionedSchemaLocation);
-
-        if (currentLocation != null)
+    private String renderSchema(Schema schema)
+    {
+        try
         {
-            SchemaLocation currentSchemaLocation = new SchemaLocation(null, schema.getTargetNamespace(), fileName, currentLocation, namespaceHandlerName, className);
-            ctx().getSchemaModel().addSchemaLocation(currentSchemaLocation);
+            JAXBContext jaxbContext = JAXBContext.newInstance(Schema.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            NamespaceFilter outFilter = new NamespaceFilter("mule", SchemaConstants.MULE_NAMESPACE, true);
+            OutputFormat format = new OutputFormat();
+            format.setIndent(true);
+            format.setNewlines(true);
+
+            StringWriter sw = new StringWriter();
+            XMLWriter writer = new XMLWriter(sw, format);
+            outFilter.setContentHandler(writer);
+            marshaller.marshal(schema, outFilter);
+            return sw.toString();
         }
+        catch (JAXBException e)
+        {
+            throw new RuntimeException(e);
+        }
+
     }
 }

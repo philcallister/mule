@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
  * Marks a {@link org.mule.extensions.api.annotation.Configurable} field a optional.
  * All configurable attributes that don't include this annotation are
  * considered required
+ *
+ * @since 1.0
  */
 @Target(value = {ElementType.PARAMETER, ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

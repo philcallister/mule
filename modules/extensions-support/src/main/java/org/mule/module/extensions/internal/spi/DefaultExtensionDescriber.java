@@ -13,7 +13,6 @@ import org.mule.extensions.introspection.spi.ExtensionBuilder;
 import org.mule.extensions.introspection.spi.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.spi.ExtensionDescriber;
 import org.mule.extensions.introspection.spi.ExtensionOperationBuilder;
-import org.mule.extensions.spi.CapabilitiesResolver;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.Preconditions;
 
@@ -23,13 +22,13 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-final class DefaultExtensionDescriber implements ExtensionDescriber
+public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
     private final Class<?> extensionType;
-    private CapabilitiesResolver capabilitiesResolver = new DefaultCapabilitiesResolver();
+    private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
 
-    DefaultExtensionDescriber(Class<?> extensionType)
+    public DefaultExtensionDescriber(Class<?> extensionType)
     {
         Preconditions.checkArgument(extensionType != null, "extensionType cannot be null");
         this.extensionType = extensionType;

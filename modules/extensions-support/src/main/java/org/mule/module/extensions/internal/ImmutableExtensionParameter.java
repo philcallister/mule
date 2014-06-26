@@ -35,9 +35,10 @@ final class ImmutableExtensionParameter extends AbstractImmutableDescribed imple
         Preconditions.checkState(type != null, "Parameters must have a type");
         if (defaultValue != null)
         {
-            Preconditions.checkState(type.isInstance(defaultValue), String.format("Parameter of type '%s' cannot have a default value of type '%s'",
-                                                                                  type.getName(),
-                                                                                  defaultValue.getClass().getCanonicalName()));
+            Preconditions.checkState(type.getRawType().isInstance(defaultValue),
+                                     String.format("Parameter of type '%s' cannot have a default value of type '%s'",
+                                                   type.getName(),
+                                                   defaultValue.getClass().getCanonicalName()));
         }
 
         this.type = type;

@@ -139,14 +139,11 @@ public class SchemaBuilder
 
     public Schema registerSimpleTypes()
     {
-        registerType(schema, "integerType", SchemaConstants.INTEGER);
         registerType(schema, "decimalType", SchemaConstants.DECIMAL);
         registerType(schema, "floatType", SchemaConstants.FLOAT);
         registerType(schema, "doubleType", SchemaConstants.DOUBLE);
         registerType(schema, "dateTimeType", SchemaConstants.DATETIME);
-        registerType(schema, "longType", SchemaConstants.LONG);
         registerType(schema, "byteType", SchemaConstants.BYTE);
-        registerType(schema, "booleanType", SchemaConstants.BOOLEAN);
         registerType(schema, "anyUriType", SchemaConstants.ANYURI);
         registerType(schema, "charType", SchemaConstants.STRING, 1, 1);
 
@@ -895,26 +892,6 @@ public class SchemaBuilder
         if (description != null)
         {
             attr.setAnnotation(createDocAnnotation(description));
-        }
-
-        return attr;
-    }
-
-    private Attribute createAttribute(String name, boolean optional, QName type, String description, String defaultValue)
-    {
-        Attribute attr = new Attribute();
-        attr.setName(name);
-        attr.setUse(optional ? SchemaConstants.USE_OPTIONAL : SchemaConstants.USE_REQUIRED);
-        attr.setType(type);
-
-        if (description != null)
-        {
-            attr.setAnnotation(createDocAnnotation(description));
-        }
-
-        if (defaultValue != null)
-        {
-            attr.setDefault(defaultValue);
         }
 
         return attr;

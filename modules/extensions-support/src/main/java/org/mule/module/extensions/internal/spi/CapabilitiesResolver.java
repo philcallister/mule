@@ -8,14 +8,13 @@ package org.mule.module.extensions.internal.spi;
 
 import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.introspection.spi.CapabilityAwareBuilder;
-import org.mule.extensions.spi.CapabilitiesResolver;
 import org.mule.module.extensions.internal.capability.xml.ImmutableXmlCapability;
 import org.mule.util.Preconditions;
 
 import java.util.Arrays;
 import java.util.List;
 
-final class DefaultCapabilitiesResolver implements CapabilitiesResolver
+final class CapabilitiesResolver
 {
 
     private static abstract class CapabilityResolver
@@ -54,11 +53,7 @@ final class DefaultCapabilitiesResolver implements CapabilitiesResolver
     );
 
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void resolveCapabilities(Class<?> extensionType, CapabilityAwareBuilder<?, ?> builder)
+    void resolveCapabilities(Class<?> extensionType, CapabilityAwareBuilder<?, ?> builder)
     {
         Preconditions.checkArgument(extensionType != null, "extensionType cannot be null");
         Preconditions.checkArgument(builder != null, "builder cannot be null");

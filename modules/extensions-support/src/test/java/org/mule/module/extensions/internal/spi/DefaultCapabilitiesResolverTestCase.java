@@ -14,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
 import org.mule.extensions.introspection.spi.CapabilityAwareBuilder;
-import org.mule.extensions.spi.CapabilitiesResolver;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -42,7 +41,7 @@ public class DefaultCapabilitiesResolverTestCase extends AbstractMuleTestCase
     @Before
     public void before()
     {
-        resolver = new DefaultCapabilitiesResolver();
+        resolver = new CapabilitiesResolver();
     }
 
     @Test
