@@ -15,11 +15,8 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,14 +28,13 @@ import org.apache.commons.lang.StringUtils;
  *
  * @since 1.0
  */
-final class ImmutableExtension extends AbstractImmutableDescribed implements Extension
+final class ImmutableExtension extends AbstractImmutableCapableDescribed implements Extension
 {
 
     private final String version;
     private final String minMuleVersion;
     private final Map<String, ExtensionConfiguration> configurations;
     private final Map<String, ExtensionOperation> operations;
-    private Set<Object> capabilities;
 
     protected ImmutableExtension(String name,
                                  String description,
@@ -48,7 +44,7 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
                                  List<ExtensionOperation> operations,
                                  Set<Object> capabilities)
     {
-        super(name, description);
+        super(name, description, capabilities);
 
         checkNullOrRepeatedNames(configurations, "configurations");
         checkNullOrRepeatedNames(operations, "operations");
@@ -61,7 +57,6 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
 
         this.configurations = toMap(configurations);
         this.operations = toMap(operations);
-        this.capabilities = ImmutableSet.copyOf(capabilities);
     }
 
 
@@ -130,50 +125,5 @@ final class ImmutableExtension extends AbstractImmutableDescribed implements Ext
         }
 
         return extensionOperation;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public <T> Set<T> getCapabilities(Class<T> capabilityType)
-    {
-        Set<T> matches = new HashSet<>();
-        for (Object capability : capabilities)
-        {
-            if (capabilityType.isInstance(capability))
-            {
-                matches.add((T) capability);
-            }
-        }
-
-        return ImmutableSet.copyOf(matches);
-    }
-
-
-    /**
-     * Defines equality by matching the extension's {@link #getName()} and
-     * {@link #getVersion()}
-     */
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (obj instanceof Extension)
-        {
-            Extension other = (Extension) obj;
-            return Objects.equal(getName(), other.getName()) && Objects.equal(getVersion(), other.getVersion());
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns a hash code based on the extension's {@link #getName()} and
-     * {@link #getVersion()}
-     */
-    @Override
-    public int hashCode()
-    {
-        return Objects.hashCode(getName(), getVersion());
     }
 }

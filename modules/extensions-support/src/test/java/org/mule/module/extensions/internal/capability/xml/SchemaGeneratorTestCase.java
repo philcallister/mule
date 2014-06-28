@@ -36,7 +36,7 @@ public class SchemaGeneratorTestCase extends AbstractMuleTestCase
     public void generate()
     {
         ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-        new DefaultExtensionDescriber(HeisenbergModule.class).describe(builder);
+        new DefaultExtensionDescriber().describe(HeisenbergModule.class, builder);
         Extension extension = builder.build();
         XmlCapability capability = extension.getCapabilities(XmlCapability.class).iterator().next();
 

@@ -137,9 +137,25 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
 
     private void validateMuleVersion()
     {
-        checkState(!StringUtils.isBlank(minMuleVersion), "minimum Mule version cannot be blank");
-        checkState(new MuleVersion(minMuleVersion).atLeast(DEFAULT_MIN_MULE_VERSION),
+        // make sure version is valid
+        parseVersion(this.version, "extension version");
+        checkState(!StringUtils.isBlank(this.minMuleVersion), "minimum Mule version cannot be blank");
+
+        MuleVersion minMuleVersion = parseVersion(this.minMuleVersion, "minimum Mule Version");
+        checkState(minMuleVersion.atLeast(DEFAULT_MIN_MULE_VERSION),
                    String.format("Minimum Mule version must be at least %s", DEFAULT_MIN_MULE_VERSION.toString()));
+    }
+
+    private MuleVersion parseVersion(String version, String description)
+    {
+        try
+        {
+            return new MuleVersion(version);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new IllegalArgumentException(String.format("Invalid %s version: %s", description, version));
+        }
     }
 
     private List<ExtensionConfiguration> sort(List<ExtensionConfiguration> configurations)

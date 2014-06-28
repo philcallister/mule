@@ -36,7 +36,6 @@ import org.mule.tck.MuleTestUtils;
 import org.mule.tck.SensingNullMessageProcessor;
 import org.mule.tck.TestingWorkListener;
 import org.mule.tck.TriggerableMessageSource;
-import org.mule.tck.junit4.rule.SystemProperty;
 import org.mule.tck.testmodels.mule.TestConnector;
 import org.mule.util.ClassUtils;
 import org.mule.util.FileUtils;
@@ -54,7 +53,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 /**
@@ -79,6 +77,11 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
      * If the annotations module is on the classpath, also enable annotations config builder
      */
     public static final String CLASSNAME_ANNOTATIONS_CONFIG_BUILDER = "org.mule.config.AnnotationsConfigurationBuilder";
+
+    /**
+     * If the extensions support module is on the classpath, also enable extensions manager config builder
+     */
+    public static final String CLASSNAME_EXTENSIONS_MANAGER_CONFIG_BUILDER = "org.mule.module.extensions.internal.DefaultExtensionsManager";
 
     /**
      * The context used to run this test. Context will be created per class
@@ -202,6 +205,16 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
         // template method
     }
 
+    private void addIfPresent(List<ConfigurationBuilder> builders, String builderClassName) throws Exception
+    {
+        if (ClassUtils.isClassOnPath(builderClassName, getClass()))
+        {
+            builders.add((ConfigurationBuilder) ClassUtils.instanciateClass(builderClassName,
+                                                                            ClassUtils.NO_ARGS,
+                                                                            getClass()));
+        }
+    }
+
     protected MuleContext createMuleContext() throws Exception
     {
         // Should we set up the manager for every method?
@@ -215,13 +228,15 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
             MuleContextFactory muleContextFactory = new DefaultMuleContextFactory();
             List<ConfigurationBuilder> builders = new ArrayList<ConfigurationBuilder>();
             builders.add(new SimpleConfigurationBuilder(getStartUpProperties()));
+
             //If the annotations module is on the classpath, add the annotations config builder to the list
             //This will enable annotations config for this instance
-            if (ClassUtils.isClassOnPath(CLASSNAME_ANNOTATIONS_CONFIG_BUILDER, getClass()))
-            {
-                builders.add((ConfigurationBuilder) ClassUtils.instanciateClass(CLASSNAME_ANNOTATIONS_CONFIG_BUILDER,
-                                                                                ClassUtils.NO_ARGS, getClass()));
-            }
+            addIfPresent(builders, CLASSNAME_ANNOTATIONS_CONFIG_BUILDER);
+
+            //If the extensions support module is on the classpath, add the config builder to the list
+            //This will enable extensions support for this instance
+            addIfPresent(builders, CLASSNAME_EXTENSIONS_MANAGER_CONFIG_BUILDER);
+
             builders.add(getBuilder());
             addBuilders(builders);
             MuleContextBuilder contextBuilder = new DefaultMuleContextBuilder();

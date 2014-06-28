@@ -263,6 +263,18 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         ).build();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void badExtensionVersion()
+    {
+        populatedBuilder().setVersion("i'm new").build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void badMinMuleVersion()
+    {
+        populatedBuilder().setMinMuleVersion("i'm new").build();
+    }
+
     private void assertConsumeOperation(List<ExtensionOperation> operations) throws NoSuchOperationException
     {
         ExtensionOperation operation = operations.get(0);

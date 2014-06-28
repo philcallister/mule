@@ -4,13 +4,13 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal.spi;
+package org.mule.module.extensions.internal;
 
 import static junit.framework.Assert.assertEquals;
-import org.mule.module.extensions.HeisenbergModule;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.spi.ExtensionScanner;
+import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.internal.spi.DefaultExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -19,47 +19,45 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultExtensionScannerTestCase extends AbstractMuleTestCase
+public class ExtensionDiscovererTestCase extends AbstractMuleTestCase
 {
 
     @Mock
     private ExtensionsManager extensionsManager;
 
-    private ExtensionScanner scanner;
+    private ExtensionDiscoverer discoverer;
 
     @Before
     public void setUp()
     {
-        scanner = new DefaultExtensionScanner();
+        discoverer = new DefaultExtensionDiscoverer();
     }
 
     @Test
     public void scan() throws Exception
     {
-        List<Extension> extensions = scanner.scan();
+        List<Extension> extensions = discoverer.discover(getClass().getClassLoader(), new DefaultExtensionDescriber());
         assertEquals(1, extensions.size());
 
         Extension extension = extensions.get(0);
         assertMuleExtension(extension);
-
     }
 
-    @Test
-    public void scanAndRegister() throws Exception
+    @Test(expected = IllegalArgumentException.class)
+    public void nullClassLoader()
     {
-        scanner.scanAndRegister(extensionsManager);
-        ArgumentCaptor<Extension> captor = ArgumentCaptor.forClass(Extension.class);
-        Mockito.verify(extensionsManager).register(captor.capture());
+        discoverer.discover(null, new DefaultExtensionDescriber());
+    }
 
-        Extension extension = captor.getValue();
-        assertMuleExtension(extension);
+    @Test(expected = IllegalArgumentException.class)
+    public void nullDescriber()
+    {
+        discoverer.discover(getClass().getClassLoader(), null);
     }
 
     private void assertMuleExtension(Extension extension)

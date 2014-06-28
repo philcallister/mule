@@ -25,23 +25,17 @@ import org.apache.commons.lang.StringUtils;
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
-    private final Class<?> extensionType;
     private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
 
-    public DefaultExtensionDescriber(Class<?> extensionType)
-    {
-        Preconditions.checkArgument(extensionType != null, "extensionType cannot be null");
-        this.extensionType = extensionType;
-    }
-
     @Override
-    public void describe(ExtensionBuilder builder)
+    public void describe(Class<?> extensionType, ExtensionBuilder builder)
     {
+        Preconditions.checkArgument(extensionType != null, "Can't describe a null type");
         ExtensionDescriptor descriptor = MuleExtensionAnnotationParser.parseExtensionDescriptor(extensionType);
         describeExtension(builder, descriptor);
         describeConfigurations(builder, descriptor);
         describeOperations(builder, descriptor);
-        describeCapabilities(builder);
+        describeCapabilities(extensionType, builder);
     }
 
     private void describeExtension(ExtensionBuilder builder, ExtensionDescriptor descriptor)
@@ -131,7 +125,7 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         }
     }
 
-    private void describeCapabilities(ExtensionBuilder builder)
+    private void describeCapabilities(Class<?> extensionType, ExtensionBuilder builder)
     {
         capabilitiesResolver.resolveCapabilities(extensionType, builder);
     }

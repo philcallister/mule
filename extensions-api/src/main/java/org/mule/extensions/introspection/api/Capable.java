@@ -44,4 +44,12 @@ public interface Capable
      * @since 1.0
      */
     <T> Set<T> getCapabilities(Class<T> capabilityType);
+
+
+    /**
+     * Tells if this instance is capable of the given capability
+     * @param capabilityType a capability type
+     * @return a boolean
+     */
+    boolean isCapableOf(Class<?> capabilityType);
 }

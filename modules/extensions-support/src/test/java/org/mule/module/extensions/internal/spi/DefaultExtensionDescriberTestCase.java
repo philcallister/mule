@@ -62,8 +62,8 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     @Test
     public void describeTestModule() throws Exception
     {
-        ExtensionDescriber describer = new DefaultExtensionDescriber(HeisenbergModule.class);
-        describer.describe(builder);
+        ExtensionDescriber describer = new DefaultExtensionDescriber();
+        describer.describe(HeisenbergModule.class, builder);
 
         Extension extension = builder.build();
         assertNotNull(extension);

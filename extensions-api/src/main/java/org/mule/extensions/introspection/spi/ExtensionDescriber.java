@@ -9,5 +9,5 @@ package org.mule.extensions.introspection.spi;
 public interface ExtensionDescriber
 {
 
-    void describe(ExtensionBuilder builder);
+    void describe(Class<?> extensionType, ExtensionBuilder builder);
 }

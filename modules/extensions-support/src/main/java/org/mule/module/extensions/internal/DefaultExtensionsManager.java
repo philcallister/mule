@@ -6,48 +6,149 @@
  */
 package org.mule.module.extensions.internal;
 
+import org.mule.common.MuleVersion;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
+import org.mule.module.extensions.internal.spi.DefaultExtensionDescriber;
 import org.mule.util.Preconditions;
 
-import com.google.common.collect.ForwardingIterator;
+import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-final class DefaultExtensionsManager implements ExtensionsManager
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Default implementation of {@link org.mule.extensions.api.ExtensionsManager}
+ *
+ * @since 3.6.0
+ */
+public final class DefaultExtensionsManager implements ExtensionsManager
 {
 
-    private final List<Extension> extensions = new LinkedList<>();
+    private static final Logger logger = LoggerFactory.getLogger(DefaultExtensionsManager.class);
+
+    private final Map<String, Extension> extensions = Collections.synchronizedMap(new LinkedHashMap<String, Extension>());
+    private ExtensionDiscoverer extensionDiscoverer = new DefaultExtensionDiscoverer();
 
     @Override
-    public void register(Extension extension)
+    public List<Extension> discoverExtensions(ClassLoader classLoader)
     {
-        Preconditions.checkArgument(extension != null, "Cannot register a null extension");
-        extensions.add(extension);
+        logger.info("Starting discovery of extensions");
+
+        List<Extension> discovered = extensionDiscoverer.discover(classLoader, new DefaultExtensionDescriber());
+        logger.info("Discovered {} extensions", discovered.size());
+
+        ImmutableList.Builder<Extension> accepted = ImmutableList.builder();
+
+        for (Extension extension : discovered)
+        {
+            final String extensionName = extension.getName();
+
+            if (extensions.containsKey(extensionName))
+            {
+                if (maybeUpdateExtension(extension, extensionName))
+                {
+                    accepted.add(extension);
+                }
+            }
+            else
+            {
+                registerExtension(extension);
+                accepted.add(extension);
+            }
+        }
+
+        return accepted.build();
     }
 
-
-    @Override
-    public Iterator<Extension> getExtensions()
+    private void registerExtension(Extension extension)
     {
-        final Iterator<Extension> iterator = new ArrayList(extensions).iterator();
+        logger.info("Registering extension (version {})", extension.getName(), extension.getVersion());
+        extensions.put(extension.getName(), extension);
+    }
 
-        return new ForwardingIterator<Extension>()
+    private boolean maybeUpdateExtension(Extension extension, String extensionName)
+    {
+        Extension actual = extensions.get(extensionName);
+        MuleVersion newVersion;
+        try
         {
-            @Override
-            protected Iterator<Extension> delegate()
-            {
-                return iterator;
-            }
+            newVersion = new MuleVersion(extension.getVersion());
+        }
+        catch (IllegalArgumentException e)
+        {
+            logger.warn(
+                    String.format("Found extensions %s with invalid version %s. Skipping registration",
+                                  extension.getName(), extension.getVersion()), e);
 
-            @Override
-            public void remove()
+            return false;
+        }
+
+        if (newVersion.newerThan(actual.getVersion()))
+        {
+            logExtensionHotUpdate(extension, actual);
+            registerExtension(extension);
+
+            return true;
+        }
+        else
+        {
+            logger.info("Found extension {} but version {} was already registered. Keeping existing definition",
+                        extension.getName(),
+                        extension.getVersion());
+
+            return false;
+        }
+    }
+
+    private void logExtensionHotUpdate(Extension extension, Extension actual)
+    {
+        if (logger.isInfoEnabled())
+        {
+            logger.info(String.format(
+                    "Found extension %s which was already registered with version %s. New version %s " +
+                    "was found. Hot updating extension definition",
+                    extension.getName(),
+                    actual.getVersion(),
+                    extension.getVersion()));
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Extension> getExtensions()
+    {
+        return ImmutableList.copyOf(extensions.values());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Extension> getExtensionsCapableOf(Class<?> capabilityType)
+    {
+        Preconditions.checkArgument(capabilityType != null, "capability type cannot be null");
+        ImmutableList.Builder<Extension> capables = ImmutableList.builder();
+        for (Extension extension : getExtensions())
+        {
+            if (extension.isCapableOf(capabilityType))
             {
-                throw new UnsupportedOperationException("Extensions cannot be unregistered");
+                capables.add(extension);
             }
-        };
+        }
+
+        return capables.build();
+    }
+
+    protected void setExtensionsDiscoverer(ExtensionDiscoverer discoverer)
+    {
+        extensionDiscoverer = discoverer;
     }
 }

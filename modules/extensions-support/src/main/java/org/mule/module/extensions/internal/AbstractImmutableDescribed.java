@@ -48,4 +48,34 @@ abstract class AbstractImmutableDescribed implements Described
     {
         return description;
     }
+
+    /**
+     * Defines object equality based on the given object
+     * being an object of this class and in the equality
+     * of the {@link #getName()} attributes
+     *
+     * @param obj an object
+     * @return {@code true} if equal
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (getClass().isInstance(obj))
+        {
+            return name.equals(((Described) obj).getName());
+        }
+
+        return false;
+    }
+
+    /**
+     * calculates hashcode based on {@link #getName()}
+     *
+     * @return a hash code
+     */
+    @Override
+    public int hashCode()
+    {
+        return name.hashCode();
+    }
 }
