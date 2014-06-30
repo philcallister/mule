@@ -7,8 +7,8 @@
 package org.mule.module.extensions.internal;
 
 import static org.mule.util.Preconditions.checkArgument;
-import org.mule.extensions.introspection.spi.Builder;
-import org.mule.extensions.introspection.spi.CapabilityAwareBuilder;
+import org.mule.extensions.introspection.api.Builder;
+import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
 
 import java.util.HashSet;
 import java.util.Set;

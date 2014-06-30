@@ -9,6 +9,7 @@ package org.mule.extensions.api;
 import org.mule.extensions.introspection.api.Extension;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the {@link org.mule.extensions.introspection.api.Extension}s available in the current context.
@@ -51,21 +52,21 @@ public interface ExtensionsManager
     List<Extension> discoverExtensions(ClassLoader classLoader);
 
     /**
-     * Returns a {@link java.util.Iterator} listing all the available
+     * Returns a {@link java.util.Set} listing all the available
      * {@link org.mule.extensions.introspection.api.Extension}s.
      *
-     * @return an {@link java.util.Iterator}. Will not be {@code null} but might be empty
+     * @return an {@link java.util.Set}. Will not be {@code null} but might be empty
      */
-    List<Extension> getExtensions();
+    Set<Extension> getExtensions();
 
     /**
-     * Returns a {@link java.util.List} with the {@link org.mule.extensions.introspection.api.Extension}s
+     * Returns a {@link java.util.Set} with the {@link org.mule.extensions.introspection.api.Extension}s
      * that have the given capability
      *
      * @param capability a {@link java.lang.Class} representing a capability
-     * @return a {@link java.util.List} with the matching {@link org.mule.extensions.introspection.api.Extension}s. It might
+     * @return a {@link java.util.Set} with the matching {@link org.mule.extensions.introspection.api.Extension}s. It might
      * be {@code null} but will never be empty
      */
-    List<Extension> getExtensionsCapableOf(Class<?> capability);
+    Set<Extension> getExtensionsCapableOf(Class<?> capability);
 
 }

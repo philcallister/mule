@@ -81,7 +81,7 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
     /**
      * If the extensions support module is on the classpath, also enable extensions manager config builder
      */
-    public static final String CLASSNAME_EXTENSIONS_MANAGER_CONFIG_BUILDER = "org.mule.module.extensions.internal.DefaultExtensionsManager";
+    public static final String CLASSNAME_EXTENSIONS_MANAGER_CONFIG_BUILDER = "org.mule.config.builders.ExtensionsManagerConfigurationBuilder";
 
     /**
      * The context used to run this test. Context will be created per class

@@ -1,0 +1,102 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
+package org.mule.module.extensions.internal.config;
+
+import static org.mule.util.Preconditions.checkState;
+import org.mule.config.spring.MuleArtifactContext;
+import org.mule.extensions.api.ExtensionsManager;
+import org.mule.extensions.introspection.api.Described;
+import org.mule.extensions.introspection.api.Extension;
+import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.util.ClassUtils;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.xml.BeanDefinitionParser;
+import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
+import org.springframework.beans.factory.xml.ParserContext;
+import org.w3c.dom.Element;
+
+public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
+{
+
+    private ExtensionsManager extensionsManager;
+    private Map<String, Extension> handledExtensions = new HashMap<>();
+
+    @Override
+    public void init()
+    {
+        extensionsManager = MuleArtifactContext.getCurrentMuleContext().get().getExtensionsManager();
+        checkState(extensionsManager != null, "Could not obtain handledExtensions manager");
+    }
+
+    @Override
+    public BeanDefinition parse(Element element, ParserContext parserContext)
+    {
+        String namespace = element.getNamespaceURI();
+        if (isHandled(namespace))
+        {
+            registerExtensionParsers(namespace, element, parserContext);
+        }
+
+        return super.parse(element, parserContext);
+    }
+
+    private boolean isHandled(String namespace)
+    {
+        return handledExtensions.containsKey(namespace);
+    }
+
+    private void registerExtensionParsers(String namespace, Element element, ParserContext parserContext)
+    {
+        try
+        {
+            Extension extension = locateExtensionByNamespace(namespace);
+            register(extension.getConfigurations(), ExtensionConfigurationBeanDefinitionParser.class);
+            register(extension.getOperations(), ExtensionOperationBeanDefinitionParser.class);
+        }
+        catch (Exception e)
+        {
+            parserContext.getReaderContext().fatal(e.getMessage(), element, e);
+        }
+
+    }
+
+    private void register(Collection<? extends Described> objects, Class<? extends BeanDefinitionParser> parserType) throws Exception
+    {
+        for (Described described : objects)
+        {
+            registerBeanDefinitionParser(described.getName(), ClassUtils.instanciateClass(parserType, described));
+        }
+    }
+
+    private Extension locateExtensionByNamespace(String namespace)
+    {
+        Collection<Extension> capableExtensions = extensionsManager.getExtensionsCapableOf(XmlCapability.class);
+        if (CollectionUtils.isEmpty(capableExtensions))
+        {
+            throw new IllegalArgumentException(
+                    String.format("Could not find any handledExtensions supporting XML capabilities. Can't process namespace %s", namespace));
+        }
+
+        for (Extension extension : capableExtensions)
+        {
+            XmlCapability capability = extension.getCapabilities(XmlCapability.class).iterator().next();
+            if (namespace.equals(capability.getNamespace()))
+            {
+                return extension;
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Could not find extension associated to namespace %s", namespace));
+    }
+
+}

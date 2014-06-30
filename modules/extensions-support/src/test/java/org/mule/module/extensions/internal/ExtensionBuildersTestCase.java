@@ -23,7 +23,7 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
-import org.mule.extensions.introspection.spi.ExtensionBuilder;
+import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -73,6 +73,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                 .setDescription(WS_CONSUMER_DESCRIPTION)
                 .setVersion(VERSION)
                 .setMinMuleVersion(MIN_MULE_VERSION)
+                .setActingClass(ExtensionBuildersTestCase.class)
                 .addCapablity(new Date())
                 .addConfiguration(
                         builder.newConfiguration()
@@ -275,9 +276,51 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         populatedBuilder().setMinMuleVersion("i'm new").build();
     }
 
+    @Test
+    public void configurationsOrder()
+    {
+        final String beta = "beta";
+        final String alpha = "alpha";
+
+        ExtensionBuilder builder = populatedBuilder();
+        Extension extension = builder.addConfiguration(
+                builder.newConfiguration()
+                        .setName(beta))
+                .addConfiguration(
+                        builder.newConfiguration()
+                                .setName(alpha))
+                .build();
+
+        List<ExtensionConfiguration> configurations = extension.getConfigurations();
+        assertEquals(3, configurations.size());
+        assertEquals(CONFIG_NAME, configurations.get(0).getName());
+        assertEquals(alpha, configurations.get(1).getName());
+        assertEquals(beta, configurations.get(2).getName());
+    }
+
+    @Test
+    public void operationsAlphaSorted()
+    {
+        assertEquals(2, extension.getOperations().size());
+        assertEquals(BROADCAST, extension.getOperations().get(0).getName());
+        assertEquals(CONSUMER, extension.getOperations().get(1).getName());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nameClashes()
+    {
+        ExtensionBuilder builder = populatedBuilder();
+        builder.addOperation(builder.newOperation()
+                                     .setName(CONFIG_NAME)
+                                     .setDescription("")
+                                     .addInputType(ImmutableDataType.of(String.class))
+                                     .setOutputType(ImmutableDataType.of(String.class)))
+                .build();
+    }
+
     private void assertConsumeOperation(List<ExtensionOperation> operations) throws NoSuchOperationException
     {
-        ExtensionOperation operation = operations.get(0);
+        ExtensionOperation operation = operations.get(1);
         assertSame(operation, extension.getOperation(CONSUMER));
 
         assertEquals(CONSUMER, operation.getName());
@@ -293,7 +336,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 
     private void assertBroadcastOperation(List<ExtensionOperation> operations) throws NoSuchOperationException
     {
-        ExtensionOperation operation = operations.get(1);
+        ExtensionOperation operation = operations.get(0);
         assertSame(operation, extension.getOperation(BROADCAST));
 
         assertEquals(BROADCAST, operation.getName());

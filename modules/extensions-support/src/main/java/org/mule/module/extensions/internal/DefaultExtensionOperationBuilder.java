@@ -8,8 +8,8 @@ package org.mule.module.extensions.internal;
 
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.spi.ExtensionOperationBuilder;
-import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
+import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
+import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
 import java.util.Arrays;
 import java.util.LinkedList;

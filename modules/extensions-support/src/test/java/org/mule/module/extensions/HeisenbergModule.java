@@ -25,8 +25,8 @@ import java.util.List;
 public class HeisenbergModule
 {
 
-    public static final String SCHEMA_LOCATION = "Jesse's motor home";
-    public static final String NAMESPACE = "ww";
+    public static final String SCHEMA_LOCATION = "http://www.mulesoft.org/schema/mule/extension/heisenberg";
+    public static final String NAMESPACE = "heisenberg";
     public static final String SCHEMA_VERSION = "1.0-blue";
 
     public static final String HEISENBERG = "Heisenberg";

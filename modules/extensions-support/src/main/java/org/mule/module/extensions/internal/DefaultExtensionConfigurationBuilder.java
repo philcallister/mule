@@ -7,8 +7,8 @@
 package org.mule.module.extensions.internal;
 
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.spi.ExtensionConfigurationBuilder;
-import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
+import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
+import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
 import java.util.LinkedList;
 import java.util.List;

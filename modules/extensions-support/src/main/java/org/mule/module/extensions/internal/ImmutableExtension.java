@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNamesClashes;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.toMap;
 import static org.mule.util.Preconditions.checkArgument;
@@ -33,6 +34,7 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
 
     private final String version;
     private final String minMuleVersion;
+    private final Class<?> actingClass;
     private final Map<String, ExtensionConfiguration> configurations;
     private final Map<String, ExtensionOperation> operations;
 
@@ -40,23 +42,27 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
                                  String description,
                                  String version,
                                  String minMuleVersion,
+                                 Class<?> actingClass,
                                  List<ExtensionConfiguration> configurations,
                                  List<ExtensionOperation> operations,
                                  Set<Object> capabilities)
     {
         super(name, description, capabilities);
 
+        checkArgument(actingClass != null, "acting class cannot be null");
+        this.actingClass = actingClass;
+
         checkNullOrRepeatedNames(configurations, "configurations");
         checkNullOrRepeatedNames(operations, "operations");
+        checkNamesClashes(configurations, operations);
+        this.configurations = toMap(configurations);
+        this.operations = toMap(operations);
 
         checkArgument(!StringUtils.isBlank(version), "version cannot be blank");
         this.version = version;
 
         checkArgument(!StringUtils.isBlank(minMuleVersion), "minMuleVersion cannot be blank");
         this.minMuleVersion = minMuleVersion;
-
-        this.configurations = toMap(configurations);
-        this.operations = toMap(operations);
     }
 
 
@@ -111,6 +117,14 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
         return minMuleVersion;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Class<?> getActingClass()
+    {
+        return actingClass;
+    }
 
     /**
      * {@inheritDoc}

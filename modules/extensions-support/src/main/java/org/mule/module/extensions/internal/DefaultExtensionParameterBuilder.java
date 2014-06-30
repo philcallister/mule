@@ -8,7 +8,7 @@ package org.mule.module.extensions.internal;
 
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
+import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
 import org.apache.commons.lang.StringUtils;
 

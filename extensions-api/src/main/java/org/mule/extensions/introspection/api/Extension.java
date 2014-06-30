@@ -81,7 +81,8 @@ public interface Extension extends Described, Capable
 
     /**
      * Returns the {@link ExtensionOperation}s
-     * available for this extension. Each operation is guaranteed to have a unique name
+     * available for this extension. Each operation is guaranteed to have a unique name, and that name
+     * cannot be already in use by one of the available {@link #getConfigurations()}
      * <p>
      * There is always at least one operation, and operations will be sorted alphabetically.
      * </p>
@@ -99,5 +100,13 @@ public interface Extension extends Described, Capable
      * @throws NoSuchOperationException if no operation matches the given name
      */
     ExtensionOperation getOperation(String name) throws NoSuchOperationException;
+
+    /**
+     * The class which serves as nexus between the mule runtime and this
+     * extension
+     *
+     * @return a not {@code null} {@link java.lang.Class}
+     */
+    Class<?> getActingClass();
 
 }

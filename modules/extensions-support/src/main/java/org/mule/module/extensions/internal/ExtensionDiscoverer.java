@@ -7,7 +7,7 @@
 package org.mule.module.extensions.internal;
 
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.spi.ExtensionDescriber;
+import org.mule.extensions.introspection.api.ExtensionDescriber;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public interface ExtensionDiscoverer
      * according to the algorithm described in {@link org.mule.extensions.api.ExtensionsManager#discoverExtensions(ClassLoader)}
      *
      * @param classLoader the {@link java.lang.ClassLoader} in which path perform the search
-     * @param describer   a not {@code null} {@link org.mule.extensions.introspection.spi.ExtensionDescriber} to introspect the
+     * @param describer   a not {@code null} {@link org.mule.extensions.introspection.api.ExtensionDescriber} to introspect the
      *                    extension types
      * @return a {@link java.util.List} of {@link org.mule.extensions.introspection.api.Extension}. Might be empty
      * but it will never be {@code null}

@@ -9,15 +9,16 @@ package org.mule.module.extensions.internal;
 import org.mule.common.MuleVersion;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.module.extensions.internal.spi.DefaultExtensionDescriber;
 import org.mule.util.Preconditions;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,19 +124,19 @@ public final class DefaultExtensionsManager implements ExtensionsManager
      * {@inheritDoc}
      */
     @Override
-    public List<Extension> getExtensions()
+    public Set<Extension> getExtensions()
     {
-        return ImmutableList.copyOf(extensions.values());
+        return ImmutableSet.copyOf(extensions.values());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Extension> getExtensionsCapableOf(Class<?> capabilityType)
+    public Set<Extension> getExtensionsCapableOf(Class<?> capabilityType)
     {
         Preconditions.checkArgument(capabilityType != null, "capability type cannot be null");
-        ImmutableList.Builder<Extension> capables = ImmutableList.builder();
+        ImmutableSet.Builder<Extension> capables = ImmutableSet.builder();
         for (Extension extension : getExtensions())
         {
             if (extension.isCapableOf(capabilityType))

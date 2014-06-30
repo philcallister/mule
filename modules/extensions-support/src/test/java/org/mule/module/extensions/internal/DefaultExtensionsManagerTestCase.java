@@ -16,14 +16,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mule.extensions.introspection.api.Extension;
+import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
-import org.mule.extensions.introspection.spi.ExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import com.google.common.collect.ImmutableList;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -104,10 +107,10 @@ public class DefaultExtensionsManagerTestCase extends AbstractMuleTestCase
         when(extension2.isCapableOf(XmlCapability.class)).thenReturn(false);
 
         discover();
-        List<Extension> extensions = extensionsManager.getExtensionsCapableOf(XmlCapability.class);
+        Set<Extension> extensions = extensionsManager.getExtensionsCapableOf(XmlCapability.class);
 
         assertEquals(1, extensions.size());
-        testEquals(extension1, extensions.get(0));
+        testEquals(extension1, extensions.iterator().next());
     }
 
     @Test
@@ -117,7 +120,7 @@ public class DefaultExtensionsManagerTestCase extends AbstractMuleTestCase
         when(extension2.isCapableOf(XmlCapability.class)).thenReturn(false);
 
         discover();
-        List<Extension> extensions = extensionsManager.getExtensionsCapableOf(XmlCapability.class);
+        Set<Extension> extensions = extensionsManager.getExtensionsCapableOf(XmlCapability.class);
 
         assertTrue(extensions.isEmpty());
     }
@@ -224,13 +227,16 @@ public class DefaultExtensionsManagerTestCase extends AbstractMuleTestCase
                 .build();
     }
 
-    private void testEquals(List<Extension> expected, List<Extension> obtained)
+    private void testEquals(Collection<Extension> expected, Collection<Extension> obtained)
     {
         assertEquals(expected.size(), obtained.size());
+        Iterator<Extension> expectedIterator = expected.iterator();
+        Iterator<Extension> obtainedIterator = expected.iterator();
 
-        for (int i = 0; i < expected.size(); i++)
+        while (expectedIterator.hasNext())
         {
-            testEquals(expected.get(i), obtained.get(i));
+            assertTrue(obtainedIterator.hasNext());
+            testEquals(expectedIterator.next(), obtainedIterator.next());
         }
     }
 

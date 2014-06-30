@@ -6,13 +6,16 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.Described;
-import org.mule.extensions.introspection.spi.Builder;
-import org.mule.util.Preconditions;
+import org.mule.extensions.introspection.api.ExtensionConfiguration;
+import org.mule.extensions.introspection.api.ExtensionOperation;
+import org.mule.extensions.introspection.api.Builder;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
@@ -32,16 +35,55 @@ public final class MuleExtensionUtils
 
     public static void checkNullOrRepeatedNames(Collection<? extends Described> describedCollection, String describedEntityName)
     {
-        Preconditions.checkState(describedCollection != null && !describedCollection.isEmpty(), String.format("Must provide at least one %s", describedEntityName));
+        Set<String> repeatedNames = collectRepeatedNames(describedCollection, describedEntityName);
+
+        if (!repeatedNames.isEmpty())
+        {
+            throw new IllegalArgumentException(
+                    String.format("The following %s were declared multiple times: [%s]",
+                                  describedEntityName,
+                                  Joiner.on(", ").join(repeatedNames))
+            );
+        }
+    }
+
+    /**
+     * Verifies that no operation has the same name as a configuration. This
+     * method assumes that the configurations and operations provided have
+     * already been verified through {@link #checkNullOrRepeatedNames(java.util.Collection, String)}
+     * which means that name clashes can only occur against each other and not within the
+     * inner elements of each collection
+     */
+    public static void checkNamesClashes(Collection<ExtensionConfiguration> configurations, Collection<ExtensionOperation> operations)
+    {
+        List<Described> all = new ArrayList<>(configurations.size() + operations.size());
+        all.addAll(configurations);
+        all.addAll(operations);
+
+        Set<String> clashes = collectRepeatedNames(all, "operations");
+        if (!clashes.isEmpty())
+        {
+            throw new IllegalArgumentException(
+                    String.format("The following operations have the same name as a declared configuration: [%s]",
+                                  Joiner.on(", ").join(clashes))
+            );
+        }
+    }
+
+    private static Set<String> collectRepeatedNames(Collection<? extends Described> describedCollection, String describedEntityName)
+    {
+        if (CollectionUtils.isEmpty(describedCollection))
+        {
+            return ImmutableSet.of();
+        }
 
         Multiset<String> names = LinkedHashMultiset.create();
 
         for (Described described : describedCollection)
         {
-            Preconditions.checkArgument(described != null, String.format("A null %s was provided", describedEntityName));
+            checkArgument(described != null, String.format("A null %s was provided", describedEntityName));
             names.add(described.getName());
         }
-
 
         names = Multisets.copyHighestCountFirst(names);
         Set<String> repeatedNames = new HashSet<>();
@@ -55,14 +97,7 @@ public final class MuleExtensionUtils
             repeatedNames.add(name);
         }
 
-        if (!repeatedNames.isEmpty())
-        {
-            throw new IllegalArgumentException(
-                    String.format("The following %s were declared multiple times: [%s]",
-                                  describedEntityName,
-                                  Joiner.on(", ").join(repeatedNames))
-            );
-        }
+        return repeatedNames;
     }
 
     public static <T> List<T> build(Collection<? extends Builder<T>> builders)

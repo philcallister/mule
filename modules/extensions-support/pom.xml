@@ -31,13 +31,6 @@
 			<artifactId>mule-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-            <!-- for now and only to get the NestedProcessor... evaluate if move that class here
-            this dependency should be the other way around -->
-        <dependency>
-            <groupId>org.mule.modules</groupId>
-            <artifactId>mule-module-devkit-support</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 		<dependency>
 			<groupId>org.mule</groupId>
 			<artifactId>mule-core</artifactId>

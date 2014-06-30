@@ -9,14 +9,15 @@ package org.mule.module.extensions.internal;
 import static org.mule.util.Preconditions.checkArgument;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.common.MuleVersion;
+import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.spi.Builder;
-import org.mule.extensions.introspection.spi.ExtensionBuilder;
-import org.mule.extensions.introspection.spi.ExtensionConfigurationBuilder;
-import org.mule.extensions.introspection.spi.ExtensionOperationBuilder;
-import org.mule.extensions.introspection.spi.ExtensionParameterBuilder;
+import org.mule.extensions.introspection.api.Builder;
+import org.mule.extensions.introspection.api.ExtensionBuilder;
+import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
+import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
+import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +28,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * Default implementation of {@link org.mule.extensions.introspection.spi.ExtensionBuilder}
+ * Default implementation of {@link org.mule.extensions.introspection.api.ExtensionBuilder}
  * which builds instances of {@link ImmutableExtension}
  *
  * @since 1.0
@@ -42,6 +43,7 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
     private String description;
     private String version;
     private String minMuleVersion;
+    private Class<?> actingClass;
     private List<ExtensionConfigurationBuilder> configurations = new LinkedList<>();
     private List<Builder<ExtensionOperation>> operations = new LinkedList<>();
 
@@ -98,6 +100,16 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
      * {@inheritDoc}
      */
     @Override
+    public ExtensionBuilder setActingClass(Class<?> actingClass)
+    {
+        this.actingClass = actingClass;
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ExtensionBuilder addConfiguration(ExtensionConfigurationBuilder configuration)
     {
         checkArgument(configuration != null, "cannot add a null configuration builder");
@@ -130,8 +142,9 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
                                       description,
                                       version,
                                       minMuleVersion,
-                                      sort(MuleExtensionUtils.build(configurations)),
-                                      MuleExtensionUtils.build(operations),
+                                      actingClass,
+                                      sortConfigurations(MuleExtensionUtils.build(configurations)),
+                                      sort(MuleExtensionUtils.build(operations)),
                                       capabilities);
     }
 
@@ -158,28 +171,25 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
         }
     }
 
-    private List<ExtensionConfiguration> sort(List<ExtensionConfiguration> configurations)
+    private List<ExtensionConfiguration> sortConfigurations(List<ExtensionConfiguration> configurations)
     {
         List<ExtensionConfiguration> sorted = new ArrayList<>(configurations.size());
         sorted.add(configurations.get(0));
 
         if (configurations.size() > 1)
         {
-            List<ExtensionConfiguration> nonDefault = configurations.subList(1, configurations.size());
-            Collections.sort(nonDefault, new Comparator<ExtensionConfiguration>()
-            {
-                @Override
-                public int compare(ExtensionConfiguration c1, ExtensionConfiguration c2)
-                {
-                    return c1.getName().compareTo(c2.getName());
-                }
-            });
-
-            sorted.addAll(nonDefault);
+            sorted.addAll(sort(configurations.subList(1, configurations.size())));
         }
 
         return sorted;
     }
+
+    private <T extends Described> List<T> sort(List<T> list)
+    {
+        Collections.sort(list, new DescribedComparator());
+        return list;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -206,5 +216,15 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
     public ExtensionParameterBuilder newParameter()
     {
         return new DefaultExtensionParameterBuilder();
+    }
+
+    private class DescribedComparator implements Comparator<Described>
+    {
+
+        @Override
+        public int compare(Described o1, Described o2)
+        {
+            return o1.getName().compareTo(o2.getName());
+        }
     }
 }
