@@ -42,7 +42,7 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
     public BeanDefinition parse(Element element, ParserContext parserContext)
     {
         String namespace = element.getNamespaceURI();
-        if (isHandled(namespace))
+        if (!isHandled(namespace))
         {
             registerExtensionParsers(namespace, element, parserContext);
         }
@@ -60,8 +60,8 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         try
         {
             Extension extension = locateExtensionByNamespace(namespace);
-            register(extension.getConfigurations(), ExtensionConfigurationBeanDefinitionParser.class);
-            register(extension.getOperations(), ExtensionOperationBeanDefinitionParser.class);
+            register(extension, extension.getConfigurations(), ExtensionConfigurationBeanDefinitionParser.class);
+            register(extension, extension.getOperations(), ExtensionOperationBeanDefinitionParser.class);
         }
         catch (Exception e)
         {
@@ -70,11 +70,11 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
 
     }
 
-    private void register(Collection<? extends Described> objects, Class<? extends BeanDefinitionParser> parserType) throws Exception
+    private void register(Extension extension, Collection<? extends Described> objects, Class<? extends BeanDefinitionParser> parserType) throws Exception
     {
         for (Described described : objects)
         {
-            registerBeanDefinitionParser(described.getName(), ClassUtils.instanciateClass(parserType, described));
+            registerBeanDefinitionParser(described.getName(), ClassUtils.instanciateClass(parserType, extension, described));
         }
     }
 
@@ -90,7 +90,7 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         for (Extension extension : capableExtensions)
         {
             XmlCapability capability = extension.getCapabilities(XmlCapability.class).iterator().next();
-            if (namespace.equals(capability.getNamespace()))
+            if (namespace.equals(capability.getSchemaLocation()))
             {
                 return extension;
             }

@@ -18,12 +18,12 @@ import static org.mule.module.extensions.internal.ImmutableDataType.of;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
+import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
-import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -315,6 +315,22 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                                      .setDescription("")
                                      .addInputType(ImmutableDataType.of(String.class))
                                      .setOutputType(ImmutableDataType.of(String.class)))
+                .build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void operationNamedName()
+    {
+        ExtensionBuilder builder = populatedBuilder();
+        DataType string = ImmutableDataType.of(String.class);
+        builder.addOperation(builder.newOperation()
+                                     .setName("invalidOperation")
+                                     .setDescription("")
+                                     .addInputType(string)
+                                     .setOutputType(string)
+                                     .addParameter(builder.newParameter()
+                                                           .setName("name")
+                                                           .setType(string)))
                 .build();
     }
 

@@ -7,14 +7,16 @@
 
 package org.mule.module.extensions.internal.capability.xml.schema.model;
 
+import org.mule.extensions.introspection.api.DataType;
+
 import javax.xml.namespace.QName;
 
 public final class SchemaTypeConversion
 {
 
-    public static boolean isSupported(String typeName)
+    public static boolean isSupported(DataType type)
     {
-        return convertType("", typeName) != null;
+        return convertType("", type.getRawType().getName()) != null;
     }
 
     public static QName convertType(String targetNamespace, String typeName)

@@ -6,26 +6,42 @@
  */
 package org.mule.module.extensions.internal.config;
 
+import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.xml.BeanDefinitionParser;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
-public class ExtensionConfigurationBeanDefinitionParser implements BeanDefinitionParser
+public class ExtensionConfigurationBeanDefinitionParser extends AbstractExtensionBeanDefinitionParser
 {
 
+    private final Extension extension;
     private final ExtensionConfiguration configuration;
 
-    public ExtensionConfigurationBeanDefinitionParser(ExtensionConfiguration configuration)
+    public ExtensionConfigurationBeanDefinitionParser(Extension extension, ExtensionConfiguration configuration)
     {
+        this.extension = extension;
         this.configuration = configuration;
     }
 
     @Override
     public BeanDefinition parse(Element element, ParserContext parserContext)
     {
-        return null;
+        parseConfigName(element);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(extension.getActingClass());
+        builder.setScope(BeanDefinition.SCOPE_SINGLETON);
+
+        for (ExtensionParameter parameter : configuration.getParameters())
+        {
+            parseParameter(parameter, builder, element);
+        }
+
+        BeanDefinition definition = builder.getBeanDefinition();
+        setNoRecurseOnDefinition(definition);
+
+        return definition;
     }
 }

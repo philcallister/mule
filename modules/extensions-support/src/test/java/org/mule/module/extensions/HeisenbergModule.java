@@ -17,6 +17,9 @@ import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
 
+import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,21 +33,38 @@ public class HeisenbergModule
     public static final String SCHEMA_VERSION = "1.0-blue";
 
     public static final String HEISENBERG = "Heisenberg";
+    public static final String AGE = "50";
     public static final String EXTENSION_NAME = "HeisenbergExtension";
     public static final String EXTENSION_DESCRIPTION = "My Test Extension just to unit test";
     public static final String EXTENSION_VERSION = "1.0";
 
     @Configurable
     @Optional(defaultValue = HEISENBERG)
-    private String name;
+    private String myName;
+
+    @Configurable
+    @Optional(defaultValue = AGE)
+    private Integer age;
 
     @Configurable
     private List<String> enemies = new LinkedList<>();
 
+    @Configurable
+    private BigDecimal money;
+
+    @Configurable
+    private boolean cancer;
+
+    @Configurable
+    private Date dateOfBirth;
+
+    @Configurable
+    private Calendar dateOfDeath;
+
     @Operation
     public String sayMyName()
     {
-        return name;
+        return myName;
     }
 
     @Operation
@@ -88,14 +108,14 @@ public class HeisenbergModule
         message.setProperty("secretPackage", "meth", PropertyScope.INVOCATION);
     }
 
-    public String getName()
+    public String getMyName()
     {
-        return name;
+        return myName;
     }
 
-    public void setName(String name)
+    public void setMyName(String myName)
     {
-        this.name = name;
+        this.myName = myName;
     }
 
     public List<String> getEnemies()
@@ -106,5 +126,55 @@ public class HeisenbergModule
     public void setEnemies(List<String> enemies)
     {
         this.enemies = enemies;
+    }
+
+    public Integer getAge()
+    {
+        return age;
+    }
+
+    public void setAge(Integer age)
+    {
+        this.age = age;
+    }
+
+    public boolean isCancer()
+    {
+        return cancer;
+    }
+
+    public void setCancer(boolean cancer)
+    {
+        this.cancer = cancer;
+    }
+
+    public BigDecimal getMoney()
+    {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money)
+    {
+        this.money = money;
+    }
+
+    public Calendar getDateOfDeath()
+    {
+        return dateOfDeath;
+    }
+
+    public void setDateOfDeath(Calendar dateOfDeath)
+    {
+        this.dateOfDeath = dateOfDeath;
+    }
+
+    public Date getDateOfBirth()
+    {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(Date dateOfBirth)
+    {
+        this.dateOfBirth = dateOfBirth;
     }
 }

@@ -23,86 +23,207 @@ public enum DataQualifier
     /**
      * A void type. Means no value
      */
-    VOID,
+    VOID
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onVoid();
+                }
+            },
 
     /**
      * A boolean type.
      */
-    BOOLEAN,
+    BOOLEAN
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onBoolean();
+                }
+            },
 
     /**
      * A number with no decimal part
      */
-    INTEGER,
+    INTEGER
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onInteger();
+                }
+            },
 
     /**
      * A double precision number
      */
-    DOUBLE,
+    DOUBLE
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onDouble();
+                }
+            },
 
     /**
      * A floating point number
      */
-    DECIMAL,
+    DECIMAL
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onDecimal();
+                }
+            },
 
     /**
      * A text type
      */
-    STRING,
+    STRING
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onString();
+                }
+            },
 
     /**
      * A short number
      */
-    SHORT,
+    SHORT
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onShort();
+                }
+            },
 
     /**
      * A long integer
      */
-    LONG,
+    LONG
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onLong();
+                }
+            },
 
     /**
      * A single byte
      */
-    BYTE,
+    BYTE
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onByte();
+                }
+            },
 
     /**
      * A streaming, consumible type
      */
-    STREAM,
+    STREAM
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onStream();
+                }
+            },
 
     /**
      * An {@link java.lang.Enum} type
      */
-    ENUM,
+    ENUM
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onEnum();
+                }
+            },
 
     /**
      * A date type
      */
-    DATE,
+    DATE
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onDate();
+                }
+            },
 
     /**
      * A date with time
      */
-    DATE_TIME,
+    DATE_TIME
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onDateTime();
+                }
+            },
 
     /**
      * A pojo implementing the bean contract
      */
-    BEAN,
+    BEAN
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onBean();
+                }
+            },
 
     /**
      * A java {@link java.util.Collection} type
      */
-    LIST,
+    LIST
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onList();
+                }
+            },
 
     /**
      * A java {@link java.util.Map}
      */
-    MAP,
+    MAP
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onMap();
+                }
+            },
 
     /**
      * A reference to another operation which will in turn
      * return another type. Consider this as a level of indirection
      */
-    OPERATION;
+    OPERATION
+            {
+                @Override
+                public void accept(DataQualifierVisitor visitor)
+                {
+                    visitor.onOperation();
+                }
+            };
+
+    public abstract void accept(DataQualifierVisitor visitor);
 }

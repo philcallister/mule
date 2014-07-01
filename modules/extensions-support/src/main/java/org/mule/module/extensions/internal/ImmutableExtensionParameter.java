@@ -6,9 +6,13 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.util.Preconditions;
+
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Set;
 
 /**
  * Immutable implementation of {@link org.mule.extensions.introspection.api.ExtensionParameter}
@@ -17,6 +21,8 @@ import org.mule.util.Preconditions;
  */
 final class ImmutableExtensionParameter extends AbstractImmutableDescribed implements ExtensionParameter
 {
+
+    private static final Set<String> reservedNames = ImmutableSet.<String>builder().add("name").build();
 
     private final DataType type;
     private final boolean required;
@@ -32,14 +38,13 @@ final class ImmutableExtensionParameter extends AbstractImmutableDescribed imple
     {
         super(name, description);
 
-        Preconditions.checkState(type != null, "Parameters must have a type");
-        if (defaultValue != null)
+        if (reservedNames.contains(name))
         {
-            Preconditions.checkState(type.getRawType().isInstance(defaultValue),
-                                     String.format("Parameter of type '%s' cannot have a default value of type '%s'",
-                                                   type.getName(),
-                                                   defaultValue.getClass().getCanonicalName()));
+            throw new IllegalArgumentException(
+                    String.format("Extension parameter cannot have the name ['%s'] since it's a reserved one", name));
         }
+
+        checkArgument(type != null, "Parameters must have a type");
 
         this.type = type;
         this.required = required;

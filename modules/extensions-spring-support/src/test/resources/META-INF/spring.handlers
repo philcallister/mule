@@ -1,1 +1,1 @@
-heisenberg=org.mule.module.extensions.internal.config.ExtensionsNamespaceHandler
+http\://www.mulesoft.org/schema/mule/extension/heisenberg=org.mule.module.extensions.internal.config.ExtensionsNamespaceHandler

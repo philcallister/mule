@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.config;
 
+import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -16,10 +17,12 @@ import org.w3c.dom.Element;
 public class ExtensionOperationBeanDefinitionParser implements BeanDefinitionParser
 {
 
+    private final Extension extension;
     private final ExtensionOperation operation;
 
-    public ExtensionOperationBeanDefinitionParser(ExtensionOperation operation)
+    public ExtensionOperationBeanDefinitionParser(Extension extension, ExtensionOperation operation)
     {
+        this.extension = extension;
         this.operation = operation;
     }
 

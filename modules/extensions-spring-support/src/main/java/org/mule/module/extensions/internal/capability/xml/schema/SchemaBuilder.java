@@ -764,14 +764,7 @@ public class SchemaBuilder
                 }
                 else if (isTypeSupported(parameterType) || ENUM.equals(parameterQualifier))
                 {
-                    if (STRING.equals(parameterQualifier))
-                    {
-                        createParameterElement(all, parameter);
-                    }
-                    else
-                    {
-                        complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
-                    }
+                    complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
                 }
                 else if (BEAN.equals(parameterQualifier))
                 {
@@ -911,7 +904,7 @@ public class SchemaBuilder
 
     private boolean isTypeSupported(DataType type)
     {
-        return SchemaTypeConversion.isSupported(type.getRawType().getName());
+        return SchemaTypeConversion.isSupported(type);
     }
 
     private boolean skipField(Field field)

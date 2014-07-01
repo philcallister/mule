@@ -29,8 +29,10 @@ public class ExtensionsManagerConfigurationBuilder extends AbstractConfiguration
         if (muleContext instanceof DefaultMuleContext &&
             ClassUtils.isClassOnPath(EXTENSIONS_MANAGER_CLASS_NAME, getClass()))
         {
-            ((DefaultMuleContext) muleContext).setExtensionsManager(
-                    (ExtensionsManager) ClassUtils.instanciateClass(EXTENSIONS_MANAGER_CLASS_NAME));
+            ExtensionsManager extensionsManager = (ExtensionsManager) ClassUtils.instanciateClass(EXTENSIONS_MANAGER_CLASS_NAME);
+            extensionsManager.discoverExtensions(Thread.currentThread().getContextClassLoader());
+
+            ((DefaultMuleContext) muleContext).setExtensionsManager(extensionsManager);
         }
     }
 }

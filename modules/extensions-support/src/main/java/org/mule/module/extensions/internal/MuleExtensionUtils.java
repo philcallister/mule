@@ -7,10 +7,12 @@
 package org.mule.module.extensions.internal;
 
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.extensions.introspection.api.Builder;
+import org.mule.extensions.introspection.api.DataQualifier;
+import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.api.Builder;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -141,5 +143,12 @@ public final class MuleExtensionUtils
         }
 
         return map.build();
+    }
+
+    public static boolean isListOf(DataType type, DataQualifier of)
+    {
+        return DataQualifier.LIST.equals(type.getQualifier()) &&
+               type.getGenericTypes().length > 0 &&
+               of.equals(type.getGenericTypes()[0].getQualifier());
     }
 }

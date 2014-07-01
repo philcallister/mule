@@ -41,7 +41,12 @@
                             <xs:documentation>Give a name to this configuration so it can be later referenced by config-ref.</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
-                    <xs:attribute type="xs:string" use="optional" name="name"></xs:attribute>
+                    <xs:attribute type="xs:string" use="optional" name="myName"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="integerType" use="optional" name="age"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="doubleType" use="required" name="money"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="booleanType" use="required" name="cancer"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="dateTimeType" use="required" name="dateOfBirth"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="dateTimeType" use="required" name="dateOfDeath"></xs:attribute>
                 </xs:extension>
             </xs:complexContent>
         </xs:complexType>
@@ -121,18 +126,12 @@
         <xs:complexContent>
             <xs:extension xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:abstractMessageProcessorType">
                 <xs:group minOccurs="0" maxOccurs="unbounded" ref="mule:messageProcessorOrOutboundEndpoint"></xs:group>
-                <xs:sequence>
-                    <xs:element type="xs:string" default="#[payload]" minOccurs="0" name="goodbyeMessage">
-                        <xs:annotation>
-                            <xs:documentation></xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                </xs:sequence>
                 <xs:attribute type="xs:string" use="optional" name="config-ref">
                     <xs:annotation>
                         <xs:documentation>Specify which configuration to use for this invocation.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
+                <xs:attribute type="xs:string" use="optional" name="goodbyeMessage"></xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
