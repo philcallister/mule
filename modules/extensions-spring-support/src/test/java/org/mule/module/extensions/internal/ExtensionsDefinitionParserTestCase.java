@@ -8,13 +8,18 @@ package org.mule.module.extensions.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.Ricin;
 import org.mule.tck.junit4.FunctionalTestCase;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -22,6 +27,7 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
 {
 
     private static final String HEISENBERG_NAME = "heisenberg";
+    private static final String HEISENBERG_BYREF = "heisenbergByRef";
 
     @Override
     protected String getConfigFile()
@@ -33,6 +39,18 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
     public void heisenbergConfig()
     {
         HeisenbergModule heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
+        assertHeisenbergConfig(heisenberg);
+    }
+
+    @Test
+    public void heisenbergByRef() throws Exception
+    {
+        HeisenbergModule heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_BYREF);
+        assertHeisenbergConfig(heisenberg);
+    }
+
+    private void assertHeisenbergConfig(HeisenbergModule heisenberg)
+    {
         assertNotNull(heisenberg);
         assertEquals(HeisenbergModule.HEISENBERG, heisenberg.getMyName());
         assertEquals(Integer.valueOf(HeisenbergModule.AGE), heisenberg.getAge());
@@ -52,6 +70,41 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertEquals(getDateOfDeath().get(Calendar.YEAR), heisenberg.getDateOfDeath().get(Calendar.YEAR));
 
         assertEquals(new BigDecimal("1000000"), heisenberg.getMoney());
+
+        Map<String, Long> recipe = heisenberg.getRecipe();
+        assertNotNull(recipe);
+        assertEquals(3, recipe.size());
+        assertEquals(Long.valueOf(75), recipe.get("methylamine"));
+        assertEquals(Long.valueOf(0), recipe.get("pseudoephedrine"));
+        assertEquals(Long.valueOf(25), recipe.get("P2P"));
+
+        Door door = heisenberg.getNextDoor();
+        //TODO: this should be an assert not an if, once the parser properly supports this
+        if (door != null)
+        {
+            assertEquals("pollos hermanos", door.getAddress());
+            assertEquals("Gustavo Fring", door.getVictim());
+            Door previous = door.getPrevious();
+            assertNotNull(previous);
+            assertEquals("Krazy-8", previous.getVictim());
+            assertEquals("Jesse's", previous.getAddress());
+            assertNull(previous.getPrevious());
+        }
+
+        Set<Ricin> ricinPacks = heisenberg.getRicinPacks();
+
+        //TODO: this should be an assert not an if, once the parser properly supports this
+        if (ricinPacks != null)
+        {
+            assertEquals(1, ricinPacks.size());
+            Ricin ricin = ricinPacks.iterator().next();
+            assertEquals(Long.valueOf(22), ricin.getMicrogramsPerKilo());
+
+            Door destination = ricin.getDestination();
+            assertNotNull(destination);
+            assertEquals("Lidia", destination.getVictim());
+            assertEquals("Stevia coffe shop", destination.getAddress());
+        }
     }
 
     private Calendar getDateOfBirth()

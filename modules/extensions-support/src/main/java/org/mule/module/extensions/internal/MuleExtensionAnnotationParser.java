@@ -14,6 +14,7 @@ import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
+import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
@@ -105,9 +106,11 @@ final class MuleExtensionAnnotationParser
                 continue;
             }
 
+            DataType dataType = adaptType(parameterTypes[i]);
+
             ParameterDescriptor parameter = new ParameterDescriptor();
             parameter.setName(paramNames[i]);
-            parameter.setType(adaptType(parameterTypes[i]));
+            parameter.setType(dataType);
 
             Map<Class<? extends Annotation>, Annotation> annotations = parseAnnotations(parameterAnnotations[i]);
 
@@ -115,11 +118,7 @@ final class MuleExtensionAnnotationParser
             if (optional != null)
             {
                 parameter.setRequired(false);
-                String defaultValue = optional.defaultValue();
-                if (!StringUtils.isEmpty(defaultValue))
-                {
-                    parameter.setDefaultValue(defaultValue);
-                }
+                parameter.setDefaultValue(getDefaultValue(optional, dataType));
             }
             else
             {
@@ -130,6 +129,24 @@ final class MuleExtensionAnnotationParser
         }
 
         return parameters;
+    }
+
+    protected static Object getDefaultValue(Optional optional, DataType dataType)
+    {
+        if (optional == null)
+        {
+            return null;
+        }
+
+        String defaultValue = optional.defaultValue();
+        if (DataQualifier.STRING.equals(dataType.getQualifier()))
+        {
+            return defaultValue;
+        }
+        else
+        {
+            return StringUtils.isEmpty(defaultValue) ? null : defaultValue;
+        }
     }
 
     private static boolean isParametrizable(DataType type, Annotation[] annotations)

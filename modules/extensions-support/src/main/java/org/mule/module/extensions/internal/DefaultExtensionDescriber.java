@@ -6,9 +6,11 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.mule.module.extensions.internal.MuleExtensionAnnotationParser.getDefaultValue;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
+import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
@@ -61,14 +63,15 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         {
             Configurable configurable = field.getAnnotation(Configurable.class);
             Optional optional = field.getAnnotation(Optional.class);
+            DataType dataType = IntrospectionUtils.getFieldDataType(field);
 
             configuration.addParameter(builder.newParameter()
                                                .setName(field.getName())
                                                        //.setDescription(from java doc) TODO: get this from java doc
-                                               .setType(IntrospectionUtils.getFieldDataType(field))
+                                               .setType(dataType)
                                                .setDynamic(configurable.isDynamic())
                                                .setRequired(optional == null)
-                                               .setDefaultValue(optional != null ? optional.defaultValue() : null));
+                                               .setDefaultValue(getDefaultValue(optional, dataType)));
         }
     }
 

@@ -22,6 +22,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Extension(name = HeisenbergModule.EXTENSION_NAME, description = HeisenbergModule.EXTENSION_DESCRIPTION, version = HeisenbergModule.EXTENSION_VERSION)
 @Xml(schemaLocation = HeisenbergModule.SCHEMA_LOCATION, namespace = HeisenbergModule.NAMESPACE, schemaVersion = HeisenbergModule.SCHEMA_VERSION)
@@ -60,6 +62,18 @@ public class HeisenbergModule
 
     @Configurable
     private Calendar dateOfDeath;
+
+    @Configurable
+    @Optional
+    private Map<String, Long> recipe;
+
+    @Configurable
+    @Optional
+    private Set<Ricin> ricinPacks;
+
+    @Configurable
+    @Optional
+    private Door nextDoor;
 
     @Operation
     public String sayMyName()
@@ -176,5 +190,35 @@ public class HeisenbergModule
     public void setDateOfBirth(Date dateOfBirth)
     {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public Map<String, Long> getRecipe()
+    {
+        return recipe;
+    }
+
+    public void setRecipe(Map<String, Long> recipe)
+    {
+        this.recipe = recipe;
+    }
+
+    public Set<Ricin> getRicinPacks()
+    {
+        return ricinPacks;
+    }
+
+    public void setRicinPacks(Set<Ricin> ricinPacks)
+    {
+        this.ricinPacks = ricinPacks;
+    }
+
+    public Door getNextDoor()
+    {
+        return nextDoor;
+    }
+
+    public void setNextDoor(Door nextDoor)
+    {
+        this.nextDoor = nextDoor;
     }
 }

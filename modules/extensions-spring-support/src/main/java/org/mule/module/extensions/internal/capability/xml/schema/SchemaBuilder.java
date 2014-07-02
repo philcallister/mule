@@ -20,6 +20,7 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Any;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Attribute;
@@ -218,31 +219,48 @@ public class SchemaBuilder
     public SchemaBuilder registerConfigElement(ExtensionConfiguration configuration)
     {
         Map<QName, String> otherAttributes = new HashMap<>();
-        ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
+        final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
         Attribute nameAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, true, SchemaConstants.STRING, SchemaConstants.ATTRIBUTE_NAME_NAME_DESCRIPTION);
         config.getAttributeOrAttributeGroup().add(nameAttribute);
 
-        ExplicitGroup all = new ExplicitGroup();
+        final ExplicitGroup all = new ExplicitGroup();
         config.setSequence(all);
 
-        for (ExtensionParameter parameter : configuration.getParameters())
+
+        for (final ExtensionParameter parameter : configuration.getParameters())
         {
-            if (LIST.equals(parameter.getType().getQualifier()))
-            {
-                generateCollectionElement(all, parameter, false);
-            }
-            else if (BEAN.equals(parameter.getType().getQualifier()))
-            {
-                registerComplexTypeChildElement(all,
-                                                parameter.getName(),
-                                                parameter.getDescription(),
-                                                parameter.getType(),
-                                                parameter.isRequired());
-            }
-            else
-            {
-                config.getAttributeOrAttributeGroup().add(createAttribute(parameter.getName(), parameter.getType(), parameter.isRequired()));
-            }
+            parameter.getType().getQualifier().accept(new BaseDataQualifierVisitor() {
+
+                @Override
+                public void onList()
+                {
+                    generateCollectionElement(all, parameter, false);
+                }
+
+                @Override
+                public void onMap()
+                {
+                    generateCollectionElement(all, parameter, false);
+                }
+
+                @Override
+                public void onBean()
+                {
+                    registerComplexTypeChildElement(all,
+                                                    parameter.getName(),
+                                                    parameter.getDescription(),
+                                                    parameter.getType(),
+                                                    parameter.isRequired());
+                }
+
+                @Override
+                protected void defaultOperation()
+                {
+                    config.getAttributeOrAttributeGroup().add(createAttribute(parameter.getName(),
+                                                                              parameter.getType(),
+                                                                              parameter.isRequired()));
+                }
+            });
         }
 
         config.setAnnotation(createDocAnnotation(configuration.getDescription()));
@@ -323,7 +341,7 @@ public class SchemaBuilder
             DataType fieldType = IntrospectionUtils.getFieldDataType(field);
             DataQualifier fieldTypeQualifier = fieldType.getQualifier();
 
-            if (LIST.equals(fieldTypeQualifier))
+            if (LIST.equals(fieldTypeQualifier) || MAP.equals(fieldTypeQualifier))
             {
                 generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
             }
@@ -347,13 +365,13 @@ public class SchemaBuilder
             else
             {
                 Attribute attribute = createAttribute(field.getName(), fieldType, false);
-                if (fieldType.getSuperclass() != null)
+                if (SchemaTypeConversion.isSupported(fieldType))
                 {
-                    complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
+                    complexType.getAttributeOrAttributeGroup().add(attribute);
                 }
                 else
                 {
-                    complexType.getAttributeOrAttributeGroup().add(attribute);
+                    complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
                 }
             }
         }

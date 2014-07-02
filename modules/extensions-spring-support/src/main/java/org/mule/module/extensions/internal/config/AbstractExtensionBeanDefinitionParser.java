@@ -19,6 +19,7 @@ import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.MuleExtensionUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaTypeConversion;
+import org.mule.util.ClassUtils;
 import org.mule.util.TemplateParser;
 
 import java.text.ParseException;
@@ -768,7 +769,14 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
             @Override
             public void onBean()
             {
-                // TODO: do this.......
+                try
+                {
+                    //TODO: Do this
+                }
+                catch (Exception e)
+                {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
