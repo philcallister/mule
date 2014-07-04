@@ -12,10 +12,17 @@ import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mule.extensions.api.annotation.Extension.DEFAULT_CONFIG_NAME;
 import static org.mule.extensions.api.annotation.Extension.MIN_MULE_VERSION;
+import static org.mule.extensions.introspection.api.DataQualifier.BEAN;
+import static org.mule.extensions.introspection.api.DataQualifier.BOOLEAN;
+import static org.mule.extensions.introspection.api.DataQualifier.DATE;
+import static org.mule.extensions.introspection.api.DataQualifier.DATE_TIME;
+import static org.mule.extensions.introspection.api.DataQualifier.DECIMAL;
 import static org.mule.extensions.introspection.api.DataQualifier.INTEGER;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
+import static org.mule.extensions.introspection.api.DataQualifier.MAP;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
 import static org.mule.extensions.introspection.api.DataQualifier.STRING;
+import static org.mule.module.extensions.HeisenbergModule.AGE;
 import static org.mule.module.extensions.HeisenbergModule.EXTENSION_DESCRIPTION;
 import static org.mule.module.extensions.HeisenbergModule.EXTENSION_NAME;
 import static org.mule.module.extensions.HeisenbergModule.EXTENSION_VERSION;
@@ -28,11 +35,17 @@ import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergModule;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
+import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -83,10 +96,20 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertSame(conf, extension.getConfiguration(DEFAULT_CONFIG_NAME));
 
         List<ExtensionParameter> parameters = conf.getParameters();
-        assertEquals(2, parameters.size());
+        assertEquals(11, parameters.size());
 
-        assertParameter(parameters.get(0), "name", "", String.class, STRING, false, true, HEISENBERG);
-        assertParameter(parameters.get(1), "enemies", "", List.class, LIST, true, true, null);
+        assertParameter(parameters.get(0), "myName", "", String.class, STRING, false, true, HEISENBERG);
+        assertParameter(parameters.get(1), "age", "", Integer.class, INTEGER, false, true, AGE);
+        assertParameter(parameters.get(2), "enemies", "", List.class, LIST, true, true, null);
+        assertParameter(parameters.get(3), "money", "", BigDecimal.class, DECIMAL, true, true, null);
+        assertParameter(parameters.get(4), "cancer", "", boolean.class, BOOLEAN, true, true, null);
+        assertParameter(parameters.get(4), "cancer", "", boolean.class, BOOLEAN, true, true, null);
+        assertParameter(parameters.get(5), "dateOfBirth", "", Date.class, DATE, true, true, null);
+        assertParameter(parameters.get(6), "dateOfDeath", "", Calendar.class, DATE_TIME, true, true, null);
+        assertParameter(parameters.get(7), "recipe", "", Map.class, MAP, false, true, null);
+        assertParameter(parameters.get(8), "ricinPacks", "", Set.class, LIST, false, true, null);
+        assertParameter(parameters.get(9), "nextDoor", "", Door.class, BEAN, false, true, null);
+        assertParameter(parameters.get(10), "candidateDoors", "", Map.class, MAP, false, true, null);
     }
 
     private void assertTestModuleOperations(Extension extension) throws Exception

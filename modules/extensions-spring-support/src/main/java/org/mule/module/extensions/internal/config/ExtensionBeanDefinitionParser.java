@@ -9,7 +9,6 @@ package org.mule.module.extensions.internal.config;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.config.spring.MuleHierarchicalBeanDefinitionParserDelegate;
-import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.config.spring.util.SpringXMLUtils;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataQualifierVisitor;
@@ -19,14 +18,16 @@ import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.MuleExtensionUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaTypeConversion;
-import org.mule.util.ClassUtils;
+import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.TemplateParser;
 
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -43,18 +44,29 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionParser
+/**
+ * Base implementation of {@link org.springframework.beans.factory.xml.BeanDefinitionParser}
+ * for all parsers capable of handling objects described by the extensions introspection API
+ *
+ * @since 3.6.0
+ */
+abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
 {
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'hh:mm:ss";
     private static final String CALENDAR_FORMAT = "yyyy-MM-dd'T'hh:mm:ssX";
+    private static final String REF = "ref";
+    public static final String KEY_REF = "key-ref";
+    public static final String KEY = "key";
+    public static final String VALUE_REF = "value-ref";
+
 
     /**
      * Mule Pattern Info
      */
     private TemplateParser.PatternInfo patternInfo;
 
-    public AbstractExtensionBeanDefinitionParser()
+    public ExtensionBeanDefinitionParser()
     {
         patternInfo = TemplateParser.createMuleStyleParser().getStyle();
     }
@@ -90,15 +102,15 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         List<Element> childDomElements = DomUtils.getChildElementsByTagName(element, childElementName);
         for (Element childDomElement : childDomElements)
         {
-            if (hasAttribute(childDomElement, "value-ref"))
+            if (hasAttribute(childDomElement, VALUE_REF))
             {
-                if (!isMuleExpression(childDomElement.getAttribute("value-ref")))
+                if (!isMuleExpression(childDomElement.getAttribute(VALUE_REF)))
                 {
-                    managedList.add(new RuntimeBeanReference(childDomElement.getAttribute("value-ref")));
+                    managedList.add(new RuntimeBeanReference(childDomElement.getAttribute(VALUE_REF)));
                 }
                 else
                 {
-                    managedList.add(childDomElement.getAttribute("value-ref"));
+                    managedList.add(childDomElement.getAttribute(VALUE_REF));
                 }
             }
             else
@@ -119,9 +131,9 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         Element domElement = DomUtils.getChildElementByTagName(element, parentElementName);
         if (domElement != null)
         {
-            if (hasAttribute(domElement, "ref"))
+            if (hasAttribute(domElement, REF))
             {
-                setRef(builder, fieldName, domElement.getAttribute("ref"));
+                setRef(builder, fieldName, domElement.getAttribute(REF));
             }
             else
             {
@@ -141,19 +153,20 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         List<Element> childDomElements = DomUtils.getChildElementsByTagName(element, childElementName);
         for (Element childDomElement : childDomElements)
         {
-            if (hasAttribute(childDomElement, "value-ref"))
+            if (hasAttribute(childDomElement, VALUE_REF))
             {
-                if (!isMuleExpression(childDomElement.getAttribute("value-ref")))
+                if (!isMuleExpression(childDomElement.getAttribute(VALUE_REF)))
                 {
-                    managedSet.add(new RuntimeBeanReference(childDomElement.getAttribute("value-ref")));
+                    managedSet.add(new RuntimeBeanReference(childDomElement.getAttribute(VALUE_REF)));
                 }
                 else
                 {
-                    managedSet.add(childDomElement.getAttribute("value-ref"));
+                    managedSet.add(childDomElement.getAttribute(VALUE_REF));
                 }
             }
             else
             {
+                parserDelegate.setParser(this);
                 managedSet.add(parserDelegate.parse(childDomElement));
             }
         }
@@ -170,9 +183,9 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         Element domElement = DomUtils.getChildElementByTagName(element, parentElementName);
         if (domElement != null)
         {
-            if (hasAttribute(domElement, "ref"))
+            if (hasAttribute(domElement, REF))
             {
-                setRef(builder, fieldName, domElement.getAttribute("ref"));
+                setRef(builder, fieldName, domElement.getAttribute(REF));
             }
             else
             {
@@ -212,30 +225,30 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         for (Element childDomElement : childDomElements)
         {
             Object key = null;
-            if (hasAttribute(childDomElement, "key-ref"))
+            if (hasAttribute(childDomElement, KEY_REF))
             {
-                key = new RuntimeBeanReference(childDomElement.getAttribute("key-ref"));
+                key = new RuntimeBeanReference(childDomElement.getAttribute(KEY_REF));
             }
             else
             {
-                if (hasAttribute(childDomElement, "key"))
+                if (hasAttribute(childDomElement, KEY))
                 {
-                    key = childDomElement.getAttribute("key");
+                    key = childDomElement.getAttribute(KEY);
                 }
                 else
                 {
                     key = childDomElement.getTagName();
                 }
             }
-            if (hasAttribute(childDomElement, "value-ref"))
+            if (hasAttribute(childDomElement, VALUE_REF))
             {
-                if (!isMuleExpression(childDomElement.getAttribute("value-ref")))
+                if (!isMuleExpression(childDomElement.getAttribute(VALUE_REF)))
                 {
-                    managedMap.put(key, new RuntimeBeanReference(childDomElement.getAttribute("value-ref")));
+                    managedMap.put(key, new RuntimeBeanReference(childDomElement.getAttribute(VALUE_REF)));
                 }
                 else
                 {
-                    managedMap.put(key, childDomElement.getAttribute("value-ref"));
+                    managedMap.put(key, childDomElement.getAttribute(VALUE_REF));
                 }
             }
             else
@@ -256,9 +269,9 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         Element domElement = DomUtils.getChildElementByTagName(element, parentElementName);
         if (domElement != null)
         {
-            if (hasAttribute(domElement, "ref"))
+            if (hasAttribute(domElement, REF))
             {
-                setRef(builder, fieldName, domElement.getAttribute("ref"));
+                setRef(builder, fieldName, domElement.getAttribute(REF));
             }
             else
             {
@@ -316,6 +329,92 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         }
     }
 
+    /**
+     * parses a bean which type is described by {@code beanType},
+     * recursively moving through the bean's properties.
+     *
+     * @param element           the XML element which has the bean as a child
+     * @param builder           the current {@link org.springframework.beans.factory.support.BeanDefinitionBuilder}
+     * @param fieldName         the name of the field in which the parsed pojo is going to be assigned
+     * @param parentElementName the name of the the bean's top level XML element
+     * @param beanType          a {@link org.mule.extensions.introspection.api.DataType} describing the bean's type
+     * @return a {@link org.springframework.beans.factory.config.BeanDefinition} if the bean could be parsed, {@code null}
+     * if the bean is not present on the XML definition
+     */
+    protected BeanDefinition parseBean(Element element,
+                                       BeanDefinitionBuilder builder,
+                                       String fieldName,
+                                       String parentElementName,
+                                       DataType beanType)
+    {
+        if (parseObjectRef(element, builder, fieldName, parentElementName))
+        {
+            return null;
+        }
+
+        element = DomUtils.getChildElementByTagName(element, parentElementName);
+
+        if (element == null)
+        {
+            return null;
+        }
+
+        BeanDefinitionBuilder beanBuilder = BeanDefinitionBuilder.rootBeanDefinition(beanType.getRawType());
+        if (recurseBeanProperties(beanType.getRawType(), beanBuilder, element))
+        {
+            builder.addPropertyValue(fieldName, beanBuilder.getBeanDefinition());
+        }
+
+        return builder.getBeanDefinition();
+    }
+
+    /**
+     * Recurses the bean's properties by the rules of
+     * {@link org.mule.module.extensions.internal.util.IntrospectionUtils#getFieldsDataTypes(Class)}.
+     * <p/>
+     * The found attributes will be described into the provided {@code builder}
+     *
+     * @param clazz   the {@link java.lang.Class} of the bean to be parsed
+     * @param builder the current {@link org.springframework.beans.factory.support.BeanDefinitionBuilder}
+     * @param element the {@link org.w3c.dom.Element} describing the bean
+     * @return {@code true} if the builder was configured with at least one bean property. {@code false}
+     * if no bean property was found and the builder remains untouched.
+     */
+    protected boolean recurseBeanProperties(Class<?> clazz, BeanDefinitionBuilder builder, Element element)
+    {
+        boolean include = false;
+
+        for (Map.Entry<Field, DataType> entry : IntrospectionUtils.getFieldsDataTypes(clazz).entrySet())
+        {
+            Field field = entry.getKey();
+            String elementName = field.getName();
+            DataType dataType = entry.getValue();
+
+
+            if (element.hasAttribute(field.getName()))
+            {
+                parseProperty(builder, element, elementName);
+                include = true;
+            }
+            else
+            {
+                elementName = NameUtils.uncamel(elementName);
+                Element childElement = DomUtils.getChildElementByTagName(element, elementName);
+                if (childElement != null)
+                {
+                    BeanDefinitionBuilder childBeanBuilder = BeanDefinitionBuilder.rootBeanDefinition(dataType.getRawType());
+                    if (recurseBeanProperties(dataType.getRawType(), childBeanBuilder, childElement))
+                    {
+                        builder.addPropertyValue(field.getName(), childBeanBuilder.getBeanDefinition());
+                        include = true;
+                    }
+                }
+            }
+        }
+
+        return include;
+    }
+
     protected void attachProcessorDefinition(ParserContext parserContext, BeanDefinition definition)
     {
         MutablePropertyValues propertyValues = parserContext.getContainingBeanDefinition()
@@ -362,14 +461,6 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
             return element.getAttribute(attributeName);
         }
         return null;
-    }
-
-    protected void parseConfigName(Element element)
-    {
-        if (hasAttribute(element, "name"))
-        {
-            element.setAttribute("name", AutoIdUtils.getUniqueName(element, "mule-bean"));
-        }
     }
 
     protected void setInitMethodIfNeeded(BeanDefinitionBuilder builder, Class clazz)
@@ -566,22 +657,22 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
 
     protected boolean parseObjectRef(Element element,
                                      BeanDefinitionBuilder builder,
-                                     String elementName,
-                                     String propertyName)
+                                     String propertyName,
+                                     String elementName)
     {
         Element childElement = DomUtils.getChildElementByTagName(element, elementName);
         if (childElement != null)
         {
-            if (hasAttribute(childElement, "ref"))
+            if (hasAttribute(childElement, REF))
             {
-                if (childElement.getAttribute("ref").startsWith("#"))
+                final String ref = childElement.getAttribute(REF);
+                if (ref.startsWith("#"))
                 {
-                    builder.addPropertyValue(propertyName, childElement.getAttribute("ref"));
+                    builder.addPropertyValue(propertyName, ref);
                 }
                 else
                 {
-                    builder.addPropertyValue(propertyName,
-                                             (("#[registry:" + childElement.getAttribute("ref")) + "]"));
+                    builder.addPropertyValue(propertyName, ref(ref));
                 }
                 return true;
             }
@@ -595,82 +686,15 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
                                                 String propertyName,
                                                 String defaultValue)
     {
-        Element childElement = DomUtils.getChildElementByTagName(element, elementName);
-        if (childElement != null)
+        if (parseObjectRef(element, builder, elementName, propertyName))
         {
-            if (hasAttribute(childElement, "ref"))
-            {
-                if (childElement.getAttribute("ref").startsWith("#"))
-                {
-                    builder.addPropertyValue(propertyName, childElement.getAttribute("ref"));
-                }
-                else
-                {
-                    builder.addPropertyValue(propertyName,
-                                             (("#[registry:" + childElement.getAttribute("ref")) + "]"));
-                }
-                return true;
-            }
+            return true;
         }
         else
         {
             builder.addPropertyValue(propertyName, defaultValue);
         }
-        return false;
-    }
 
-    protected boolean parseNoExprObjectRef(Element element,
-                                           BeanDefinitionBuilder builder,
-                                           String elementName,
-                                           String propertyName)
-    {
-        Element childElement = DomUtils.getChildElementByTagName(element, elementName);
-        if (childElement != null)
-        {
-            if (hasAttribute(childElement, "ref"))
-            {
-                if (childElement.getAttribute("ref").startsWith("#"))
-                {
-                    builder.addPropertyValue(propertyName, childElement.getAttribute("ref"));
-                }
-                else
-                {
-                    builder.addPropertyValue(propertyName,
-                                             new RuntimeBeanReference(childElement.getAttribute("ref")));
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    protected boolean parseNoExprObjectRefWithDefault(Element element,
-                                                      BeanDefinitionBuilder builder,
-                                                      String elementName,
-                                                      String propertyName,
-                                                      String defaultValue)
-    {
-        Element childElement = DomUtils.getChildElementByTagName(element, elementName);
-        if (childElement != null)
-        {
-            if (hasAttribute(childElement, "ref"))
-            {
-                if (childElement.getAttribute("ref").startsWith("#"))
-                {
-                    builder.addPropertyValue(propertyName, childElement.getAttribute("ref"));
-                }
-                else
-                {
-                    builder.addPropertyValue(propertyName,
-                                             new RuntimeBeanReference(childElement.getAttribute("ref")));
-                }
-                return true;
-            }
-        }
-        else
-        {
-            builder.addPropertyValue(propertyName, defaultValue);
-        }
         return false;
     }
 
@@ -703,15 +727,34 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         }
     }
 
+    /**
+     * Returns a reference to the given {@code ref} key
+     * by using a Mule expression that uses the {@code registry:}
+     * expression resolver
+     *
+     * @param ref a ref key
+     * @return a {@link java.lang.String}
+     */
+    protected Object ref(String ref)
+    {
+        return String.format("#[registry:%s]", ref);
+    }
+
     protected void parseParameter(final ExtensionParameter parameter,
                                   final BeanDefinitionBuilder builder,
                                   final Element element)
     {
+        parseElement(builder, element, parameter.getName(), parameter.getType(), parameter.getDefaultValue());
+    }
 
-        final String fieldName = parameter.getName();
+    protected void parseElement(final BeanDefinitionBuilder builder,
+                                final Element element,
+                                final String fieldName,
+                                final DataType dataType,
+                                final Object defaultValue)
+    {
         final String uncameledFieldName = NameUtils.uncamel(fieldName);
         final String singularName = NameUtils.singularize(NameUtils.uncamel(fieldName));
-        final DataType dataType = parameter.getType();
 
         DataQualifierVisitor visitor = new BaseDataQualifierVisitor()
         {
@@ -721,7 +764,7 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
             {
                 if (SchemaTypeConversion.isSupported(dataType))
                 {
-                    parseProperty(builder, element, fieldName, fieldName, parameter.getDefaultValue());
+                    parseProperty(builder, element, fieldName, fieldName, defaultValue);
                 }
             }
 
@@ -733,14 +776,14 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
                     //TODO: parseNestedProcessorAndSetProperty();
                 }
                 else if (Set.class.isAssignableFrom(dataType.getRawType()))
-                { //TODO: do we want a Set qualifier?
+                {
                     parseSetWithDefaultAndSetProperty(element,
                                                       builder,
                                                       fieldName,
                                                       uncameledFieldName,
                                                       singularName,
-                                                      parameter.getDefaultValue(),
-                                                      new TextParseDelegate());
+                                                      defaultValue,
+                                                      ParseDelegate.of(dataType));
                 }
                 else
                 {
@@ -749,8 +792,8 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
                                                        fieldName,
                                                        uncameledFieldName,
                                                        singularName,
-                                                       parameter.getDefaultValue(),
-                                                       new TextParseDelegate());
+                                                       defaultValue,
+                                                       ParseDelegate.of(dataType));
                 }
             }
 
@@ -762,27 +805,20 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
                                                   fieldName,
                                                   uncameledFieldName,
                                                   singularName,
-                                                  parameter.getDefaultValue(),
-                                                  new TextParseDelegate());
+                                                  defaultValue,
+                                                  ParseDelegate.of(dataType));
             }
 
             @Override
             public void onBean()
             {
-                try
-                {
-                    //TODO: Do this
-                }
-                catch (Exception e)
-                {
-                    throw new RuntimeException(e);
-                }
+                parseBean(element, builder, fieldName, uncameledFieldName, dataType);
             }
 
             @Override
             public void onDate()
             {
-                parseDate(builder, element, fieldName, parameter.getDefaultValue());
+                parseDate(builder, element, fieldName, defaultValue);
             }
 
             @Override
@@ -790,7 +826,7 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
             {
                 if (Calendar.class.isAssignableFrom(dataType.getRawType()))
                 {
-                    parseCalendar(builder, element, fieldName, parameter.getDefaultValue());
+                    parseCalendar(builder, element, fieldName, defaultValue);
                 }
                 else
                 {
@@ -800,22 +836,5 @@ abstract class AbstractExtensionBeanDefinitionParser implements BeanDefinitionPa
         };
 
         dataType.getQualifier().accept(visitor);
-    }
-
-    protected interface ParseDelegate<T>
-    {
-
-        public T parse(Element element);
-
-    }
-
-    protected class TextParseDelegate implements ParseDelegate<String>
-    {
-
-        @Override
-        public String parse(Element element)
-        {
-            return element.getTextContent();
-        }
     }
 }

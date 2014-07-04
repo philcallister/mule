@@ -8,6 +8,16 @@ package org.mule.module.extensions.internal;
 
 import org.mule.extensions.introspection.api.DataQualifierVisitor;
 
+/**
+ * Base implementation of {@link org.mule.extensions.introspection.api.DataQualifierVisitor}
+ * in which all methods are implemented and delegate into {@link #defaultOperation()}. In this way,
+ * you can only implement the methods you care about and have a central point to determine which logic
+ * to apply on the cases you don't specifically care about
+ * <p/>
+ * This default implementation of {@link #defaultOperation()} is a no-op
+ *
+ * @since 3.6.0
+ */
 public class BaseDataQualifierVisitor implements DataQualifierVisitor
 {
 
@@ -115,6 +125,6 @@ public class BaseDataQualifierVisitor implements DataQualifierVisitor
 
     protected void defaultOperation()
     {
-
+        //no op
     }
 }

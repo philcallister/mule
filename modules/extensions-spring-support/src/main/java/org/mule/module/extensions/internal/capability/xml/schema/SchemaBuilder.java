@@ -12,7 +12,6 @@ import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.MAP;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
-import static org.mule.extensions.introspection.api.DataQualifier.STRING;
 import org.mule.extensions.api.annotation.param.Ignore;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.introspection.api.DataQualifier;
@@ -52,14 +51,9 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelE
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
-import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -72,6 +66,9 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 /**
+ * Builder class to generate a XSD schema that describes a
+ * {@link org.mule.extensions.introspection.api.Extension}
+ *
  * @since 3.6.0
  */
 //TODO: there're A LOT of ifs here... Keeping them just for now since
@@ -177,11 +174,6 @@ public class SchemaBuilder
         schema.getSimpleTypeOrComplexTypeOrGroup().add(simpleType);
     }
 
-    private LocalSimpleType createSimpleType(QName base, int minlen, int maxlen)
-    {
-        return createSimpleType(base, minlen, maxlen, SchemaConstants.DEFAULT_PATTERN);
-    }
-
     private LocalSimpleType createSimpleType(QName base, int minlen, int maxlen, String pattern)
     {
         LocalSimpleType simpleType = new LocalSimpleType();
@@ -229,7 +221,8 @@ public class SchemaBuilder
 
         for (final ExtensionParameter parameter : configuration.getParameters())
         {
-            parameter.getType().getQualifier().accept(new BaseDataQualifierVisitor() {
+            parameter.getType().getQualifier().accept(new BaseDataQualifierVisitor()
+            {
 
                 @Override
                 public void onList()
@@ -296,11 +289,11 @@ public class SchemaBuilder
             return registeredComplexTypesHolders.get(type).getComplexType().getName();
         }
 
-        TopLevelComplexType complexType = new TopLevelComplexType();
+        final TopLevelComplexType complexType = new TopLevelComplexType();
         complexType.setName(type.getName());
         registeredComplexTypesHolders.put(type, new ComplexTypeHolder(complexType, type));
 
-        ExplicitGroup all = new ExplicitGroup();
+        final ExplicitGroup all = new ExplicitGroup();
 
         DataType superclass = type.getSuperclass();
         if (superclass != null)
@@ -319,61 +312,56 @@ public class SchemaBuilder
             complexType.setSequence(all);
         }
 
-        BeanInfo info;
-        try
+        for (Map.Entry<Field, DataType> entry : IntrospectionUtils.getFieldsDataTypes(type.getRawType()).entrySet())
         {
-            info = Introspector.getBeanInfo(type.getRawType());
-        }
-        catch (IntrospectionException e)
-        {
-            throw new RuntimeException(String.format("Could not register type for class %s", type.getRawType().getName()), e);
-        }
-
-        // use the property descriptors to only get the attributes compliant with the bean contract
-        for (PropertyDescriptor property : info.getPropertyDescriptors())
-        {
-            Field field = ReflectionUtils.findField(type.getRawType(), property.getName());
+            final Field field = entry.getKey();
             if (skipField(field))
             {
                 continue;
             }
 
-            DataType fieldType = IntrospectionUtils.getFieldDataType(field);
-            DataQualifier fieldTypeQualifier = fieldType.getQualifier();
+            final DataType fieldType = entry.getValue();
+            fieldType.getQualifier().accept(new BaseDataQualifierVisitor()
+            {
 
-            if (LIST.equals(fieldTypeQualifier) || MAP.equals(fieldTypeQualifier))
-            {
-                generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
-            }
-            else if (OPERATION.equals(fieldTypeQualifier))
-            {
-                generateNestedProcessorElement(all, field.getName(), isRequired(field));
-            }
-            else if (STRING.equals(fieldType))
-            {
-                createParameterElement(all,
-                                       field.getName(),
-                                       EMPTY,
-                                       fieldType,
-                                       isRequired(field),
-                                       EMPTY);
-            }
-            else if (BEAN.equals(fieldTypeQualifier))
-            {
-                registerComplexTypeChildElement(all, field.getName(), EMPTY, fieldType, false);
-            }
-            else
-            {
-                Attribute attribute = createAttribute(field.getName(), fieldType, false);
-                if (SchemaTypeConversion.isSupported(fieldType))
+                @Override
+                public void onList()
                 {
-                    complexType.getAttributeOrAttributeGroup().add(attribute);
+                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
                 }
-                else
+
+                @Override
+                public void onMap()
                 {
-                    complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
+                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
                 }
-            }
+
+                @Override
+                public void onOperation()
+                {
+                    generateNestedProcessorElement(all, field.getName(), isRequired(field));
+                }
+
+                @Override
+                public void onBean()
+                {
+                    registerComplexTypeChildElement(all, field.getName(), EMPTY, fieldType, false);
+                }
+
+                @Override
+                protected void defaultOperation()
+                {
+                    Attribute attribute = createAttribute(field.getName(), fieldType, false);
+                    if (SchemaTypeConversion.isSupported(fieldType))
+                    {
+                        complexType.getAttributeOrAttributeGroup().add(attribute);
+                    }
+                    else
+                    {
+                        complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
+                    }
+                }
+            });
         }
 
         if (type.getSuperclass() == null)

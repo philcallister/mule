@@ -59,7 +59,6 @@ public class ObjectFactory
     private final static QName _MaxInclusive_QNAME = new QName("http://www.w3.org/2001/XMLSchema", "maxInclusive");
     private final static QName _Attribute_QNAME = new QName("http://www.w3.org/2001/XMLSchema", "attribute");
     private final static QName _AnyAttribute_QNAME = new QName("http://www.w3.org/2001/XMLSchema", "anyAttribute");
-    private final static QName _BuiltBy_QNAME = new QName("http://www.mulesoft.org/schema/mule/devkit", "built-by", "devkit");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.mule.devkit.apt.generator.schema
@@ -648,16 +647,6 @@ public class ObjectFactory
     {
         return new JAXBElement<Wildcard>(_AnyAttribute_QNAME, Wildcard.class, null, value);
     }
-
-    /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link Wildcard }{@code >}}
-     */
-    @XmlElementDecl(namespace = "http://www.mulesoft.org/schema/mule/devkit", name = "built-by")
-    public JAXBElement<BuiltBy> createBuiltBy(BuiltBy value)
-    {
-        return new JAXBElement<BuiltBy>(_BuiltBy_QNAME, BuiltBy.class, null, value);
-    }
-
 
     /**
      * Create an instance of {@link JAXBElement }{@code <}{@link LocalElement }{@code >}}

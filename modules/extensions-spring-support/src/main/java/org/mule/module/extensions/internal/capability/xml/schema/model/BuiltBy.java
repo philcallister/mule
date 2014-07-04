@@ -9,10 +9,8 @@ package org.mule.module.extensions.internal.capability.xml.schema.model;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "built-by", namespace = "http://www.mulesoft.org/schema/mule/devkit")
 public class BuiltBy
 {
 

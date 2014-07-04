@@ -25,12 +25,29 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
+/**
+ * Generic implementation of {@link org.springframework.beans.factory.xml.NamespaceHandler}
+ * capable of parsing configurations and operations for any given {@link org.mule.extensions.introspection.api.Extension}
+ * which supports the given namespace.
+ * <p/>
+ * For this namespace handler to function, an instance of {@link org.mule.extensions.api.ExtensionsManager}
+ * has to be accessible and the {@link org.mule.extensions.api.ExtensionsManager#discoverExtensions(ClassLoader)}
+ * needs to have successfully discovered and register extensions.
+ *
+ * @since 3.6.0
+ */
 public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
 {
 
     private ExtensionsManager extensionsManager;
     private Map<String, Extension> handledExtensions = new HashMap<>();
 
+    /**
+     * Attempts to get a hold on a {@link org.mule.extensions.api.ExtensionsManager}
+     * instance
+     *
+     * @throws java.lang.IllegalStateException if no extension manager could be found
+     */
     @Override
     public void init()
     {
@@ -38,6 +55,10 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         checkState(extensionsManager != null, "Could not obtain handledExtensions manager");
     }
 
+    /**
+     * Registers parsers for the given element, provided that an extension can be found which
+     * responds to that namespace
+     */
     @Override
     public BeanDefinition parse(Element element, ParserContext parserContext)
     {

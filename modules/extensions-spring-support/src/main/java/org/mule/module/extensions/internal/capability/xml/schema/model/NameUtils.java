@@ -8,6 +8,7 @@ package org.mule.module.extensions.internal.capability.xml.schema.model;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 public class NameUtils
@@ -17,7 +18,8 @@ public class NameUtils
     private static final List<Inflection> singular = new ArrayList<>();
     private static final List<String> uncountable = new ArrayList<>();
 
-    static {
+    static
+    {
         // plural is "singular to plural form"
         // singular is "plural to singular form"
         plural("$", "s");
@@ -81,28 +83,34 @@ public class NameUtils
         uncountable("sheep");
     }
 
-    private static void plural(String pattern, String replacement) {
+    private static void plural(String pattern, String replacement)
+    {
         plural.add(0, new Inflection(pattern, replacement));
     }
 
-    private static void singular(String pattern, String replacement) {
+    private static void singular(String pattern, String replacement)
+    {
         singular.add(0, new Inflection(pattern, replacement));
     }
 
-    private static void irregular(String s, String p) {
+    private static void irregular(String s, String p)
+    {
         plural("(" + s.substring(0, 1) + ")" + s.substring(1) + "$", "$1" + p.substring(1));
         singular("(" + p.substring(0, 1) + ")" + p.substring(1) + "$", "$1" + s.substring(1));
     }
 
-    private static void uncountable(String word) {
+    private static void uncountable(String word)
+    {
         uncountable.add(word);
     }
 
-    public static String camel(String uncamelCaseName) {
+    public static String camel(String uncamelCaseName)
+    {
         String result = "";
         String[] parts = uncamelCaseName.split("-");
 
-        for (int i = 0; i < parts.length; i++) {
+        for (int i = 0; i < parts.length; i++)
+        {
             result += StringUtils.capitalize(parts[i].toLowerCase());
         }
 
@@ -110,18 +118,21 @@ public class NameUtils
     }
 
 
-    public static String uncamel(String camelCaseName) {
+    public static String uncamel(String camelCaseName)
+    {
         String result = "";
         String[] parts = camelCaseName.split("(?<!^)(?=[A-Z])");
 
-        for (int i = 0; i < parts.length; i++) {
+        for (int i = 0; i < parts.length; i++)
+        {
             result += parts[i].toLowerCase() + (i < parts.length - 1 ? "-" : "");
         }
 
         return result;
     }
 
-    public static String friendlyNameFromCamelCase(String camelCaseName) {
+    public static String friendlyNameFromCamelCase(String camelCaseName)
+    {
         return StringUtils.capitalize(uncamel(camelCaseName)).replaceAll("-", " ");
     }
 
@@ -131,12 +142,18 @@ public class NameUtils
      * @param word The word
      * @return The pluralized word
      */
-    public static String pluralize(String word) {
-        if (isUncountable(word)) {
+    public static String pluralize(String word)
+    {
+        if (isUncountable(word))
+        {
             return word;
-        } else {
-            for (Inflection inflection : plural) {
-                if (inflection.match(word)) {
+        }
+        else
+        {
+            for (Inflection inflection : plural)
+            {
+                if (inflection.match(word))
+                {
                     return inflection.replace(word);
                 }
             }
@@ -150,12 +167,18 @@ public class NameUtils
      * @param word The word
      * @return The singularized word
      */
-    public static String singularize(String word) {
-        if (isUncountable(word)) {
+    public static String singularize(String word)
+    {
+        if (isUncountable(word))
+        {
             return word;
-        } else {
-            for (Inflection inflection : singular) {
-                if (inflection.match(word)) {
+        }
+        else
+        {
+            for (Inflection inflection : singular)
+            {
+                if (inflection.match(word))
+                {
                     return inflection.replace(word);
                 }
             }
@@ -169,29 +192,37 @@ public class NameUtils
      * @param word The word
      * @return True if it is uncountable
      */
-    public static boolean isUncountable(String word) {
-        for (String w : uncountable) {
-            if (w.equalsIgnoreCase(word)) {
+    public static boolean isUncountable(String word)
+    {
+        for (String w : uncountable)
+        {
+            if (w.equalsIgnoreCase(word))
+            {
                 return true;
             }
         }
         return false;
     }
 
-    private static class Inflection {
+    private static class Inflection
+    {
+
         private String pattern;
         private String replacement;
         private boolean ignoreCase;
 
-        public Inflection(String pattern) {
+        public Inflection(String pattern)
+        {
             this(pattern, null, true);
         }
 
-        public Inflection(String pattern, String replacement) {
+        public Inflection(String pattern, String replacement)
+        {
             this(pattern, replacement, true);
         }
 
-        public Inflection(String pattern, String replacement, boolean ignoreCase) {
+        public Inflection(String pattern, String replacement, boolean ignoreCase)
+        {
             this.pattern = pattern;
             this.replacement = replacement;
             this.ignoreCase = ignoreCase;
@@ -204,9 +235,11 @@ public class NameUtils
          * @param word The word
          * @return True if it matches the inflection pattern
          */
-        public boolean match(String word) {
+        public boolean match(String word)
+        {
             int flags = 0;
-            if (ignoreCase) {
+            if (ignoreCase)
+            {
                 flags = flags | java.util.regex.Pattern.CASE_INSENSITIVE;
             }
             return java.util.regex.Pattern.compile(pattern, flags).matcher(word).find();
@@ -218,9 +251,11 @@ public class NameUtils
          * @param word The word
          * @return The result
          */
-        public String replace(String word) {
+        public String replace(String word)
+        {
             int flags = 0;
-            if (ignoreCase) {
+            if (ignoreCase)
+            {
                 flags = flags | java.util.regex.Pattern.CASE_INSENSITIVE;
             }
             return java.util.regex.Pattern.compile(pattern, flags).matcher(word).replaceAll(replacement);

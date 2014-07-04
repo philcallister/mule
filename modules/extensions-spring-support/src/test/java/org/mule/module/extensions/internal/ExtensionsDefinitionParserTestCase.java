@@ -52,6 +52,47 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
     private void assertHeisenbergConfig(HeisenbergModule heisenberg)
     {
         assertNotNull(heisenberg);
+
+        assertSimpleProperties(heisenberg);
+        assertRecipe(heisenberg);
+        assertDoors(heisenberg);
+        assertRicinPacks(heisenberg);
+        assertCandidateDoors(heisenberg);
+    }
+
+    private void assertRicinPacks(HeisenbergModule heisenberg)
+    {
+        Set<Ricin> ricinPacks = heisenberg.getRicinPacks();
+
+        assertNotNull(ricinPacks);
+        assertEquals(1, ricinPacks.size());
+        Ricin ricin = ricinPacks.iterator().next();
+        assertEquals(Long.valueOf(22), ricin.getMicrogramsPerKilo());
+        assertDoor(ricin.getDestination(), "Lidia", "Stevia coffe shop");
+    }
+
+    private void assertDoors(HeisenbergModule heisenberg)
+    {
+        Door door = heisenberg.getNextDoor();
+        assertDoor(door, "Gustavo Fring", "pollos hermanos");
+
+        Door previous = door.getPrevious();
+        assertDoor(door.getPrevious(), "Krazy-8", "Jesse's");
+        assertNull(previous.getPrevious());
+    }
+
+    private void assertRecipe(HeisenbergModule heisenberg)
+    {
+        Map<String, Long> recipe = heisenberg.getRecipe();
+        assertNotNull(recipe);
+        assertEquals(3, recipe.size());
+        assertEquals(Long.valueOf(75), recipe.get("methylamine"));
+        assertEquals(Long.valueOf(0), recipe.get("pseudoephedrine"));
+        assertEquals(Long.valueOf(25), recipe.get("P2P"));
+    }
+
+    private void assertSimpleProperties(HeisenbergModule heisenberg)
+    {
         assertEquals(HeisenbergModule.HEISENBERG, heisenberg.getMyName());
         assertEquals(Integer.valueOf(HeisenbergModule.AGE), heisenberg.getAge());
 
@@ -70,41 +111,21 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertEquals(getDateOfDeath().get(Calendar.YEAR), heisenberg.getDateOfDeath().get(Calendar.YEAR));
 
         assertEquals(new BigDecimal("1000000"), heisenberg.getMoney());
+    }
 
-        Map<String, Long> recipe = heisenberg.getRecipe();
-        assertNotNull(recipe);
-        assertEquals(3, recipe.size());
-        assertEquals(Long.valueOf(75), recipe.get("methylamine"));
-        assertEquals(Long.valueOf(0), recipe.get("pseudoephedrine"));
-        assertEquals(Long.valueOf(25), recipe.get("P2P"));
+    private void assertCandidateDoors(HeisenbergModule heisenberg) {
+        Map<String, Door> candidates = heisenberg.getCandidateDoors();
+        assertNotNull(candidates);
+        assertEquals(2, candidates.size());
 
-        Door door = heisenberg.getNextDoor();
-        //TODO: this should be an assert not an if, once the parser properly supports this
-        if (door != null)
-        {
-            assertEquals("pollos hermanos", door.getAddress());
-            assertEquals("Gustavo Fring", door.getVictim());
-            Door previous = door.getPrevious();
-            assertNotNull(previous);
-            assertEquals("Krazy-8", previous.getVictim());
-            assertEquals("Jesse's", previous.getAddress());
-            assertNull(previous.getPrevious());
-        }
+        assertDoor(candidates.get("skyler"), "Skyler", "308 Negra Arroyo Lane");
+        assertDoor(candidates.get("saul"), "Saul", "Shopping Mall");
+    }
 
-        Set<Ricin> ricinPacks = heisenberg.getRicinPacks();
-
-        //TODO: this should be an assert not an if, once the parser properly supports this
-        if (ricinPacks != null)
-        {
-            assertEquals(1, ricinPacks.size());
-            Ricin ricin = ricinPacks.iterator().next();
-            assertEquals(Long.valueOf(22), ricin.getMicrogramsPerKilo());
-
-            Door destination = ricin.getDestination();
-            assertNotNull(destination);
-            assertEquals("Lidia", destination.getVictim());
-            assertEquals("Stevia coffe shop", destination.getAddress());
-        }
+    private void assertDoor(Door door, String victim, String address) {
+        assertNotNull(door);
+        assertEquals(victim, door.getVictim());
+        assertEquals(address, door.getAddress());
     }
 
     private Calendar getDateOfBirth()

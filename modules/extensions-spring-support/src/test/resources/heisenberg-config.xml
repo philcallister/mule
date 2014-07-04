@@ -18,14 +18,18 @@
             <heisenberg:recipe key="pseudoephedrine">0</heisenberg:recipe>
             <heisenberg:recipe key="P2P">25</heisenberg:recipe>
         </heisenberg:recipe>
-        <!--<heisenberg:ricin-packs>-->
-        <!--<heisenberg:ricin-pack microgramsPerKilo="22">-->
-        <!--<heisenberg:destination victim="Lidia" address="Stevia coffe shop" />-->
-        <!--</heisenberg:ricin-pack>-->
-        <!--</heisenberg:ricin-packs>-->
-        <heisenberg:next-door address="pollos hermanos" victim="gustavo fring">
-            <heisenberg:previous victim="Krazy-8" address="Jesse's"/>
+        <heisenberg:ricin-packs>
+            <heisenberg:ricin-pack microgramsPerKilo="22">
+                <heisenberg:destination victim="Lidia" address="Stevia coffe shop"/>
+            </heisenberg:ricin-pack>
+        </heisenberg:ricin-packs>
+        <heisenberg:next-door address="pollos hermanos" victim="Gustavo Fring">
+            <heisenberg:previous victim="Krazy-8" address="Jesse's" />
         </heisenberg:next-door>
+        <heisenberg:candidate-doors>
+            <heisenberg:candidate-door key="skyler" value-ref="skylerDoor" />
+            <heisenberg:candidate-door key="saul" value-ref="saulDoor" />
+        </heisenberg:candidate-doors>
     </heisenberg:config>
 
 
@@ -34,6 +38,11 @@
             <spring:entry key="methylamine" value="75"/>
             <spring:entry key="pseudoephedrine" value="0"/>
             <spring:entry key="P2P" value="25"/>
+        </util:map>
+
+        <util:map id="candidateDoors">
+            <spring:entry key="skyler" value-ref="skylerDoor" />
+            <spring:entry key="saul" value-ref="saulDoor" />
         </util:map>
 
         <util:list id="enemies">
@@ -66,6 +75,16 @@
             </spring:property>
         </spring:bean>
 
+        <spring:bean id="skylerDoor" class="org.mule.module.extensions.Door">
+            <spring:property name="victim" value="Skyler" />
+            <spring:property name="address" value="308 Negra Arroyo Lane" />
+        </spring:bean>
+
+        <spring:bean id="saulDoor" class="org.mule.module.extensions.Door">
+            <spring:property name="victim" value="Saul" />
+            <spring:property name="address" value="Shopping Mall" />
+        </spring:bean>
+
     </spring:beans>
 
 
@@ -75,6 +94,7 @@
         <heisenberg:recipe ref="recipes"/>
         <heisenberg:ricin-packs ref="ricinPacks"/>
         <heisenberg:next-door ref="door"/>
+        <heisenberg:candidate-doors ref="candidateDoors" />
     </heisenberg:config>
 
 

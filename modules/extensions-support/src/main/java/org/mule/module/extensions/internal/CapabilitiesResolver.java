@@ -17,6 +17,13 @@ import java.util.List;
 
 import javax.imageio.spi.ServiceRegistry;
 
+/**
+ * Utility class that extracts all the capabilities in a given extension and registers it on a builder
+ * To do this, it relies on {@link org.mule.extensions.introspection.spi.CapabilityExtractor}s
+ * that are obtained via SPI
+ *
+ * @since 3.6.0
+ */
 public final class CapabilitiesResolver
 {
 
@@ -37,6 +44,14 @@ public final class CapabilitiesResolver
     {
     }
 
+    /**
+     * Resolves the capabilities present in {@code extensionType} and registers them in
+     * {@code builder}
+     *
+     * @param extensionType a not {@code null} {@link java.lang.Class}
+     * @param builder       a not {@code null} {@link org.mule.extensions.introspection.api.CapabilityAwareBuilder}
+     * @throws java.lang.IllegalArgumentException if {@code extensionType} or {@code builder} are {@code null}
+     */
     public void resolveCapabilities(Class<?> extensionType, CapabilityAwareBuilder<?, ?> builder)
     {
         checkArgument(extensionType != null, "extensionType cannot be null");

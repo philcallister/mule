@@ -26,6 +26,13 @@ import org.apache.commons.lang.StringUtils;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
+/**
+ * Generator class that takes a {@link org.mule.extensions.introspection.api.Extension}
+ * with a {@link org.mule.extensions.introspection.api.capability.XmlCapability} and returns
+ * a XSD schema as a String
+ *
+ * @since 3.6.0
+ */
 public class SchemaGenerator
 {
 

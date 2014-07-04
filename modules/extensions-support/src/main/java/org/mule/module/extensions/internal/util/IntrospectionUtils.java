@@ -10,10 +10,18 @@ import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.module.extensions.internal.ImmutableDataType;
 import org.mule.repackaged.internal.org.springframework.core.ResolvableType;
+import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;
 
+import com.google.common.collect.ImmutableMap;
+
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * Set of utility operations to get insights about objects and their operations
@@ -86,6 +94,54 @@ public class IntrospectionUtils
     {
         checkArgument(field != null, "Can't introspect a null field");
         return toDataType(ResolvableType.forField(field));
+    }
+
+    /**
+     * Uses {@link java.beans.Introspector} to extract the {@link java.lang.reflect.Field}s
+     * from {@code clazz} that have getters and setters. Then returns a {@link java.util.Map}
+     * in which those fields are keys and the values are {@link org.mule.extensions.introspection.api.DataType}
+     * representing those field's types (using {@link #getFieldDataType(java.lang.reflect.Field)}.
+     * <p/>
+     * For this to work, {@code clazz} has to be introspector friendly.
+     *
+     * @param clazz a non {@code null} {@link java.lang.Class}
+     * @return a {@link java.util.Map} with {@link java.lang.reflect.Field} as keys and {@link org.mule.extensions.introspection.api.DataType}
+     * as values. It might be empty but it will never be {@code null}
+     */
+    public static Map<Field, DataType> getFieldsDataTypes(Class<?> clazz)
+    {
+        BeanInfo info;
+        try
+        {
+            info = Introspector.getBeanInfo(clazz);
+        }
+        catch (IntrospectionException e)
+        {
+            throw new RuntimeException(String.format("Could not introspect class %s", clazz.getName()), e);
+        }
+
+        // use the property descriptors to only get the attributes compliant with the bean contract
+        PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
+        if (ArrayUtils.isEmpty(descriptors))
+        {
+            return ImmutableMap.of();
+        }
+
+        ImmutableMap.Builder<Field, DataType> map = ImmutableMap.builder();
+
+        // use the property descriptors to only get the attributes compliant with the bean contract
+        for (PropertyDescriptor property : info.getPropertyDescriptors())
+        {
+            Field field = ReflectionUtils.findField(clazz, property.getName());
+            if (field == null)
+            {
+                continue;
+            }
+            DataType fieldType = IntrospectionUtils.getFieldDataType(field);
+            map.put(field, fieldType);
+        }
+
+        return map.build();
     }
 
     private static DataType toDataType(ResolvableType type)

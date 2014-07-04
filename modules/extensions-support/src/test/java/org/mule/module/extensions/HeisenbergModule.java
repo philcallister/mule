@@ -75,6 +75,13 @@ public class HeisenbergModule
     @Optional
     private Door nextDoor;
 
+    /**
+     * Doors I might knock on but still haven't made up mind about
+     */
+    @Configurable
+    @Optional
+    private Map<String, Door> candidateDoors;
+
     @Operation
     public String sayMyName()
     {
@@ -220,5 +227,15 @@ public class HeisenbergModule
     public void setNextDoor(Door nextDoor)
     {
         this.nextDoor = nextDoor;
+    }
+
+    public Map<String, Door> getCandidateDoors()
+    {
+        return candidateDoors;
+    }
+
+    public void setCandidateDoors(Map<String, Door> candidateDoors)
+    {
+        this.candidateDoors = candidateDoors;
     }
 }
