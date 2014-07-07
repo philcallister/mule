@@ -33,7 +33,11 @@ public @interface Extension
      */
     String name();
 
-    String version();
+    /**
+     * Specifies the version of this extension. If left empty it will
+     * default to the mule runtime version
+     */
+    String version() default "";
 
     String minMuleVersion() default MIN_MULE_VERSION;
 

@@ -9,13 +9,14 @@ package org.mule.module.extensions.internal;
 import static org.mule.util.Preconditions.checkArgument;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.common.MuleVersion;
+import org.mule.config.MuleManifest;
+import org.mule.extensions.introspection.api.Builder;
 import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.api.Builder;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
+import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
+import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
@@ -150,9 +151,14 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
 
     private void validateMuleVersion()
     {
+        if (version == null)
+        {
+            version = MuleManifest.getProductVersion();
+        }
+
         // make sure version is valid
-        parseVersion(this.version, "extension version");
-        checkState(!StringUtils.isBlank(this.minMuleVersion), "minimum Mule version cannot be blank");
+        parseVersion(version, "extension version");
+        checkState(!StringUtils.isBlank(minMuleVersion), "minimum Mule version cannot be blank");
 
         MuleVersion minMuleVersion = parseVersion(this.minMuleVersion, "minimum Mule Version");
         checkState(minMuleVersion.atLeast(DEFAULT_MIN_MULE_VERSION),

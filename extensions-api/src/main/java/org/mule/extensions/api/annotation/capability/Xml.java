@@ -32,12 +32,12 @@ public @interface Xml
     /**
      * Namespace of the module
      */
-    String namespace() default "";
+    String namespace();
 
     /**
      * Location URI for the schema
      */
-    String schemaLocation() default "";
+    String schemaLocation();
 
 
 }

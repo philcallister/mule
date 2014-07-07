@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>org.mule</groupId>
+        <artifactId>mule</artifactId>
+        <version>3.6.0-M1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <properties>
+        <licensePath>../LICENSE_HEADER.txt</licensePath>
+    </properties>
+
+    <groupId>org.mule.extensions</groupId>
+    <artifactId>mule-extensions</artifactId>
+    <version>3.6.0-M1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Mule Extensions</name>
+    <description>Mule extensions that augment the core Mule functionality through the Mule Extension API</description>
+
+    <modules>
+        <module>validation</module>
+    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mule</groupId>
+            <artifactId>mule-extensions-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mule</groupId>
+            <artifactId>mule-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-extensions-support</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-extensions-spring-support</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!--<extensions>-->
+        <!--<extension>-->
+        <!--<groupId>org.mule.modules</groupId>-->
+        <!--<artifactId>mule-module-extensions-spring-support</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--</extension>-->
+        <!--</extensions>-->
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${mavenCompilerVersion}</version>
+                <configuration>
+                    <encoding>ISO-8859-1</encoding>
+                    <fork>false</fork>
+                    <maxmem>512m</maxmem>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            <proc>only</proc>
+                            <annotationProcessors>
+                                <annotationProcessor>
+                                    org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor
+                                </annotationProcessor>
+                            </annotationProcessors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

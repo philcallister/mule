@@ -12,11 +12,10 @@
 	<name>Mule Extensions Support</name>
 	<packaging>jar</packaging>
 	<description>
-        Interfaces and classes required by Devkit.
+        Default implementation of the Mule Extension API.
     </description>
 
     <properties>
-        <skipExportTests>false</skipExportTests>
         <licensePath>../../LICENSE_HEADER.txt</licensePath>
     </properties>
 

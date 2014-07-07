@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
     <version>${muleExtensionsApiVersion}</version>
     <name>Mule Extensions API</name>
-    <description>Mule server and core classes</description>
+    <description>API for Mule Extensions to integrate with the Mule Runtime in a decoupled way</description>
 
     <properties>
         <skipExportTests>false</skipExportTests>

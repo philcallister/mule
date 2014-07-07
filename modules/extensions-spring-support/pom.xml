@@ -9,14 +9,14 @@
 	</parent>
 	<groupId>org.mule.modules</groupId>
 	<artifactId>mule-module-extensions-spring-support</artifactId>
-	<name>Mule Extensions Support</name>
+	<name>Mule Extensions Spring Support</name>
 	<packaging>jar</packaging>
 	<description>
-        Interfaces and classes required by Devkit.
+        Support for extensions to be configured through a mule config file
+        backed by the spring framework
     </description>
 
     <properties>
-        <skipExportTests>false</skipExportTests>
         <licensePath>../../LICENSE_HEADER.txt</licensePath>
     </properties>
 
