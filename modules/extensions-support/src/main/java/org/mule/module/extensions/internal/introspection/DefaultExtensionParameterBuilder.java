@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
@@ -12,7 +12,7 @@ import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
 
 import org.apache.commons.lang.StringUtils;
 
-final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilder
+final class DefaultExtensionParameterBuilder implements NavigableExtensionParameterBuilder
 {
 
     private String name;
@@ -26,6 +26,9 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setName(String name)
     {
@@ -33,6 +36,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName()
+    {
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setDescription(String description)
     {
@@ -40,6 +55,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription()
+    {
+        return description;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setType(DataType type)
     {
@@ -47,6 +74,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataType getType()
+    {
+        return type;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setRequired(boolean required)
     {
@@ -54,6 +93,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isRequired()
+    {
+        return required;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setDynamic(boolean dynamic)
     {
@@ -61,6 +112,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDynamic()
+    {
+        return dynamic;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameterBuilder setDefaultValue(Object defaultValue)
     {
@@ -68,6 +131,18 @@ final class DefaultExtensionParameterBuilder implements ExtensionParameterBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object getDefaultValue()
+    {
+        return defaultValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionParameter build()
     {

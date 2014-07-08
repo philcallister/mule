@@ -37,6 +37,8 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 

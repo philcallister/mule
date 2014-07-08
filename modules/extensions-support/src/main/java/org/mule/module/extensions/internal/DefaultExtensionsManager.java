@@ -9,6 +9,8 @@ package org.mule.module.extensions.internal;
 import org.mule.common.MuleVersion;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
+import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.util.Preconditions;
 
 import com.google.common.collect.ImmutableList;

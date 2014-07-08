@@ -4,11 +4,12 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import static junit.framework.Assert.assertEquals;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.ExtensionOperation;
+import org.mule.module.extensions.internal.introspection.DataQualifierFactory;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 import org.mule.tck.testmodels.fruit.Apple;

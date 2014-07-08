@@ -48,45 +48,68 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <!--<extensions>-->
-        <!--<extension>-->
-        <!--<groupId>org.mule.modules</groupId>-->
-        <!--<artifactId>mule-module-extensions-spring-support</artifactId>-->
-        <!--<version>${project.version}</version>-->
-        <!--</extension>-->
-        <!--</extensions>-->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>sonatype-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
+    <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${mavenCompilerVersion}</version>
-                <configuration>
-                    <encoding>ISO-8859-1</encoding>
-                    <fork>false</fork>
-                    <maxmem>512m</maxmem>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
+                <groupId>org.bsc.maven</groupId>
+                <artifactId>maven-processor-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>process</id>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>process</goal>
                         </goals>
-                        <phase>generate-resources</phase>
+                        <phase>process-classes</phase>
                         <configuration>
-                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                            <proc>only</proc>
-                            <annotationProcessors>
-                                <annotationProcessor>
-                                    org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor
-                                </annotationProcessor>
-                            </annotationProcessors>
+                            <processors>
+                                <processor>org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor</processor>
+                            </processors>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-compiler-plugin</artifactId>-->
+                <!--<version>${mavenCompilerVersion}</version>-->
+                <!--<configuration>-->
+                    <!--<encoding>ISO-8859-1</encoding>-->
+                    <!--<fork>false</fork>-->
+                    <!--<maxmem>512m</maxmem>-->
+                    <!--<source>1.7</source>-->
+                    <!--<target>1.7</target>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>compile</goal>-->
+                        <!--</goals>-->
+                        <!--<phase>generate-resources</phase>-->
+                        <!--<configuration>-->
+                            <!--<forceJavacCompilerUse>true</forceJavacCompilerUse>-->
+                            <!--<proc>only</proc>-->
+                            <!--<annotationProcessors>-->
+                                <!--<annotationProcessor>-->
+                                    <!--org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor-->
+                                <!--</annotationProcessor>-->
+                            <!--</annotationProcessors>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 

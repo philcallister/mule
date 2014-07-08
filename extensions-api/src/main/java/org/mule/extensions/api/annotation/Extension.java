@@ -29,16 +29,32 @@ public @interface Extension
 {
 
     /**
-     * The name of the module.
+     * A simple name for this extension. Usually one or two simple words that describes
+     * the functionality. For example, for an extension that performs validations it could be
+     * something like &quot;validation&quot;. For an ftp connector it could be &quot;ftp&quot;.
+     * For a connector that accesses the google contacts API it could be &quot;google-contacts&quot;.
+     * <p/>
+     * To follow the convention described above is important since the platform might use
+     * this name to auto generate resources based on it. This attribute will be used in a
+     * convention over configuration pattern
      */
     String name();
 
     /**
-     * Specifies the version of this extension. If left empty it will
-     * default to the mule runtime version
+     * Short description about the extension's functionality
+     */
+    String description() default "";
+
+    /**
+     * Specifies the version of this extension. If left empty
+     * it will default to the mule runtime version
      */
     String version() default "";
 
+    /**
+     * The least mule runtime version necessary
+     * to execute this extension
+     */
     String minMuleVersion() default MIN_MULE_VERSION;
 
     /**
@@ -46,10 +62,6 @@ public @interface Extension
      */
     String configElementName() default DEFAULT_CONFIG_NAME;
 
-    /**
-     * Short description about the annotated module.
-     */
-    String description() default "";
 
     String DEFAULT_CONFIG_NAME = "config";
 

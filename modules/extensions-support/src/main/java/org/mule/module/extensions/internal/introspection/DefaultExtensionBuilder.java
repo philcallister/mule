@@ -4,21 +4,21 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import static org.mule.util.Preconditions.checkArgument;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.common.MuleVersion;
-import org.mule.config.MuleManifest;
-import org.mule.extensions.introspection.api.Builder;
 import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
-import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
+import org.mule.module.extensions.internal.MuleExtensionUtils;
+
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,8 @@ import org.apache.commons.lang.StringUtils;
  *
  * @since 1.0
  */
-public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilder<Extension, ExtensionBuilder> implements ExtensionBuilder
+public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilder<Extension, ExtensionBuilder>
+        implements NavigableExtensionBuilder
 {
 
     private static final String MIN_MULE_VERSION = "3.6.0";
@@ -46,7 +47,7 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
     private String minMuleVersion;
     private Class<?> actingClass;
     private List<ExtensionConfigurationBuilder> configurations = new LinkedList<>();
-    private List<Builder<ExtensionOperation>> operations = new LinkedList<>();
+    private List<ExtensionOperationBuilder> operations = new LinkedList<>();
 
     public static ExtensionBuilder newBuilder()
     {
@@ -71,10 +72,28 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
      * {@inheritDoc}
      */
     @Override
+    public String getName()
+    {
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ExtensionBuilder setDescription(String description)
     {
         this.description = description;
         return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription()
+    {
+        return description;
     }
 
     /**
@@ -87,6 +106,12 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
         return this;
     }
 
+    @Override
+    public String getVersion()
+    {
+        return version;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -95,6 +120,15 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
     {
         this.minMuleVersion = minMuleVersion;
         return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getMinMuleVersion()
+    {
+        return minMuleVersion;
     }
 
     /**
@@ -123,6 +157,15 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
      * {@inheritDoc}
      */
     @Override
+    public List<ExtensionConfigurationBuilder> getConfigurations()
+    {
+        return ImmutableList.copyOf(configurations);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ExtensionBuilder addOperation(ExtensionOperationBuilder operation)
     {
         checkArgument(operation != null, "Cannot add a null operation builder");
@@ -131,6 +174,14 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<ExtensionOperationBuilder> getOperations()
+    {
+        return ImmutableList.copyOf(operations);
+    }
 
     /**
      * {@inheritDoc}
@@ -151,11 +202,6 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
 
     private void validateMuleVersion()
     {
-        if (version == null)
-        {
-            version = MuleManifest.getProductVersion();
-        }
-
         // make sure version is valid
         parseVersion(version, "extension version");
         checkState(!StringUtils.isBlank(minMuleVersion), "minimum Mule version cannot be blank");

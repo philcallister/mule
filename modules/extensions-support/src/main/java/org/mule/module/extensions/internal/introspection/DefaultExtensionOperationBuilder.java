@@ -4,12 +4,15 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
+import org.mule.module.extensions.internal.MuleExtensionUtils;
+
+import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilder
+final class DefaultExtensionOperationBuilder implements NavigableExtensionOperationBuilder
 {
 
     private String name;
@@ -30,6 +33,9 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperationBuilder setName(String name)
     {
@@ -37,6 +43,18 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName()
+    {
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperationBuilder setDescription(String description)
     {
@@ -44,6 +62,18 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription()
+    {
+        return description;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperationBuilder addInputType(DataType... type)
     {
@@ -51,6 +81,18 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<DataType> getInputDataTypes()
+    {
+        return ImmutableList.copyOf(inputTypes);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperationBuilder setOutputType(DataType type)
     {
@@ -58,6 +100,18 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataType getOutputDataType()
+    {
+        return outputType;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperationBuilder addParameter(ExtensionParameterBuilder parameter)
     {
@@ -65,14 +119,18 @@ final class DefaultExtensionOperationBuilder implements ExtensionOperationBuilde
         return this;
     }
 
-    protected <T> void addAll(List<T> list, T[] elements)
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<ExtensionParameterBuilder> getParameters()
     {
-        if (elements != null)
-        {
-            list.addAll(Arrays.asList(elements));
-        }
+        return ImmutableList.copyOf(parameters);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionOperation build()
     {

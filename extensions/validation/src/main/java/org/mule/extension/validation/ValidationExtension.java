@@ -19,15 +19,26 @@ import org.mule.util.ClassUtils;
 import org.apache.commons.lang.StringUtils;
 
 @Extension(name = "Mule Validations Extension")
-@Xml(schemaVersion = "1.0", namespace = "validation", schemaLocation = "http://www.mulesoft.org/schema/mule/extension/validation")
+@Xml(namespace = "validation")
 public class ValidationExtension
 {
 
+    /**
+     * The canonical name of the exception class to be thrown each time a validation fails.
+     * This is optional in case that you want to customize the exception type. If not provided
+     * it will default to {@link org.mule.extension.validation.exception.ValidationException}
+     */
     @Configurable
     @Optional(defaultValue = "org.mule.extension.validation.exception.ValidationException")
     private String defaultExceptionClass;
 
-
+    /**
+     * Validates that the given {@code value} is {@code true}
+     *
+     * @param value the boolean to test
+     * @param message an optional custom message
+     * @throws Exception if the value is not {@code true}
+     */
     @Operation
     public void validateTrue(final boolean value, @Optional String message) throws Exception
     {

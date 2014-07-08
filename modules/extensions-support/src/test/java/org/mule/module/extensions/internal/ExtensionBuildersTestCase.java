@@ -14,7 +14,7 @@ import static org.junit.Assert.assertNull;
 import static org.mule.extensions.introspection.api.DataQualifier.BOOLEAN;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.STRING;
-import static org.mule.module.extensions.internal.ImmutableDataType.of;
+import static org.mule.module.extensions.internal.introspection.ImmutableDataType.of;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
@@ -24,6 +24,8 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.api.NoSuchConfigurationException;
 import org.mule.extensions.introspection.api.NoSuchOperationException;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -38,6 +40,8 @@ import org.junit.Test;
 @SmallTest
 public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 {
+
+    private static final DataType STRING_DATA_TYPE = ImmutableDataType.of(String.class);
 
     private static final String CONFIG_NAME = "config";
     private static final String CONFIG_DESCRIPTION = "Default description";
@@ -64,11 +68,13 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     private static final String CALLBACK = "callback";
     private static final String CALLBACK_DESCRIPTION = "async callback";
 
+
+    private ExtensionBuilder builder;
     private Extension extension;
 
     private ExtensionBuilder populatedBuilder()
     {
-        ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
+        builder = DefaultExtensionBuilder.newBuilder();
         return builder.setName(WS_CONSUMER)
                 .setDescription(WS_CONSUMER_DESCRIPTION)
                 .setVersion(VERSION)
@@ -152,7 +158,8 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Before
     public void buildExtension() throws Exception
     {
-        extension = populatedBuilder().build();
+        builder = populatedBuilder();
+        extension = builder.build();
     }
 
     @Test
@@ -217,13 +224,13 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Test(expected = IllegalArgumentException.class)
     public void nullCapability()
     {
-        populatedBuilder().addCapablity(null);
+        builder.addCapablity(null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void invalidMinMuleVersion() throws Exception
     {
-        populatedBuilder().setMinMuleVersion("3.5.0").build();
+        builder.setMinMuleVersion("3.5.0").build();
     }
 
     @Test
@@ -239,11 +246,10 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     public void defaultOperationInputType() throws Exception
     {
         final String operationName = "operation";
-        ExtensionBuilder builder = populatedBuilder();
-        Extension extension = builder.addOperation(builder.newOperation()
-                                                           .setName(operationName)
-                                                           .setDescription("description")
-                                                           .setOutputType(of(String.class)))
+        extension = builder.addOperation(builder.newOperation()
+                                                 .setName(operationName)
+                                                 .setDescription("description")
+                                                 .setOutputType(of(String.class)))
                 .build();
 
         List<DataType> inputTypes = extension.getOperation(operationName).getInputTypes();
@@ -257,7 +263,6 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Test(expected = IllegalStateException.class)
     public void operationWithoutOutputType() throws Exception
     {
-        ExtensionBuilder builder = populatedBuilder();
         builder.addOperation(builder.newOperation()
                                      .setName("operation")
                                      .setDescription("description")
@@ -267,13 +272,13 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Test(expected = IllegalArgumentException.class)
     public void badExtensionVersion()
     {
-        populatedBuilder().setVersion("i'm new").build();
+        builder.setVersion("i'm new").build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void badMinMuleVersion()
     {
-        populatedBuilder().setMinMuleVersion("i'm new").build();
+        builder.setMinMuleVersion("i'm new").build();
     }
 
     @Test
@@ -282,13 +287,13 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         final String beta = "beta";
         final String alpha = "alpha";
 
-        ExtensionBuilder builder = populatedBuilder();
-        Extension extension = builder.addConfiguration(
-                builder.newConfiguration()
-                        .setName(beta))
-                .addConfiguration(
-                        builder.newConfiguration()
-                                .setName(alpha))
+        Extension extension = builder
+                .addConfiguration(builder.newConfiguration()
+                                          .setName(beta)
+                                          .setDescription(beta))
+                .addConfiguration(builder.newConfiguration()
+                                          .setName(alpha)
+                                          .setDescription(alpha))
                 .build();
 
         List<ExtensionConfiguration> configurations = extension.getConfigurations();
@@ -309,28 +314,25 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     @Test(expected = IllegalArgumentException.class)
     public void nameClashes()
     {
-        ExtensionBuilder builder = populatedBuilder();
         builder.addOperation(builder.newOperation()
                                      .setName(CONFIG_NAME)
                                      .setDescription("")
-                                     .addInputType(ImmutableDataType.of(String.class))
-                                     .setOutputType(ImmutableDataType.of(String.class)))
+                                     .addInputType(STRING_DATA_TYPE)
+                                     .setOutputType(STRING_DATA_TYPE))
                 .build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void operationNamedName()
     {
-        ExtensionBuilder builder = populatedBuilder();
-        DataType string = ImmutableDataType.of(String.class);
         builder.addOperation(builder.newOperation()
                                      .setName("invalidOperation")
                                      .setDescription("")
-                                     .addInputType(string)
-                                     .setOutputType(string)
+                                     .addInputType(STRING_DATA_TYPE)
+                                     .setOutputType(STRING_DATA_TYPE)
                                      .addParameter(builder.newParameter()
                                                            .setName("name")
-                                                           .setType(string)))
+                                                           .setType(STRING_DATA_TYPE)))
                 .build();
     }
 

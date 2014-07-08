@@ -11,8 +11,9 @@ import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
-import org.mule.module.extensions.internal.DefaultExtensionBuilder;
-import org.mule.module.extensions.internal.DefaultExtensionDescriber;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
+import org.mule.module.extensions.internal.introspection.NavigableExtensionBuilder;
 import org.mule.util.ClassUtils;
 import org.mule.util.CollectionUtils;
 import org.mule.util.ExceptionUtils;
@@ -139,6 +140,7 @@ public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
         ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
         new DefaultExtensionDescriber().describe(getClass(extensionElement), builder);
 
+        new SchemaDocumenter(processingEnv).document((NavigableExtensionBuilder) builder, extensionElement);
         return builder.build();
     }
 
@@ -175,7 +177,8 @@ public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
         final String classname = element.getQualifiedName().toString();
         try
         {
-            return ClassUtils.getClass(classname);
+            ClassUtils.loadClass(classname, getClass());
+            return ClassUtils.getClass(getClass().getClassLoader(), classname, true);
         }
         catch (ClassNotFoundException e)
         {

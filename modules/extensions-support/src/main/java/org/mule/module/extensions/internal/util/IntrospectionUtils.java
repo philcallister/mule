@@ -8,7 +8,7 @@ package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.DataType;
-import org.mule.module.extensions.internal.ImmutableDataType;
+import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.repackaged.internal.org.springframework.core.ResolvableType;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;

@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 

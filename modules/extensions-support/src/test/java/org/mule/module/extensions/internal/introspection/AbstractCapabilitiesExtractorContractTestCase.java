@@ -4,12 +4,11 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
@@ -27,7 +26,7 @@ public abstract class AbstractCapabilitiesExtractorContractTestCase extends Abst
     protected CapabilitiesResolver resolver;
 
     @Mock
-    protected CapabilityAwareBuilder<?, ?> builder;
+    protected NavigableExtensionBuilder builder;
 
     @Before
     public void before()

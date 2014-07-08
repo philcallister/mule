@@ -6,6 +6,8 @@
  */
 package org.mule.extensions.introspection.spi;
 
+import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
+
 /**
  * A component capable of extracting one specific capability
  * out of a {@link java.lang.Class} that composes a {@link org.mule.extensions.introspection.api.Extension}
@@ -29,5 +31,5 @@ public interface CapabilityExtractor
      * @param extensionType a type maybe holding a capability
      * @return a capability object or {@code null}
      */
-    Object extractCapability(Class<?> extensionType);
+    Object extractCapability(Class<?> extensionType, CapabilityAwareBuilder<?, ?> builder);
 }

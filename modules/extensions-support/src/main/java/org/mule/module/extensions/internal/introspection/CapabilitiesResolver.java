@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
@@ -59,11 +59,9 @@ public final class CapabilitiesResolver
 
         for (CapabilityExtractor extractor : extractors)
         {
-            Object capability = extractor.extractCapability(extensionType);
-            if (capability != null)
-            {
-                builder.addCapablity(capability);
-            }
+            extractor.extractCapability(extensionType, builder);
         }
     }
+
+
 }

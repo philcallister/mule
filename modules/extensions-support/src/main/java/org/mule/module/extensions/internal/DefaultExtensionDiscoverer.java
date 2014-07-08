@@ -11,6 +11,8 @@ import org.mule.config.i18n.MessageFactory;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.util.ClassUtils;
 import org.mule.util.IOUtils;
 import org.mule.util.Preconditions;

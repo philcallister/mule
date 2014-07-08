@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
@@ -32,7 +32,7 @@ public final class ImmutableDataType implements DataType
      * when queried for {@link #getGenericTypes()}
      *
      * @param clazz a not {@code null} {@link java.lang.Class}
-     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @return a new {@link ImmutableDataType}
      * @throws java.lang.IllegalArgumentException if the argument is null
      */
     public static DataType of(Class<?> clazz)
@@ -46,7 +46,7 @@ public final class ImmutableDataType implements DataType
      *
      * @param clazz        a not {@code null} {@link java.lang.Class}
      * @param genericTypes an optional array of generic types accessible through {@link #getGenericTypes()}
-     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @return a new {@link ImmutableDataType}
      * @throws java.lang.IllegalArgumentException if the argument is null
      */
     public static DataType of(Class<?> clazz, Class<?>... genericTypes)
@@ -75,7 +75,7 @@ public final class ImmutableDataType implements DataType
      *
      * @param clazz        a not {@code null} {@link java.lang.Class}
      * @param genericTypes an optional array of {@link org.mule.extensions.introspection.api.DataType} types accessible through {@link #getGenericTypes()}
-     * @return a new {@link org.mule.module.extensions.internal.ImmutableDataType}
+     * @return a new {@link ImmutableDataType}
      * @throws java.lang.IllegalArgumentException if the argument is null
      */
     public static DataType of(Class<?> clazz, DataType... genericTypes)

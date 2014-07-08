@@ -4,16 +4,19 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
+import org.mule.module.extensions.internal.MuleExtensionUtils;
+
+import com.google.common.collect.ImmutableList;
 
 import java.util.LinkedList;
 import java.util.List;
 
-final class DefaultExtensionConfigurationBuilder implements ExtensionConfigurationBuilder
+final class DefaultExtensionConfigurationBuilder implements NavigableExtensionConfigurationBuilder
 {
 
     private String name;
@@ -24,6 +27,9 @@ final class DefaultExtensionConfigurationBuilder implements ExtensionConfigurati
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionConfigurationBuilder setName(String name)
     {
@@ -32,12 +38,33 @@ final class DefaultExtensionConfigurationBuilder implements ExtensionConfigurati
     }
 
     @Override
+    public String getName()
+    {
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ExtensionConfigurationBuilder setDescription(String description)
     {
         this.description = description;
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription()
+    {
+        return description;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionConfigurationBuilder addParameter(ExtensionParameterBuilder parameter)
     {
@@ -45,6 +72,15 @@ final class DefaultExtensionConfigurationBuilder implements ExtensionConfigurati
         return this;
     }
 
+    @Override
+    public List<ExtensionParameterBuilder> getParameters()
+    {
+        return ImmutableList.copyOf(parameters);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionConfiguration build()
     {

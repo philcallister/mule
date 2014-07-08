@@ -25,19 +25,21 @@ public @interface Xml
 {
 
     /**
-     * The version of the module. Defaults to 1.0.
+     * The version of the schema. If left empty it will default
+     * to the owning extension version
      */
-    String schemaVersion();
+    String schemaVersion() default "";
 
     /**
-     * Namespace of the module
+     * Extension's namespace
      */
     String namespace();
 
     /**
-     * Location URI for the schema
+     * Location URI for the schema. If left empty it will default to
+     * &quot;http://www.mulesoft.org/schema/mule/extension/&lt;&lt;extension_name&gt;&gt;
      */
-    String schemaLocation();
+    String schemaLocation() default "";
 
 
 }
