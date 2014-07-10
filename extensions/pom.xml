@@ -74,6 +74,7 @@
                         </goals>
                         <phase>process-classes</phase>
                         <configuration>
+                            <outputDirectory>target/classes/META-INF</outputDirectory>
                             <processors>
                                 <processor>org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor</processor>
                             </processors>
@@ -81,35 +82,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-compiler-plugin</artifactId>-->
-                <!--<version>${mavenCompilerVersion}</version>-->
-                <!--<configuration>-->
-                    <!--<encoding>ISO-8859-1</encoding>-->
-                    <!--<fork>false</fork>-->
-                    <!--<maxmem>512m</maxmem>-->
-                    <!--<source>1.7</source>-->
-                    <!--<target>1.7</target>-->
-                <!--</configuration>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<goals>-->
-                            <!--<goal>compile</goal>-->
-                        <!--</goals>-->
-                        <!--<phase>generate-resources</phase>-->
-                        <!--<configuration>-->
-                            <!--<forceJavacCompilerUse>true</forceJavacCompilerUse>-->
-                            <!--<proc>only</proc>-->
-                            <!--<annotationProcessors>-->
-                                <!--<annotationProcessor>-->
-                                    <!--org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor-->
-                                <!--</annotationProcessor>-->
-                            <!--</annotationProcessors>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
         </plugins>
     </build>
 

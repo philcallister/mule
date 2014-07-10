@@ -336,6 +336,12 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                 .build();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void nameWithSpaces()
+    {
+        builder.setName("i have spaces").build();
+    }
+
     private void assertConsumeOperation(List<ExtensionOperation> operations) throws NoSuchOperationException
     {
         ExtensionOperation operation = operations.get(1);

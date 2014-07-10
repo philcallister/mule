@@ -8,14 +8,17 @@ package org.mule.module.extensions.internal.capability.xml.schema;
 
 import static org.mule.util.Preconditions.checkState;
 import org.mule.extensions.api.annotation.capability.Xml;
+import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.module.extensions.internal.capability.xml.XmlCapabilityExtractor;
+import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants;
+import org.mule.module.extensions.internal.config.ExtensionsNamespaceHandler;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.module.extensions.internal.introspection.NavigableExtensionBuilder;
 import org.mule.util.ClassUtils;
-import org.mule.util.CollectionUtils;
 import org.mule.util.ExceptionUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -39,6 +42,17 @@ import javax.tools.StandardLocation;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * Annotation processor that picks up all the extensions that declare
+ * the {@link org.mule.extensions.introspection.api.capability.XmlCapability} capability
+ * by being annotated with {@link org.mule.extensions.api.annotation.capability.Xml}
+ * <p/>
+ * This annotation processor will automatically generate and package into the output jar
+ * the XSD schema and spring bundles necessary for mule to work with this extension through
+ * XML configuration
+ *
+ * @since 3.6.0
+ */
 @SupportedAnnotationTypes(value = {"org.mule.extensions.api.annotation.capability.Xml"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
@@ -88,14 +102,54 @@ public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
         {
             log(String.format("Writing schema and spring bundle for extension %s", schemaContext.getExtension().getName()));
             writeSchema(schemaContext);
+            writeSpringBundle(schemaContext);
         }
     }
 
     private void writeSchema(GeneratedSchemaContext schemaContext)
     {
         writeResource(schemaContext.getExtension(),
-                      "mule-extension-" + schemaContext.getExtension().getName(),
+                      getXsdFileName(schemaContext),
                       schemaContext.getSchema());
+    }
+
+    private void writeSpringBundle(GeneratedSchemaContext schemaContext)
+    {
+        writeSpringHandlerBundle(schemaContext);
+        writeSpringSchemaBundle(schemaContext);
+    }
+
+    private void writeSpringHandlerBundle(GeneratedSchemaContext schemaContext)
+    {
+        String content = String.format("%s=%s", schemaContext.getNamespace(), ExtensionsNamespaceHandler.class.getName());
+        writeResource(schemaContext.getExtension(), "spring.handlers", springBundleScape(content));
+    }
+
+    private void writeSpringSchemaBundle(GeneratedSchemaContext schemaContext)
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getSpringSchemaBundle(schemaContext, schemaContext.getExtension().getVersion())).append('\n');
+        builder.append(getSpringSchemaBundle(schemaContext, "current")).append('\n');
+
+        writeResource(schemaContext.getExtension(), "spring.schemas", springBundleScape(builder.toString()));
+    }
+
+    private String getSpringSchemaBundle(GeneratedSchemaContext schemaContext, String version)
+    {
+        String filename = getXsdFileName(schemaContext);
+        return String.format("%s/%s/%s=META-INF/%s", schemaContext.getNamespace(), version, filename, filename);
+    }
+
+    /**
+     * Colon is a special character for the {@link java.util.Properties} class
+     * that spring uses to parse the bundle. Thus, such character needs to be escaped
+     * with a backslash
+     * @param content the content to be scaped
+     * @return the scaped content
+     */
+    private String springBundleScape(String content)
+    {
+        return content.replaceAll(":", "\\\\:");
     }
 
     private void writeResource(Extension extension, String filename, String content)
@@ -127,29 +181,31 @@ public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
     private GeneratedSchemaContext generateSchema(TypeElement extensionElement)
     {
         Extension extension = parseExtension(extensionElement);
-        XmlCapability xmlCapability = getXmlCapability(extension);
-
-        SchemaGenerator schemaGenerator = new SchemaGenerator();
-        String schema = schemaGenerator.generate(extension, xmlCapability);
+        XmlCapability xmlCapability = extension.getCapabilities(XmlCapability.class).iterator().next();
+        String schema = new SchemaGenerator().generate(extension, xmlCapability);
 
         return new GeneratedSchemaContext(extension, xmlCapability.getSchemaLocation(), schema);
     }
 
     private Extension parseExtension(TypeElement extensionElement)
     {
+        Class<?> extensionClass = getClass(extensionElement);
         ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-        new DefaultExtensionDescriber().describe(getClass(extensionElement), builder);
+        new DefaultExtensionDescriber().describe(extensionClass, builder);
 
         new SchemaDocumenter(processingEnv).document((NavigableExtensionBuilder) builder, extensionElement);
+        extractXmlCapability(extensionClass, builder);
+
         return builder.build();
     }
 
-    private XmlCapability getXmlCapability(Extension extension)
+    private XmlCapability extractXmlCapability(Class<?> extensionClass, CapabilityAwareBuilder<?, ?> builder)
     {
-        Set<XmlCapability> capabilities = extension.getCapabilities(XmlCapability.class);
-        checkState(!CollectionUtils.isEmpty(capabilities), "Could not find xml capability for extension " + extension.getName());
+        XmlCapabilityExtractor extractor = new XmlCapabilityExtractor();
+        XmlCapability capability = (XmlCapability) extractor.extractCapability(extensionClass, builder);
+        checkState(capability != null, "Could not find xml capability for extension " + extensionClass.getName());
 
-        return capabilities.iterator().next();
+        return capability;
     }
 
 
@@ -170,6 +226,11 @@ public class SchemaGeneratorAnnotationProcessor extends AbstractProcessor
     private void log(String message)
     {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, message);
+    }
+
+    private String getXsdFileName(GeneratedSchemaContext schemaContext)
+    {
+        return String.format("mule-extension-%s%s", schemaContext.getExtension().getName(), SchemaConstants.XSD_EXTENSION);
     }
 
     private Class<?> getClass(TypeElement element)

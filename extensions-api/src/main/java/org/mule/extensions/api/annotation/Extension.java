@@ -29,14 +29,8 @@ public @interface Extension
 {
 
     /**
-     * A simple name for this extension. Usually one or two simple words that describes
-     * the functionality. For example, for an extension that performs validations it could be
-     * something like &quot;validation&quot;. For an ftp connector it could be &quot;ftp&quot;.
-     * For a connector that accesses the google contacts API it could be &quot;google-contacts&quot;.
-     * <p/>
-     * To follow the convention described above is important since the platform might use
-     * this name to auto generate resources based on it. This attribute will be used in a
-     * convention over configuration pattern
+     * A name consistent with the definition on
+     * {@link org.mule.extensions.introspection.api.Extension#getName()}
      */
     String name();
 
@@ -46,10 +40,9 @@ public @interface Extension
     String description() default "";
 
     /**
-     * Specifies the version of this extension. If left empty
-     * it will default to the mule runtime version
+     * Specifies the version of this extension
      */
-    String version() default "";
+    String version();
 
     /**
      * The least mule runtime version necessary

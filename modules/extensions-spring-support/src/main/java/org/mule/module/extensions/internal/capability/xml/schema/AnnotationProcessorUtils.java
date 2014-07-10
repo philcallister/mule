@@ -9,7 +9,6 @@ package org.mule.module.extensions.internal.capability.xml.schema;
 import com.google.common.collect.ImmutableMap;
 
 import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -22,6 +21,11 @@ import javax.lang.model.util.ElementFilter;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * Utility class for annotation processing using the {@link javax.annotation.processing.Processor} API
+ *
+ * @since 3.6.0
+ */
 final class AnnotationProcessorUtils
 {
 
@@ -60,54 +64,73 @@ final class AnnotationProcessorUtils
     }
 
 
+    static MethodDocumentation getMethodDocumentation(ProcessingEnvironment processingEnv, Element element)
+    {
+        final StringBuilder parsedComment = new StringBuilder();
+        final ImmutableMap.Builder<String, String> parameters = ImmutableMap.builder();
+        parseJavaDoc(processingEnv, element, new JavadocParseHandler()
+        {
+            @Override
+            void onParam(String param)
+            {
+                parseMethodParameter(parameters, param);
+            }
+
+            @Override
+            void onBodyLine(String bodyLine)
+            {
+                parsedComment.append(bodyLine).append('\n');
+            }
+        });
+
+        return new MethodDocumentation(stripTags(parsedComment.toString()), parameters.build());
+    }
+
     static String getJavaDocSummary(ProcessingEnvironment processingEnv, Element element)
     {
-        String comment = processingEnv.getElementUtils().getDocComment(element);
-
-        if (StringUtils.isBlank(comment))
+        final StringBuilder parsedComment = new StringBuilder();
+        parseJavaDoc(processingEnv, element, new JavadocParseHandler()
         {
-            return StringUtils.EMPTY;
-        }
+            @Override
+            void onParam(String param)
+            {
+            }
 
+            @Override
+            void onBodyLine(String bodyLine)
+            {
+                parsedComment.append(bodyLine).append('\n');
+            }
+        });
+
+        return stripTags(parsedComment.toString());
+    }
+
+    private static String stripTags(String comment)
+    {
+        StringBuilder builder = new StringBuilder();
+        boolean insideTag = false;
         comment = comment.trim();
 
-        String parsedComment = "";
-        boolean tagsBegan = false;
-        StringTokenizer st = new StringTokenizer(comment, "\n\r");
-        while (st.hasMoreTokens())
+        for (int i = 0; i < comment.length(); i++)
         {
-            String nextToken = st.nextToken().trim();
-            if (nextToken.startsWith("@"))
-            {
-                tagsBegan = true;
-            }
-            if (!tagsBegan)
-            {
-                parsedComment = parsedComment + nextToken + "\n";
-            }
-        }
-
-        String strippedComments = "";
-        boolean insideTag = false;
-        for (int i = 0; i < parsedComment.length(); i++)
-        {
-            if (parsedComment.charAt(i) == '{' &&
-                parsedComment.charAt(i + 1) == '@')
+            if (comment.charAt(i) == '{' &&
+                comment.charAt(i + 1) == '@')
             {
                 insideTag = true;
                 i++; //skip
                 continue;
             }
-            else if (parsedComment.charAt(i) == '}' && insideTag)
+            else if (comment.charAt(i) == '}' && insideTag)
             {
                 insideTag = false;
                 continue;
             }
 
-            strippedComments += parsedComment.charAt(i);
+            builder.append(comment.charAt(i));
         }
 
-        strippedComments = strippedComments.trim();
+        String strippedComments = builder.toString().trim();
         while (strippedComments.length() > 0 &&
                strippedComments.charAt(strippedComments.length() - 1) == '\n')
         {
@@ -117,14 +140,53 @@ final class AnnotationProcessorUtils
         return strippedComments;
     }
 
-    static Map<String, Element> asMap(Collection<? extends Element> elements)
+    private static void parseJavaDoc(ProcessingEnvironment processingEnv, Element element, JavadocParseHandler handler)
     {
-        ImmutableMap.Builder<String, Element> map = ImmutableMap.builder();
-        for (Element element : elements)
+        String comment = extractJavadoc(processingEnv, element);
+
+        StringTokenizer st = new StringTokenizer(comment, "\n\r");
+        while (st.hasMoreTokens())
         {
-            map.put(element.getSimpleName().toString(), element);
+            String nextToken = st.nextToken().trim();
+            if (nextToken.startsWith("@param"))
+            {
+                handler.onParam(nextToken);
+            }
+            else if (!nextToken.startsWith("@"))
+            {
+                handler.onBodyLine(nextToken);
+            }
+        }
+    }
+
+    private static void parseMethodParameter(ImmutableMap.Builder<String, String> parameters, String param)
+    {
+        param = param.replaceFirst("@param", StringUtils.EMPTY).trim();
+        int descriptionIndex = param.indexOf(" ");
+        String paramName = param.substring(0, descriptionIndex).trim();
+        String description = param.substring(descriptionIndex).trim();
+
+        parameters.put(paramName, description);
+    }
+
+    private static String extractJavadoc(ProcessingEnvironment processingEnv, Element element)
+    {
+        String comment = processingEnv.getElementUtils().getDocComment(element);
+
+        if (StringUtils.isBlank(comment))
+        {
+            return StringUtils.EMPTY;
         }
 
-        return map.build();
+        return comment.trim();
+    }
+
+    private static abstract class JavadocParseHandler
+    {
+
+        abstract void onParam(String param);
+
+        abstract void onBodyLine(String bodyLine);
+
     }
 }

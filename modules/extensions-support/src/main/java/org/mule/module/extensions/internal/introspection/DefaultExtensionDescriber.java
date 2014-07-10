@@ -67,7 +67,6 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
 
             configuration.addParameter(builder.newParameter()
                                                .setName(field.getName())
-                                                       //.setDescription(from java doc) TODO: get this from java doc
                                                .setType(dataType)
                                                .setDynamic(configurable.isDynamic())
                                                .setRequired(optional == null)
@@ -83,8 +82,8 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
             ExtensionOperationBuilder operation = builder.newOperation();
             builder.addOperation(operation);
 
-            operation.setName(resolveOperationName(method, annotation))
-                    //.setDescription() TODO: take this from java doc
+            operation
+                    .setName(resolveOperationName(method, annotation))
                     .setOutputType(IntrospectionUtils.getMethodReturnType(method));
 
             resolveOperationInputTypes(annotation, operation);

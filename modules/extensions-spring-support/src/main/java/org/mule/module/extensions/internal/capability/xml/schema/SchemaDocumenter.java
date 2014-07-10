@@ -6,9 +6,9 @@
  */
 package org.mule.module.extensions.internal.capability.xml.schema;
 
-import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.asMap;
 import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.getFieldsAnnotatedWith;
 import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.getJavaDocSummary;
+import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.getMethodDocumentation;
 import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.getMethodsAnnotatedWith;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Operation;
@@ -24,11 +24,20 @@ import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+/**
+ * Utility class that picks a {@link org.mule.module.extensions.internal.introspection.NavigableExtensionBuilder}
+ * on which a {@link org.mule.extensions.introspection.api.Extension} has already been described
+ * and enriches such description with the javadocs extracted from the extension's acting classes.
+ * <p/>
+ * This is necessary because such documentation is not available on runtime, thus this class
+ * uses the annotation processor's AST access to extract it
+ *
+ * @since 3.6.0
+ */
 final class SchemaDocumenter
 {
 
@@ -41,6 +50,7 @@ final class SchemaDocumenter
 
     void document(NavigableExtensionBuilder builder, TypeElement extensionElement)
     {
+        builder.setDescription(getJavaDocSummary(processingEnv, extensionElement));
         documentConfigurations(builder, extensionElement);
         documentOperations(builder, extensionElement);
     }
@@ -59,19 +69,19 @@ final class SchemaDocumenter
 
             ExecutableElement method = methods.get(operationBuilder.getName());
 
-             if (method == null)
+            if (method == null)
             {
                 continue;
             }
 
-            operationBuilder.setDescription(getJavaDocSummary(processingEnv, method));
-            documentOperationParameters(operationBuilder, method);
+            MethodDocumentation documentation = getMethodDocumentation(processingEnv, method);
+            operationBuilder.setDescription(documentation.getSummary());
+            documentOperationParameters(operationBuilder, documentation);
         }
     }
 
-    private void documentOperationParameters(NavigableExtensionOperationBuilder builder, ExecutableElement method)
+    private void documentOperationParameters(NavigableExtensionOperationBuilder builder, MethodDocumentation documentation)
     {
-        final Map<String, Element> attributes = asMap(method.getParameters());
         for (ExtensionParameterBuilder pb : builder.getParameters())
         {
             NavigableExtensionParameterBuilder parameterBuilder = navigable(pb);
@@ -80,10 +90,10 @@ final class SchemaDocumenter
                 continue;
             }
 
-            Element attribute = attributes.get(parameterBuilder.getName());
-            if (attribute != null)
+            String description = documentation.getParameters().get(parameterBuilder.getName());
+            if (description != null)
             {
-                parameterBuilder.setDescription(getJavaDocSummary(processingEnv, attribute));
+                parameterBuilder.setDescription(description);
             }
         }
     }

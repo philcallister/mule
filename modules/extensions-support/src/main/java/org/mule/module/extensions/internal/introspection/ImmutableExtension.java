@@ -49,6 +49,7 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
     {
         super(name, description, capabilities);
 
+        checkArgument(!name.contains(" "), "Extension name cannot contain spaces");
         checkArgument(actingClass != null, "acting class cannot be null");
         this.actingClass = actingClass;
 

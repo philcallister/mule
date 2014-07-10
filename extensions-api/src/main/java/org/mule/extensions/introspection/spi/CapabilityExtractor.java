@@ -15,6 +15,10 @@ import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
  * Because actual capabilities might be defined across several modules (or even extensions!)
  * the actual extractors are fetched through SPI, using the standard {@link java.util.ServiceLoader}
  * contract.
+ * <p/>
+ * Each implementation of this class has to aim to one and only one specific capability type. It's
+ * this extractor's responsibility to ignore the capabilities which are outside of its domain
+ * and to ignore any extension types which don't support the given capability
  *
  * @since 1.0
  */
@@ -23,12 +27,11 @@ public interface CapabilityExtractor
 
     /**
      * Looks for a specific capability in the given {@code extensionType}.
-     * Implementations must take into account that those capabilities might be
-     * expressed in a variety of forms, being this method's responsibility to find them
-     * all and return them in a consistent way that the rest of the platform can handle.
-     * If the capability is not found, then this method should return {@code null}
+     * and declares it into the given {@code builder}. After doing such,
+     * the found capability is returned (or {@code null} if not found)
      *
      * @param extensionType a type maybe holding a capability
+     * @param builder       the builder describing the processed {@link org.mule.extensions.introspection.api.Capable} object
      * @return a capability object or {@code null}
      */
     Object extractCapability(Class<?> extensionType, CapabilityAwareBuilder<?, ?> builder);

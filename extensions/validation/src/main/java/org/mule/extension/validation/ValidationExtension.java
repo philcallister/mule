@@ -18,7 +18,10 @@ import org.mule.util.ClassUtils;
 
 import org.apache.commons.lang.StringUtils;
 
-@Extension(name = "Mule Validations Extension")
+/**
+ * Validations module
+ */
+@Extension(name = "validation", version = "3.6")
 @Xml(namespace = "validation")
 public class ValidationExtension
 {

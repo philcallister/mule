@@ -53,4 +53,5 @@ public final class SchemaConstants
     public static final String ATTRIBUTE_NAME_NAME = "name";
     public static final String ATTRIBUTE_NAME_NAME_DESCRIPTION = "Give a name to this configuration so it can be later referenced by config-ref.";
     public static String DEFAULT_PATTERN = "DEFAULT_PATTERN";
+    public static final String XSD_EXTENSION = ".xsd";
 }

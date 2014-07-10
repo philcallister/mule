@@ -37,6 +37,18 @@ public interface Extension extends Described, Capable
 {
 
     /**
+     * A simple name for this extension. Usually one or two simple words that describes
+     * the functionality. For example, for an extension that performs validations it could be
+     * something like &quot;validation&quot;. For an ftp connector it could be &quot;ftp&quot;.
+     * For a connector that accesses the google contacts API it could be &quot;google-contacts&quot;.
+     * <p/>
+     * To follow the convention described above is important since the platform might use
+     * this name to auto generate resources based on it. This attribute will be used in a
+     * convention over configuration pattern. It cannot contain spaces
+     */
+    String getName();
+
+    /**
      * Returns this extension's version.
      * <p>
      * The extension version is specified as a <a href=&quot;http://semver.org/&quot;>Semantic Versioning</a>.

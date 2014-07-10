@@ -26,7 +26,7 @@ public @interface Xml
 
     /**
      * The version of the schema. If left empty it will default
-     * to the owning extension version
+     * to the owning extension's version
      */
     String schemaVersion() default "";
 

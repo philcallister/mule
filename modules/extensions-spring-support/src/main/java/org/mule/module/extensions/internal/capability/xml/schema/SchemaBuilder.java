@@ -7,7 +7,6 @@
 package org.mule.module.extensions.internal.capability.xml.schema;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.mule.extensions.introspection.api.DataQualifier.BEAN;
 import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.MAP;
@@ -339,7 +338,7 @@ public class SchemaBuilder
                 @Override
                 public void onOperation()
                 {
-                    generateNestedProcessorElement(all, field.getName(), isRequired(field));
+                    generateNestedProcessorElement(all, field.getName(), EMPTY, isRequired(field));
                 }
 
                 @Override
@@ -484,10 +483,15 @@ public class SchemaBuilder
         return complexContentExtension;
     }
 
-    private Attribute createAttribute(String name, DataType type, boolean required)
+    private Attribute createAttribute(String name, DataType type, boolean required) {
+        return createAttribute(name, EMPTY, type, required);
+    }
+
+    private Attribute createAttribute(String name, String description, DataType type, boolean required)
     {
         Attribute attribute = new Attribute();
         attribute.setUse(required ? SchemaConstants.USE_REQUIRED : SchemaConstants.USE_OPTIONAL);
+        attribute.setAnnotation(createDocAnnotation(description));
 
         if (isTypeSupported(type))
         {
@@ -732,19 +736,19 @@ public class SchemaBuilder
 
         ComplexContent complexContent = new ComplexContent();
         complexType.setComplexContent(complexContent);
-        ExtensionType complexContentExtension = new ExtensionType();
+        final ExtensionType complexContentExtension = new ExtensionType();
         complexContentExtension.setBase(base);
         complexContent.setExtension(complexContentExtension);
 
         Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
         complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
 
-        ExplicitGroup all = new ExplicitGroup();
+        final ExplicitGroup all = new ExplicitGroup();
         complexContentExtension.setSequence(all);
 
         int requiredChildElements = countRequiredChildElements(parameters);
 
-        for (ExtensionParameter parameter : parameters)
+        for (final ExtensionParameter parameter : parameters)
         {
             DataType parameterType = parameter.getType();
             DataQualifier parameterQualifier = parameterType.getQualifier();
@@ -759,27 +763,32 @@ public class SchemaBuilder
                 }
                 else
                 {
-                    generateNestedProcessorElement(all, parameter.getName(), parameter.isRequired());
+                    generateNestedProcessorElement(all, parameter.getName(), EMPTY, parameter.isRequired());
                 }
             }
             else
             {
-                if (LIST.equals(parameterQualifier))
+                parameterQualifier.accept(new BaseDataQualifierVisitor()
                 {
-                    generateCollectionElement(all, parameter, false);
-                }
-                else if (isTypeSupported(parameterType) || ENUM.equals(parameterQualifier))
-                {
-                    complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
-                }
-                else if (BEAN.equals(parameterQualifier))
-                {
-                    registerComplexTypeChildElement(all, parameter);
-                }
-                else
-                {
-                    complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
-                }
+
+                    @Override
+                    public void onList()
+                    {
+                        generateCollectionElement(all, parameter, false);
+                    }
+
+                    @Override
+                    public void onBean()
+                    {
+                        registerComplexTypeChildElement(all, parameter);
+                    }
+
+                    @Override
+                    protected void defaultOperation()
+                    {
+                        complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
+                    }
+                });
             }
         }
 
@@ -852,7 +861,7 @@ public class SchemaBuilder
         all.getParticle().add(objectFactory.createElement(textElement));
     }
 
-    private void generateNestedProcessorElement(ExplicitGroup all, String name, boolean required)
+    private void generateNestedProcessorElement(ExplicitGroup all, String name, String description, boolean required)
     {
         LocalComplexType collectionComplexType = new LocalComplexType();
         GroupRef group = generateNestedProcessorGroup();
@@ -866,6 +875,7 @@ public class SchemaBuilder
         all.getParticle().add(objectFactory.createElement(collectionElement));
 
         Attribute attribute = createAttribute("text", true, SchemaConstants.STRING, null);
+        attribute.setAnnotation(createDocAnnotation(description));
         collectionComplexType.getAttributeOrAttributeGroup().add(attribute);
     }
 
@@ -881,7 +891,7 @@ public class SchemaBuilder
 
     private Attribute createParameterAttribute(ExtensionParameter parameter, boolean forceOptional)
     {
-        return createAttribute(parameter.getName(), parameter.getType(), !forceOptional && parameter.isRequired());
+        return createAttribute(parameter.getName(), parameter.getDescription(), parameter.getType(), !forceOptional && parameter.isRequired());
     }
 
     private Attribute createAttribute(String name, boolean optional, QName type, String description)
