@@ -22,11 +22,11 @@ import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.MAP;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
 import static org.mule.extensions.introspection.api.DataQualifier.STRING;
-import static org.mule.module.extensions.HeisenbergModule.AGE;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_DESCRIPTION;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_NAME;
-import static org.mule.module.extensions.HeisenbergModule.EXTENSION_VERSION;
-import static org.mule.module.extensions.HeisenbergModule.HEISENBERG;
+import static org.mule.module.extensions.HeisenbergExtension.AGE;
+import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_DESCRIPTION;
+import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_NAME;
+import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_VERSION;
+import static org.mule.module.extensions.HeisenbergExtension.HEISENBERG;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
@@ -36,7 +36,7 @@ import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.Door;
-import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
@@ -75,7 +75,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     public void describeTestModule() throws Exception
     {
         ExtensionDescriber describer = new DefaultExtensionDescriber();
-        describer.describe(HeisenbergModule.class, builder);
+        describer.describe(new ImmutableExtensionDescribingContext(HeisenbergExtension.class, builder));
 
         Extension extension = builder.build();
         assertNotNull(extension);

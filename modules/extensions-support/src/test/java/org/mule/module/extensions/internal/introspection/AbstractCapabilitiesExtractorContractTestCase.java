@@ -31,7 +31,7 @@ public abstract class AbstractCapabilitiesExtractorContractTestCase extends Abst
     @Before
     public void before()
     {
-        resolver = CapabilitiesResolver.newInstance();
+        resolver = new CapabilitiesResolver();
     }
 
     @Test

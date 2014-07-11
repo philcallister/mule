@@ -1,0 +1,2 @@
+org.mule.module.extensions.internal.resources.ExtensionRegistrationResourceContributor
+org.mule.module.extensions.internal.capability.xml.SpringBundleResourceContributor

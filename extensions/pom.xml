@@ -46,6 +46,13 @@
             <artifactId>mule-module-extensions-spring-support</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.mule.tests</groupId>
+            <artifactId>mule-tests-functional</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <pluginRepositories>
@@ -76,7 +83,7 @@
                         <configuration>
                             <outputDirectory>target/classes/META-INF</outputDirectory>
                             <processors>
-                                <processor>org.mule.module.extensions.internal.capability.xml.schema.SchemaGeneratorAnnotationProcessor</processor>
+                                <processor>org.mule.module.extensions.internal.resources.ExtensionResourcesGeneratorAnnotationProcessor</processor>
                             </processors>
                         </configuration>
                     </execution>

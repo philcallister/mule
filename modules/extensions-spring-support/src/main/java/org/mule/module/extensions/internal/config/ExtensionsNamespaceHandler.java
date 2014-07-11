@@ -105,7 +105,7 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         if (CollectionUtils.isEmpty(capableExtensions))
         {
             throw new IllegalArgumentException(
-                    String.format("Could not find any handledExtensions supporting XML capabilities. Can't process namespace %s", namespace));
+                    String.format("Could not find any handled extensions supporting XML capabilities. Can't process namespace %s", namespace));
         }
 
         for (Extension extension : capableExtensions)

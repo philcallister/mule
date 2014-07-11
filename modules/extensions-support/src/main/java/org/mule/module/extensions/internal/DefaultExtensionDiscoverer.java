@@ -83,7 +83,7 @@ final class DefaultExtensionDiscoverer implements ExtensionDiscoverer
             Class<?> extensionClass = ClassUtils.loadClass(extensionClassname, classLoader);
 
             ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-            describer.describe(extensionClass, builder);
+            describer.describe(new ImmutableExtensionDescribingContext(extensionClass, builder));
 
             return builder.build();
         }

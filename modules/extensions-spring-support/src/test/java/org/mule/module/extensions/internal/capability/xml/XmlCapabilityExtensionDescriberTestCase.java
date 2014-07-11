@@ -10,7 +10,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
-import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.DefaultExtensionDescriberTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -33,8 +33,8 @@ public class XmlCapabilityExtensionDescriberTestCase extends DefaultExtensionDes
         assertEquals(1, capabilities.size());
 
         XmlCapability xml = capabilities.iterator().next();
-        assertEquals(HeisenbergModule.SCHEMA_LOCATION, xml.getSchemaLocation());
-        assertEquals(HeisenbergModule.SCHEMA_VERSION, xml.getSchemaVersion());
-        assertEquals(HeisenbergModule.NAMESPACE, xml.getNamespace());
+        assertEquals(HeisenbergExtension.SCHEMA_LOCATION, xml.getSchemaLocation());
+        assertEquals(HeisenbergExtension.SCHEMA_VERSION, xml.getSchemaVersion());
+        assertEquals(HeisenbergExtension.NAMESPACE, xml.getNamespace());
     }
 }

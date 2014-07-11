@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Extension(name = HeisenbergModule.EXTENSION_NAME, description = HeisenbergModule.EXTENSION_DESCRIPTION, version = HeisenbergModule.EXTENSION_VERSION)
-@Xml(schemaLocation = HeisenbergModule.SCHEMA_LOCATION, namespace = HeisenbergModule.NAMESPACE, schemaVersion = HeisenbergModule.SCHEMA_VERSION)
-public class HeisenbergModule
+@Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
+@Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
+public class HeisenbergExtension
 {
 
     public static final String SCHEMA_LOCATION = "http://www.mulesoft.org/schema/mule/extension/heisenberg";
@@ -36,7 +36,7 @@ public class HeisenbergModule
 
     public static final String HEISENBERG = "Heisenberg";
     public static final String AGE = "50";
-    public static final String EXTENSION_NAME = "HeisenbergExtension";
+    public static final String EXTENSION_NAME = "heisenberg";
     public static final String EXTENSION_DESCRIPTION = "My Test Extension just to unit test";
     public static final String EXTENSION_VERSION = "1.0";
 

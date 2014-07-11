@@ -7,6 +7,7 @@
 package org.mule.module.extensions.internal.introspection;
 
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getDefaultValue;
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
@@ -14,45 +15,64 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
+import org.mule.extensions.introspection.api.ExtensionDescribingContext;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
+import org.mule.extensions.introspection.spi.ExtensionDescriberPostProcessor;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
-import org.mule.util.Preconditions;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Iterator;
 import java.util.List;
+
+import javax.imageio.spi.ServiceRegistry;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * Default implementation of {@link org.mule.extensions.introspection.api.ExtensionDescriber}
+ *
+ * @since 3.6.0
+ */
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
-    private CapabilitiesResolver capabilitiesResolver = CapabilitiesResolver.newInstance();
+    private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
+    private Iterator<ExtensionDescriberPostProcessor> postProcessors;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void describe(Class<?> extensionType, ExtensionBuilder builder)
+    public void describe(ExtensionDescribingContext context)
     {
-        Preconditions.checkArgument(extensionType != null, "Can't describe a null type");
-        ExtensionDescriptor descriptor = MuleExtensionAnnotationParser.parseExtensionDescriptor(extensionType);
-        describeExtension(builder, descriptor, extensionType);
-        describeConfigurations(builder, descriptor);
-        describeOperations(builder, descriptor);
-        describeCapabilities(extensionType, builder);
+        checkArgument(context != null, "context cannot be null");
+        checkArgument(context.getExtensionType() != null, "Can't describe a null type");
+        checkArgument(context.getExtensionBuilder() != null, "Can't describe with a null builder");
+
+        ExtensionDescriptor descriptor = MuleExtensionAnnotationParser.parseExtensionDescriptor(context.getExtensionType());
+        describeExtension(context, descriptor);
+        describeConfigurations(context, descriptor);
+        describeOperations(context, descriptor);
+        describeCapabilities(context);
+        applyPostProcessors(context);
     }
 
-    private void describeExtension(ExtensionBuilder builder, ExtensionDescriptor descriptor, Class<?> extensionType)
+    private void describeExtension(ExtensionDescribingContext context, ExtensionDescriptor descriptor)
     {
-        builder.setName(descriptor.getName())
+        context.getExtensionBuilder()
+                .setName(descriptor.getName())
                 .setDescription(descriptor.getDescription())
                 .setVersion(descriptor.getVersion())
                 .setMinMuleVersion(descriptor.getMinMuleVersion())
-                .setActingClass(extensionType);
+                .setActingClass(context.getExtensionType());
     }
 
 
-    private void describeConfigurations(ExtensionBuilder builder, ExtensionDescriptor descriptor)
+    private void describeConfigurations(ExtensionDescribingContext context, ExtensionDescriptor descriptor)
     {
-        // TODO: for now we add only one configuration, when we do OAuth or when we resolve the question around config representations this has to change
+        ExtensionBuilder builder = context.getExtensionBuilder();
+
         ExtensionConfigurationBuilder configuration = builder.newConfiguration()
                 .setName(descriptor.getConfigElementName())
                 .setDescription(descriptor.getDescription());
@@ -74,8 +94,9 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         }
     }
 
-    private void describeOperations(ExtensionBuilder builder, ExtensionDescriptor extension)
+    private void describeOperations(ExtensionDescribingContext context, ExtensionDescriptor extension)
     {
+        ExtensionBuilder builder = context.getExtensionBuilder();
         for (Method method : extension.getOperationMethods())
         {
             Operation annotation = method.getAnnotation(Operation.class);
@@ -128,8 +149,27 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         }
     }
 
-    private void describeCapabilities(Class<?> extensionType, ExtensionBuilder builder)
+    private void applyPostProcessors(ExtensionDescribingContext context)
     {
-        capabilitiesResolver.resolveCapabilities(extensionType, builder);
+        Iterator<ExtensionDescriberPostProcessor> postProcessors = getPostProcessors();
+        while (postProcessors.hasNext())
+        {
+            postProcessors.next().postProcess(context);
+        }
+    }
+
+    private synchronized Iterator<ExtensionDescriberPostProcessor> getPostProcessors()
+    {
+        if (postProcessors == null)
+        {
+            postProcessors = ServiceRegistry.lookupProviders(ExtensionDescriberPostProcessor.class, getClass().getClassLoader());
+        }
+
+        return postProcessors;
+    }
+
+    private void describeCapabilities(ExtensionDescribingContext context)
+    {
+        capabilitiesResolver.resolveCapabilities(context.getExtensionType(), context.getExtensionBuilder());
     }
 }

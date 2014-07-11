@@ -11,9 +11,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.mule.module.extensions.Door;
-import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.Ricin;
-import org.mule.tck.junit4.FunctionalTestCase;
+import org.mule.tck.junit4.ExtensionsFunctionalTestCase;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
+public class ExtensionsDefinitionParserTestCase extends ExtensionsFunctionalTestCase
 {
 
     private static final String HEISENBERG_NAME = "heisenberg";
@@ -35,21 +35,27 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         return "heisenberg-config.xml";
     }
 
+    @Override
+    protected String[] getDiscoverablePackages()
+    {
+        return new String[] {"org.mule.module.extensions"};
+    }
+
     @Test
     public void heisenbergConfig()
     {
-        HeisenbergModule heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
+        HeisenbergExtension heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
         assertHeisenbergConfig(heisenberg);
     }
 
     @Test
     public void heisenbergByRef() throws Exception
     {
-        HeisenbergModule heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_BYREF);
+        HeisenbergExtension heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_BYREF);
         assertHeisenbergConfig(heisenberg);
     }
 
-    private void assertHeisenbergConfig(HeisenbergModule heisenberg)
+    private void assertHeisenbergConfig(HeisenbergExtension heisenberg)
     {
         assertNotNull(heisenberg);
 
@@ -60,7 +66,7 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertCandidateDoors(heisenberg);
     }
 
-    private void assertRicinPacks(HeisenbergModule heisenberg)
+    private void assertRicinPacks(HeisenbergExtension heisenberg)
     {
         Set<Ricin> ricinPacks = heisenberg.getRicinPacks();
 
@@ -71,7 +77,7 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertDoor(ricin.getDestination(), "Lidia", "Stevia coffe shop");
     }
 
-    private void assertDoors(HeisenbergModule heisenberg)
+    private void assertDoors(HeisenbergExtension heisenberg)
     {
         Door door = heisenberg.getNextDoor();
         assertDoor(door, "Gustavo Fring", "pollos hermanos");
@@ -81,7 +87,7 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertNull(previous.getPrevious());
     }
 
-    private void assertRecipe(HeisenbergModule heisenberg)
+    private void assertRecipe(HeisenbergExtension heisenberg)
     {
         Map<String, Long> recipe = heisenberg.getRecipe();
         assertNotNull(recipe);
@@ -91,10 +97,10 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertEquals(Long.valueOf(25), recipe.get("P2P"));
     }
 
-    private void assertSimpleProperties(HeisenbergModule heisenberg)
+    private void assertSimpleProperties(HeisenbergExtension heisenberg)
     {
-        assertEquals(HeisenbergModule.HEISENBERG, heisenberg.getMyName());
-        assertEquals(Integer.valueOf(HeisenbergModule.AGE), heisenberg.getAge());
+        assertEquals(HeisenbergExtension.HEISENBERG, heisenberg.getMyName());
+        assertEquals(Integer.valueOf(HeisenbergExtension.AGE), heisenberg.getAge());
 
         List<String> enemies = heisenberg.getEnemies();
         assertEquals(2, enemies.size());
@@ -113,7 +119,8 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertEquals(new BigDecimal("1000000"), heisenberg.getMoney());
     }
 
-    private void assertCandidateDoors(HeisenbergModule heisenberg) {
+    private void assertCandidateDoors(HeisenbergExtension heisenberg)
+    {
         Map<String, Door> candidates = heisenberg.getCandidateDoors();
         assertNotNull(candidates);
         assertEquals(2, candidates.size());
@@ -122,7 +129,8 @@ public class ExtensionsDefinitionParserTestCase extends FunctionalTestCase
         assertDoor(candidates.get("saul"), "Saul", "Shopping Mall");
     }
 
-    private void assertDoor(Door door, String victim, String address) {
+    private void assertDoor(Door door, String victim, String address)
+    {
         assertNotNull(door);
         assertEquals(victim, door.getVictim());
         assertEquals(address, door.getAddress());

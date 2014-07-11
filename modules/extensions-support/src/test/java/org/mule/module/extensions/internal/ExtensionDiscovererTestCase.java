@@ -9,7 +9,7 @@ package org.mule.module.extensions.internal;
 import static junit.framework.Assert.assertEquals;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.module.extensions.HeisenbergModule;
+import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.tck.junit4.AbstractMuleTestCase;
@@ -63,6 +63,6 @@ public class ExtensionDiscovererTestCase extends AbstractMuleTestCase
 
     private void assertMuleExtension(Extension extension)
     {
-        assertEquals(HeisenbergModule.EXTENSION_NAME, extension.getName());
+        assertEquals(HeisenbergExtension.EXTENSION_NAME, extension.getName());
     }
 }

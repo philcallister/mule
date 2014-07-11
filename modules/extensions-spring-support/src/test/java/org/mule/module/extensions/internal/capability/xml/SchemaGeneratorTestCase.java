@@ -7,11 +7,12 @@
 package org.mule.module.extensions.internal.capability.xml;
 
 import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.capability.XmlCapability;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
-import org.mule.module.extensions.HeisenbergModule;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.module.extensions.HeisenbergExtension;
+import org.mule.module.extensions.internal.ImmutableExtensionDescribingContext;
 import org.mule.module.extensions.internal.capability.xml.schema.SchemaGenerator;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
@@ -36,7 +37,7 @@ public class SchemaGeneratorTestCase extends AbstractMuleTestCase
     public void generate()
     {
         ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-        new DefaultExtensionDescriber().describe(HeisenbergModule.class, builder);
+        new DefaultExtensionDescriber().describe(new ImmutableExtensionDescribingContext(HeisenbergExtension.class, builder));
         Extension extension = builder.build();
         XmlCapability capability = extension.getCapabilities(XmlCapability.class).iterator().next();
 

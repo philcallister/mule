@@ -4,7 +4,7 @@
       xmlns:util="http://www.springframework.org/schema/util"
       xmlns:spring="http://www.springframework.org/schema/beans"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-               http://www.mulesoft.org/schema/mule/extension/heisenberg http://www.mulesoft.org/schema/mule/extension/heisenberg/1.0-blue/heisenberg.xsd
+               http://www.mulesoft.org/schema/mule/extension/heisenberg http://www.mulesoft.org/schema/mule/extension/heisenberg/current/mule-extension-heisenberg.xsd
                http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
     <heisenberg:config name="heisenberg" cancer="true" dateOfBirth="1959-09-07T00:00:00"
