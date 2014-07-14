@@ -17,7 +17,7 @@ import java.util.List;
  * Although extensions resolve their functionality mainly in runtime,
  * some configuration resources such as XML schemas, service registration files,
  * spring bundles, or whatever resource the runtime requires need to be generated
- * in compile time.
+ * in compile or run time.
  * <p/>
  * Additionally, those resources might reference more than one
  * {@link org.mule.extensions.introspection.api.Extension},
