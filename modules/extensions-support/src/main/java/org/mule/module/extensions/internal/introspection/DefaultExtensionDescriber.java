@@ -8,6 +8,8 @@ package org.mule.module.extensions.internal.introspection;
 
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getDefaultValue;
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.config.ServiceRegistry;
+import org.mule.config.SPIServiceRegistry;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
@@ -25,8 +27,6 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.imageio.spi.ServiceRegistry;
-
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -37,8 +37,14 @@ import org.apache.commons.lang.StringUtils;
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
+    private ServiceRegistry serviceRegistry;
     private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
     private Iterator<ExtensionDescriberPostProcessor> postProcessors;
+
+    public DefaultExtensionDescriber()
+    {
+        setServiceRegistry(new SPIServiceRegistry());
+    }
 
     /**
      * {@inheritDoc}
@@ -56,6 +62,13 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         describeOperations(context, descriptor);
         describeCapabilities(context);
         applyPostProcessors(context);
+    }
+
+    @Override
+    public void setServiceRegistry(ServiceRegistry serviceRegistry)
+    {
+        checkArgument(serviceRegistry != null, "serviceRegistry cannot be null");
+        this.serviceRegistry = serviceRegistry;
     }
 
     private void describeExtension(ExtensionDescribingContext context, ExtensionDescriptor descriptor)
@@ -162,7 +175,7 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
     {
         if (postProcessors == null)
         {
-            postProcessors = ServiceRegistry.lookupProviders(ExtensionDescriberPostProcessor.class, getClass().getClassLoader());
+            postProcessors = serviceRegistry.lookupProviders(ExtensionDescriberPostProcessor.class, getClass().getClassLoader());
         }
 
         return postProcessors;

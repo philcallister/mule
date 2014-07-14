@@ -7,8 +7,10 @@
 package org.mule.module.extensions.internal;
 
 import org.mule.common.MuleVersion;
+import org.mule.config.SPIServiceRegistry;
 import org.mule.extensions.api.ExtensionsManager;
 import org.mule.extensions.introspection.api.Extension;
+import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.util.Preconditions;
@@ -38,12 +40,18 @@ public final class DefaultExtensionsManager implements ExtensionsManager
     private final Map<String, Extension> extensions = Collections.synchronizedMap(new LinkedHashMap<String, Extension>());
     private ExtensionDiscoverer extensionDiscoverer = new DefaultExtensionDiscoverer();
 
+    public DefaultExtensionsManager()
+    {
+
+    }
+
+
     @Override
     public List<Extension> discoverExtensions(ClassLoader classLoader)
     {
         logger.info("Starting discovery of extensions");
 
-        List<Extension> discovered = extensionDiscoverer.discover(classLoader, new DefaultExtensionDescriber());
+        List<Extension> discovered = extensionDiscoverer.discover(classLoader, newDescriber());
         logger.info("Discovered {} extensions", discovered.size());
 
         ImmutableList.Builder<Extension> accepted = ImmutableList.builder();
@@ -73,6 +81,14 @@ public final class DefaultExtensionsManager implements ExtensionsManager
     {
         logger.info("Registering extension (version {})", extension.getName(), extension.getVersion());
         extensions.put(extension.getName(), extension);
+    }
+
+    private ExtensionDescriber newDescriber()
+    {
+        ExtensionDescriber describer = new DefaultExtensionDescriber();
+        describer.setServiceRegistry(new SPIServiceRegistry());
+
+        return describer;
     }
 
     private boolean maybeUpdateExtension(Extension extension, String extensionName)

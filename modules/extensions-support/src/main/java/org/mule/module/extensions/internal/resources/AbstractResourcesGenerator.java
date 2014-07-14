@@ -6,6 +6,9 @@
  */
 package org.mule.module.extensions.internal.resources;
 
+import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.config.ServiceRegistry;
+import org.mule.config.SPIServiceRegistry;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.resources.api.GenerableResource;
 import org.mule.extensions.resources.api.ResourcesGenerator;
@@ -18,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.imageio.spi.ServiceRegistry;
 
 /**
  * Base implementation of {@link org.mule.extensions.resources.api.ResourcesGenerator}
@@ -33,6 +35,12 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
 {
 
     private Map<String, GenerableResource> resources = new HashMap<>();
+    private ServiceRegistry serviceRegistry;
+
+    public AbstractResourcesGenerator()
+    {
+        setServiceRegistry(new SPIServiceRegistry());
+    }
 
     /**
      * {@inheritDoc}
@@ -57,7 +65,7 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
     @Override
     public void generateFor(Extension extension)
     {
-        Iterator<GenerableResourceContributor> contributors = ServiceRegistry.lookupProviders(GenerableResourceContributor.class, getClass().getClassLoader());
+        Iterator<GenerableResourceContributor> contributors = serviceRegistry.lookupProviders(GenerableResourceContributor.class, getClass().getClassLoader());
 
         while (contributors.hasNext())
         {
@@ -79,6 +87,13 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
         }
 
         return generatedResources.build();
+    }
+
+    @Override
+    public void setServiceRegistry(ServiceRegistry serviceRegistry)
+    {
+        checkArgument(serviceRegistry != null, "serviceRegistry cannot be null");
+        this.serviceRegistry = serviceRegistry;
     }
 
     /**

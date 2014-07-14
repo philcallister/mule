@@ -7,9 +7,11 @@
 package org.mule.module.extensions.internal.resources;
 
 import static org.mule.util.Preconditions.checkState;
+import org.mule.config.SPIServiceRegistry;
 import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
+import org.mule.extensions.introspection.api.ExtensionDescriber;
 import org.mule.extensions.introspection.api.ExtensionDescribingContext;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
 import org.mule.extensions.resources.api.ResourcesGenerator;
@@ -95,10 +97,19 @@ public class ExtensionResourcesGeneratorAnnotationProcessor extends AbstractProc
         context.getCustomParameters().put(SchemaDocumenterPostProcessor.EXTENSION_ELEMENT, extensionElement);
         context.getCustomParameters().put(SchemaDocumenterPostProcessor.PROCESSING_ENVIRONMENT, processingEnv);
 
-        new DefaultExtensionDescriber().describe(context);
+        buildExtensionDescriber().describe(context);
+
         extractXmlCapability(extensionClass, builder);
 
         return builder.build();
+    }
+
+    private ExtensionDescriber buildExtensionDescriber()
+    {
+        ExtensionDescriber describer = new DefaultExtensionDescriber();
+        describer.setServiceRegistry(new SPIServiceRegistry());
+
+        return describer;
     }
 
     private XmlCapability extractXmlCapability(Class<?> extensionClass, CapabilityAwareBuilder<?, ?> builder)

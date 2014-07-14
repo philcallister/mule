@@ -10,6 +10,11 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mule.extensions.api.annotation.Extension.DEFAULT_CONFIG_NAME;
 import static org.mule.extensions.api.annotation.Extension.MIN_MULE_VERSION;
 import static org.mule.extensions.introspection.api.DataQualifier.BEAN;
@@ -27,14 +32,17 @@ import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_DESCRIPTI
 import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_NAME;
 import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_VERSION;
 import static org.mule.module.extensions.HeisenbergExtension.HEISENBERG;
+import org.mule.api.config.ServiceRegistry;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionDescriber;
+import org.mule.extensions.introspection.api.ExtensionDescribingContext;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.extensions.introspection.spi.ExtensionDescriberPostProcessor;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
@@ -43,16 +51,23 @@ import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 @SmallTest
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 {
 
@@ -63,19 +78,33 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     private static final String HIDE_METH_IN_EVENT_OPERATION = "hideMethInEvent";
     private static final String HIDE_METH_IN_MESSAGE_OPERATION = "hideMethInMessage";
 
+    @Mock
+    private ServiceRegistry serviceRegistry;
+
     private ExtensionBuilder builder;
+    private ExtensionDescriber describer;
+    private ExtensionDescribingContext describingContext;
 
     @Before
     public void setUp()
     {
         builder = DefaultExtensionBuilder.newBuilder();
+
+
+        describer = new DefaultExtensionDescriber();
+        describer.setServiceRegistry(serviceRegistry);
+
+        Iterator<ExtensionDescriberPostProcessor> emptyIterator = Collections.emptyIterator();
+        when(serviceRegistry.lookupProviders(same(ExtensionDescriberPostProcessor.class))).thenReturn(emptyIterator);
+        when(serviceRegistry.lookupProviders(same(ExtensionDescriberPostProcessor.class), any(ClassLoader.class))).thenReturn(emptyIterator);
+        describingContext = new ImmutableExtensionDescribingContext(HeisenbergExtension.class, builder);
     }
 
     @Test
     public void describeTestModule() throws Exception
     {
-        ExtensionDescriber describer = new DefaultExtensionDescriber();
-        describer.describe(new ImmutableExtensionDescribingContext(HeisenbergExtension.class, builder));
+
+        describer.describe(describingContext);
 
         Extension extension = builder.build();
         assertNotNull(extension);
@@ -89,6 +118,31 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertTestModuleOperations(extension);
 
         assertCapabilities(extension);
+
+        verify(serviceRegistry).lookupProviders(any(Class.class), any(ClassLoader.class));
+    }
+
+    @Test
+    public void postProcessorsInvoked() throws Exception
+    {
+        ExtensionDescriberPostProcessor postProcessor1 = mock(ExtensionDescriberPostProcessor.class);
+        ExtensionDescriberPostProcessor postProcessor2 = mock(ExtensionDescriberPostProcessor.class);
+
+        Iterator<ExtensionDescriberPostProcessor> it = Arrays.asList(postProcessor1, postProcessor2).iterator();
+
+        when(serviceRegistry.lookupProviders(same(ExtensionDescriberPostProcessor.class), any(ClassLoader.class)))
+                .thenReturn(it);
+
+        describeTestModule();
+
+        verify(postProcessor1).postProcess(describingContext);
+        verify(postProcessor1).postProcess(describingContext);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nullServiceRegistry()
+    {
+        describer.setServiceRegistry(null);
     }
 
     private void assertTestModuleConfiguration(Extension extension) throws Exception

@@ -6,6 +6,7 @@
  */
 package org.mule.extensions.resources.api;
 
+import org.mule.api.config.ServiceRegistryAware;
 import org.mule.extensions.introspection.api.Extension;
 
 import java.util.List;
@@ -29,14 +30,16 @@ import java.util.List;
  * <p/>
  * To do so, implementations will work in tandem with instances of
  * {@link org.mule.extensions.resources.spi.GenerableResourceContributor} which will be
- * obtained via standard SPI discovery mechanism.
+ * obtained via a {@link org.mule.api.config.ServiceRegistry} provided through
+ * {@link #setServiceRegistry(org.mule.api.config.ServiceRegistry)}. If no service registry
+ * is provided then the platform will automatically choose an implementation.
  * <p/>
  * Implementations are to be assumed not thread-safe and to be used in a
  * fire and forget fashion
  *
  * @since 1.0
  */
-public interface ResourcesGenerator
+public interface ResourcesGenerator extends ServiceRegistryAware
 {
 
     /**

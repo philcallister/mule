@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.resources;
 
+
 import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import org.mule.extensions.resources.api.GenerableResource;
