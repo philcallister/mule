@@ -24,7 +24,7 @@ public class ExtensionRegistrationResourceContributor implements GenerableResour
     public void contribute(Extension extension, ResourcesGenerator resourcesGenerator)
     {
         resourcesGenerator.getOrCreateResource("extensions/mule.extensions").getContentBuilder()
-                .append(extension.getActingClass().getName())
+                .append(extension.getDeclaringClass().getName())
                 .append('\n');
     }
 }

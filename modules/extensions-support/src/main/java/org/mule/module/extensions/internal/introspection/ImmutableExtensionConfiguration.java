@@ -6,6 +6,8 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.MuleExtensionUtils;
@@ -21,12 +23,19 @@ final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed i
 {
 
     private final List<ExtensionParameter> parameters;
+    private final Class<?> declaringClass;
 
-    protected ImmutableExtensionConfiguration(String name, String description, List<ExtensionParameter> parameters)
+    protected ImmutableExtensionConfiguration(String name,
+                                              String description,
+                                              Class<?> declaringClass,
+                                              List<ExtensionParameter> parameters)
     {
         super(name, description);
-        MuleExtensionUtils.checkNullOrRepeatedNames(parameters, "parameters");
+        checkDeclaringClass(declaringClass);
+        checkNullOrRepeatedNames(parameters, "parameters");
+
         this.parameters = MuleExtensionUtils.immutableList(parameters);
+        this.declaringClass = declaringClass;
     }
 
     /**
@@ -38,4 +47,12 @@ final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed i
         return parameters;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Class<?> getDeclaringClass()
+    {
+        return this.declaringClass;
+    }
 }

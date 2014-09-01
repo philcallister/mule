@@ -25,6 +25,7 @@ final class DefaultExtensionOperationBuilder implements NavigableExtensionOperat
 
     private String name;
     private String description = StringUtils.EMPTY;
+    private Class<?> declaringClass;
     private List<DataType> inputTypes = new LinkedList<>();
     private DataType outputType = null;
     private List<ExtensionParameterBuilder> parameters = new LinkedList<>();
@@ -104,6 +105,22 @@ final class DefaultExtensionOperationBuilder implements NavigableExtensionOperat
      * {@inheritDoc}
      */
     @Override
+    public Class<?> getDeclaringClass()
+    {
+        return declaringClass;
+    }
+
+    @Override
+    public ExtensionOperationBuilder setDeclaringClass(Class<?> declaringClass)
+    {
+        this.declaringClass = declaringClass;
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public DataType getOutputDataType()
     {
         return outputType;
@@ -141,6 +158,7 @@ final class DefaultExtensionOperationBuilder implements NavigableExtensionOperat
 
         return new ImmutableExtensionOperation(name,
                                                description,
+                                               declaringClass,
                                                inputTypes,
                                                outputType,
                                                MuleExtensionUtils.build(parameters));

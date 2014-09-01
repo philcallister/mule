@@ -6,12 +6,12 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import static org.mule.util.Preconditions.checkState;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Extension;
-import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.api.annotation.param.Payload;
 import org.mule.extensions.introspection.api.DataQualifier;
@@ -49,29 +49,16 @@ final class MuleExtensionAnnotationParser
             .add(MuleMessage.class)
             .build();
 
-    static ExtensionDescriptor parseExtensionDescriptor(Class<?> extensionType)
+    static Extension getExtension(Class<?> extensionType)
     {
-        ExtensionDescriptor extension = newExtension(extensionType);
-        extension.addConfigurableFields(getConfigurableFields(extensionType));
-        extension.addOperationMethods(ClassUtils.getMethodsAnnotatedWith(extensionType, Operation.class));
+        Extension extension = extensionType.getAnnotation(Extension.class);
+        checkState(extension != null, String.format("%s is not a Mule extension since it's not annotated with %s",
+                                                                  extensionType.getName(), Extension.class.getName()));
 
         return extension;
     }
 
-    private static ExtensionDescriptor newExtension(Class<?> extensionType)
-    {
-        Extension extensionTypeAnnotation = extensionType.getAnnotation(Extension.class);
-        ExtensionDescriptor extension = null;
-
-        if (extensionTypeAnnotation != null)
-        {
-            extension = new ExtensionDescriptor(extensionTypeAnnotation);
-        }
-
-        return extension;
-    }
-
-    private static Collection<Field> getConfigurableFields(Class<?> extensionType)
+    static Collection<Field> getConfigurableFields(Class<?> extensionType)
     {
         List<Field> fields = ClassUtils.getDeclaredFields(extensionType, true);
         return CollectionUtils.select(fields, new Predicate()
@@ -85,9 +72,9 @@ final class MuleExtensionAnnotationParser
     }
 
 
-    public static List<ParameterDescriptor> parseParameter(Method method, ExtensionDescriptor extension)
+    public static List<ParameterDescriptor> parseParameter(Method method)
     {
-        String[] paramNames = getParamNames(method, extension);
+        String[] paramNames = getParamNames(method);
 
         if (ArrayUtils.isEmpty(paramNames))
         {
@@ -183,7 +170,7 @@ final class MuleExtensionAnnotationParser
         return false;
     }
 
-    private static String[] getParamNames(Method method, ExtensionDescriptor extension)
+    private static String[] getParamNames(Method method)
     {
         String[] paramNames;
         try
@@ -193,7 +180,7 @@ final class MuleExtensionAnnotationParser
         catch (IOException e)
         {
             throw new IllegalStateException(
-                    String.format("Could not read parameter names from method %s of class %s", method.getName(), extension.getName())
+                    String.format("Could not read parameter names from method %s of class %s", method.getName(), method.getDeclaringClass().getName())
                     , e);
         }
 

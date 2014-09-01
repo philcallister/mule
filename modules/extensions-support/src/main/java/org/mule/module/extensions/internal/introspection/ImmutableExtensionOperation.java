@@ -6,11 +6,13 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
+import static org.mule.module.extensions.internal.MuleExtensionUtils.immutableList;
+import static org.mule.util.Preconditions.checkArgument;
+import static org.mule.util.Preconditions.checkState;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.MuleExtensionUtils;
-import org.mule.util.Preconditions;
 
 import java.util.List;
 
@@ -27,21 +29,25 @@ final class ImmutableExtensionOperation extends AbstractImmutableDescribed imple
     private final List<DataType> inputTypes;
     private final DataType outputType;
     private final List<ExtensionParameter> parameters;
+    private final Class<?> declaringClass;
 
     ImmutableExtensionOperation(String name,
                                 String description,
+                                Class<?> declaringClass,
                                 List<DataType> inputTypes,
                                 DataType outputType,
                                 List<ExtensionParameter> parameters)
     {
         super(name, description);
 
-        Preconditions.checkArgument(!CollectionUtils.isEmpty(inputTypes), "Must provide at least one input type");
-        Preconditions.checkState(outputType != null, "Must provide an output type");
+        checkDeclaringClass(declaringClass);
+        checkArgument(!CollectionUtils.isEmpty(inputTypes), "Must provide at least one input type");
+        checkState(outputType != null, "Must provide an output type");
 
-        this.inputTypes = MuleExtensionUtils.immutableList(inputTypes);
+        this.declaringClass = declaringClass;
+        this.inputTypes = immutableList(inputTypes);
         this.outputType = outputType;
-        this.parameters = MuleExtensionUtils.immutableList(parameters);
+        this.parameters = immutableList(parameters);
     }
 
     /**
@@ -69,5 +75,14 @@ final class ImmutableExtensionOperation extends AbstractImmutableDescribed imple
     public DataType getOutputType()
     {
         return outputType;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Class<?> getDeclaringClass()
+    {
+        return this.declaringClass;
     }
 }

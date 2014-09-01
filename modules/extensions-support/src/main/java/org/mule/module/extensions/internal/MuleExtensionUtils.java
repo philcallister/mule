@@ -151,4 +151,9 @@ public final class MuleExtensionUtils
                type.getGenericTypes().length > 0 &&
                of.equals(type.getGenericTypes()[0].getQualifier());
     }
+
+    public static void checkDeclaringClass(Class<?> declaringClass)
+    {
+        checkArgument(declaringClass != null, "declaringClass cannot be null");
+    }
 }

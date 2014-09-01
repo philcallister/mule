@@ -47,4 +47,6 @@ public interface ExtensionOperation extends Described
      * @return a {@link org.mule.extensions.introspection.api.DataType}
      */
     DataType getOutputType();
+
+    Class<?> getDeclaringClass();
 }

@@ -27,7 +27,7 @@ public class ExtensionRegistrationResourceContributorTestCase extends AbstractMu
     public void contribute()
     {
         Extension extension = mock(Extension.class);
-        when(extension.getActingClass()).thenAnswer(new Answer<Object>()
+        when(extension.getDeclaringClass()).thenAnswer(new Answer<Object>()
         {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable

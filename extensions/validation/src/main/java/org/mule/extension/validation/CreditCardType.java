@@ -21,7 +21,7 @@ public enum CreditCardType
 
     private CreditCardType(CodeValidator codeValidator)
     {
-        this.codeValidator = codeValidator;
+
     }
 
     public CodeValidator getCodeValidator()

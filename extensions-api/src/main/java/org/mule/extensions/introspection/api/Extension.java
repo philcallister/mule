@@ -114,11 +114,10 @@ public interface Extension extends Described, Capable
     ExtensionOperation getOperation(String name) throws NoSuchOperationException;
 
     /**
-     * The class which serves as nexus between the mule runtime and this
-     * extension
+     * The class on which this extension is defined
      *
      * @return a not {@code null} {@link java.lang.Class}
      */
-    Class<?> getActingClass();
+    Class<?> getDeclaringClass();
 
 }

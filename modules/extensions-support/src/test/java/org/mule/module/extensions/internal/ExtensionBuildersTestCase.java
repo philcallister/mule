@@ -42,6 +42,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 {
 
     private static final DataType STRING_DATA_TYPE = ImmutableDataType.of(String.class);
+    private static final Class<?> DECLARING_CLASS = ExtensionBuildersTestCase.class;
 
     private static final String CONFIG_NAME = "config";
     private static final String CONFIG_DESCRIPTION = "Default description";
@@ -79,12 +80,13 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                 .setDescription(WS_CONSUMER_DESCRIPTION)
                 .setVersion(VERSION)
                 .setMinMuleVersion(MIN_MULE_VERSION)
-                .setActingClass(ExtensionBuildersTestCase.class)
+                .setDeclaringClass(ExtensionBuildersTestCase.class)
                 .addCapablity(new Date())
                 .addConfiguration(
                         builder.newConfiguration()
                                 .setName(CONFIG_NAME)
                                 .setDescription(CONFIG_DESCRIPTION)
+                                .setDeclaringClass(DECLARING_CLASS)
                                 .addParameter(builder.newParameter()
                                                       .setName(WSDL_LOCATION)
                                                       .setDescription(URI_TO_FIND_THE_WSDL)
@@ -116,6 +118,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                                       .setDescription(GO_GET_THEM_TIGER)
                                       .addInputType(of(String.class))
                                       .setOutputType(of(String.class))
+                                      .setDeclaringClass(DECLARING_CLASS)
                                       .addParameter(builder.newParameter()
                                                             .setName(OPERATION)
                                                             .setDescription(THE_OPERATION_TO_USE)
@@ -134,6 +137,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                                        .setDescription(BROADCAST_DESCRIPTION)
                                        .addInputType(of(String.class))
                                        .setOutputType(of(List.class, String.class))
+                                       .setDeclaringClass(DECLARING_CLASS)
                                        .addParameter(builder.newParameter()
                                                              .setName(OPERATION)
                                                              .setDescription(THE_OPERATION_TO_USE)
@@ -248,6 +252,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         final String operationName = "operation";
         extension = builder.addOperation(builder.newOperation()
                                                  .setName(operationName)
+                                                 .setDeclaringClass(DECLARING_CLASS)
                                                  .setDescription("description")
                                                  .setOutputType(of(String.class)))
                 .build();
@@ -266,6 +271,17 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         builder.addOperation(builder.newOperation()
                                      .setName("operation")
                                      .setDescription("description")
+                                     .setDeclaringClass(DECLARING_CLASS)
+        ).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void operationWithoutDeclaringClass() throws Exception
+    {
+        builder.addOperation(builder.newOperation()
+                                     .setName("operation")
+                                     .setDescription("description")
+                                     .setOutputType(STRING_DATA_TYPE)
         ).build();
     }
 
@@ -290,10 +306,12 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         Extension extension = builder
                 .addConfiguration(builder.newConfiguration()
                                           .setName(beta)
-                                          .setDescription(beta))
+                                          .setDescription(beta)
+                                          .setDeclaringClass(DECLARING_CLASS))
                 .addConfiguration(builder.newConfiguration()
                                           .setName(alpha)
-                                          .setDescription(alpha))
+                                          .setDescription(alpha)
+                                          .setDeclaringClass(DECLARING_CLASS))
                 .build();
 
         List<ExtensionConfiguration> configurations = extension.getConfigurations();

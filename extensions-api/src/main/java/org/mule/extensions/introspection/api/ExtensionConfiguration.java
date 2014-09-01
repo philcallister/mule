@@ -42,4 +42,6 @@ public interface ExtensionConfiguration extends Described
      */
     List<ExtensionParameter> getParameters();
 
+    Class<?> getDeclaringClass();
+
 }

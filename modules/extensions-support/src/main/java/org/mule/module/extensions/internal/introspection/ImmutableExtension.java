@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNamesClashes;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.toMap;
@@ -34,7 +35,7 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
 
     private final String version;
     private final String minMuleVersion;
-    private final Class<?> actingClass;
+    private final Class<?> declaringClass;
     private final Map<String, ExtensionConfiguration> configurations;
     private final Map<String, ExtensionOperation> operations;
 
@@ -42,7 +43,7 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
                                  String description,
                                  String version,
                                  String minMuleVersion,
-                                 Class<?> actingClass,
+                                 Class<?> declaringClass,
                                  List<ExtensionConfiguration> configurations,
                                  List<ExtensionOperation> operations,
                                  Set<Object> capabilities)
@@ -50,8 +51,8 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
         super(name, description, capabilities);
 
         checkArgument(!name.contains(" "), "Extension name cannot contain spaces");
-        checkArgument(actingClass != null, "acting class cannot be null");
-        this.actingClass = actingClass;
+        checkDeclaringClass(declaringClass);
+        this.declaringClass = declaringClass;
 
         checkNullOrRepeatedNames(configurations, "configurations");
         checkNullOrRepeatedNames(operations, "operations");
@@ -122,9 +123,9 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
      * {@inheritDoc}
      */
     @Override
-    public Class<?> getActingClass()
+    public Class<?> getDeclaringClass()
     {
-        return actingClass;
+        return declaringClass;
     }
 
     /**

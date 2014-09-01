@@ -13,6 +13,8 @@ public interface ExtensionOperationBuilder extends Builder<ExtensionOperation>
 
     ExtensionOperationBuilder setDescription(String description);
 
+    ExtensionOperationBuilder setDeclaringClass(Class<?> declaringClass);
+
     ExtensionOperationBuilder addInputType(DataType... type);
 
     ExtensionOperationBuilder setOutputType(DataType type);

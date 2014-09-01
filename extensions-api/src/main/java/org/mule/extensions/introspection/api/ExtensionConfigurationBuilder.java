@@ -13,6 +13,8 @@ public interface ExtensionConfigurationBuilder extends Builder<ExtensionConfigur
 
     ExtensionConfigurationBuilder setDescription(String description);
 
+    ExtensionConfigurationBuilder setDeclaringClass(Class<?> declaringClass);
+
     ExtensionConfigurationBuilder addParameter(ExtensionParameterBuilder parameter);
 
 }

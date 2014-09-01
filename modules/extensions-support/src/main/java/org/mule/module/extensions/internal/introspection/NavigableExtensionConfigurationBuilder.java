@@ -18,6 +18,8 @@ public interface NavigableExtensionConfigurationBuilder extends ExtensionConfigu
 
     String getDescription();
 
+    Class<?> getDeclaringClass();
+
     List<ExtensionParameterBuilder> getParameters();
 
 }

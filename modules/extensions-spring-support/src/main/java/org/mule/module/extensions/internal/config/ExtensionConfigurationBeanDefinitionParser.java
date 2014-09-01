@@ -45,7 +45,7 @@ public class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDef
     public BeanDefinition parse(Element element, ParserContext parserContext)
     {
         parseConfigName(element);
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(extension.getActingClass());
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(configuration.getDeclaringClass());
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
 
         for (ExtensionParameter parameter : configuration.getParameters())

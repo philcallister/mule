@@ -11,7 +11,11 @@ import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.config.ServiceRegistry;
 import org.mule.config.SPIServiceRegistry;
 import org.mule.extensions.api.annotation.Configurable;
+import org.mule.extensions.api.annotation.Configuration;
+import org.mule.extensions.api.annotation.Configurations;
+import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
+import org.mule.extensions.api.annotation.Operations;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
@@ -21,6 +25,7 @@ import org.mule.extensions.introspection.api.ExtensionDescribingContext;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
 import org.mule.extensions.introspection.spi.ExtensionDescriberPostProcessor;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.util.ClassUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -36,6 +41,9 @@ import org.apache.commons.lang.StringUtils;
  */
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
+
+    private static final String DEFAULT_CONFIG_NAME = "config";
+    private static final String DEFAULT_CONFIG_DESCRIPTION = "Default configuration";
 
     private ServiceRegistry serviceRegistry;
     private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
@@ -56,10 +64,10 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         checkArgument(context.getExtensionType() != null, "Can't describe a null type");
         checkArgument(context.getExtensionBuilder() != null, "Can't describe with a null builder");
 
-        ExtensionDescriptor descriptor = MuleExtensionAnnotationParser.parseExtensionDescriptor(context.getExtensionType());
-        describeExtension(context, descriptor);
-        describeConfigurations(context, descriptor);
-        describeOperations(context, descriptor);
+        Extension extension = MuleExtensionAnnotationParser.getExtension(context.getExtensionType());
+        describeExtension(context, extension);
+        describeConfigurations(context);
+        describeOperations(context);
         describeCapabilities(context);
         applyPostProcessors(context);
     }
@@ -71,28 +79,53 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         this.serviceRegistry = serviceRegistry;
     }
 
-    private void describeExtension(ExtensionDescribingContext context, ExtensionDescriptor descriptor)
+    private void describeExtension(ExtensionDescribingContext context, Extension extension)
     {
         context.getExtensionBuilder()
-                .setName(descriptor.getName())
-                .setDescription(descriptor.getDescription())
-                .setVersion(descriptor.getVersion())
-                .setMinMuleVersion(descriptor.getMinMuleVersion())
-                .setActingClass(context.getExtensionType());
+                .setName(extension.name())
+                .setDescription(extension.description())
+                .setVersion(extension.version())
+                .setDeclaringClass(context.getExtensionType())
+                .setMinMuleVersion(extension.minMuleVersion());
     }
 
 
-    private void describeConfigurations(ExtensionDescribingContext context, ExtensionDescriptor descriptor)
+    private void describeConfigurations(ExtensionDescribingContext context)
     {
-        ExtensionBuilder builder = context.getExtensionBuilder();
+        Configurations configurations = context.getExtensionType().getAnnotation(Configurations.class);
+        if (configurations != null)
+        {
+            for (Class<?> declaringClass : configurations.value())
+            {
+                parseConfiguration(context, declaringClass);
+            }
+        }
+        else
+        {
+            parseConfiguration(context, context.getExtensionType());
+        }
+    }
 
-        ExtensionConfigurationBuilder configuration = builder.newConfiguration()
-                .setName(descriptor.getConfigElementName())
-                .setDescription(descriptor.getDescription());
+    private void parseConfiguration(ExtensionDescribingContext context, Class<?> declaringClass)
+    {
+        final ExtensionBuilder builder = context.getExtensionBuilder();
+        final ExtensionConfigurationBuilder configuration = context.getExtensionBuilder().newConfiguration();
 
-        builder.addConfiguration(configuration);
+        configuration.setDeclaringClass(declaringClass);
 
-        for (Field field : descriptor.getConfigurableFields())
+        Configuration configurationAnnotation = declaringClass.getAnnotation(Configuration.class);
+        if (configurationAnnotation != null)
+        {
+            configuration.setName(configurationAnnotation.name())
+                    .setDescription(configurationAnnotation.description());
+        }
+        else
+        {
+            configuration.setName(DEFAULT_CONFIG_NAME)
+                    .setDescription(DEFAULT_CONFIG_DESCRIPTION);
+        }
+
+        for (Field field : MuleExtensionAnnotationParser.getConfigurableFields(declaringClass))
         {
             Configurable configurable = field.getAnnotation(Configurable.class);
             Optional optional = field.getAnnotation(Optional.class);
@@ -105,32 +138,57 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
                                                .setRequired(optional == null)
                                                .setDefaultValue(getDefaultValue(optional, dataType)));
         }
+
+        builder.addConfiguration(configuration);
     }
 
-    private void describeOperations(ExtensionDescribingContext context, ExtensionDescriptor extension)
+    private void describeOperations(ExtensionDescribingContext context)
     {
-        ExtensionBuilder builder = context.getExtensionBuilder();
-        for (Method method : extension.getOperationMethods())
+        final Class<?> extensionType = context.getExtensionType();
+
+        Operations operations = extensionType.getAnnotation(Operations.class);
+        if (operations != null)
+        {
+            for (Class<?> declaringClass : operations.value())
+            {
+                parseOperation(context, declaringClass);
+            }
+        }
+        else
+        {
+            parseOperation(context, extensionType);
+        }
+
+
+    }
+
+    private void parseOperation(ExtensionDescribingContext context, Class<?> declaringClass)
+    {
+        final ExtensionBuilder builder = context.getExtensionBuilder();
+
+        for (Method method : ClassUtils.getMethodsAnnotatedWith(declaringClass, Operation.class))
         {
             Operation annotation = method.getAnnotation(Operation.class);
             ExtensionOperationBuilder operation = builder.newOperation();
-            builder.addOperation(operation);
+
 
             operation
                     .setName(resolveOperationName(method, annotation))
+                    .setDeclaringClass(declaringClass)
                     .setOutputType(IntrospectionUtils.getMethodReturnType(method));
 
             resolveOperationInputTypes(annotation, operation);
-            parseOperationParameters(method, builder, operation, extension);
+            parseOperationParameters(method, builder, operation);
+
+            builder.addOperation(operation);
         }
     }
 
     private void parseOperationParameters(Method method,
                                           ExtensionBuilder builder,
-                                          ExtensionOperationBuilder operation,
-                                          ExtensionDescriptor extension)
+                                          ExtensionOperationBuilder operation)
     {
-        List<ParameterDescriptor> descriptors = MuleExtensionAnnotationParser.parseParameter(method, extension);
+        List<ParameterDescriptor> descriptors = MuleExtensionAnnotationParser.parseParameter(method);
 
         for (ParameterDescriptor parameterDescriptor : descriptors)
         {

@@ -19,6 +19,8 @@ public interface NavigableExtensionOperationBuilder extends ExtensionOperationBu
 
     String getDescription();
 
+    Class<?> getDeclaringClass();
+
     List<DataType> getInputDataTypes();
 
     DataType getOutputDataType();

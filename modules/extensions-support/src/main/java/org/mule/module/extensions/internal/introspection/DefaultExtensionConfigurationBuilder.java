@@ -21,6 +21,7 @@ final class DefaultExtensionConfigurationBuilder implements NavigableExtensionCo
 
     private String name;
     private String description;
+    private Class<?> declaringClass;
     private List<ExtensionParameterBuilder> parameters = new LinkedList<>();
 
     DefaultExtensionConfigurationBuilder()
@@ -66,6 +67,25 @@ final class DefaultExtensionConfigurationBuilder implements NavigableExtensionCo
      * {@inheritDoc}
      */
     @Override
+    public Class<?> getDeclaringClass()
+    {
+        return declaringClass;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ExtensionConfigurationBuilder setDeclaringClass(Class<?> declaringClass)
+    {
+        this.declaringClass = declaringClass;
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ExtensionConfigurationBuilder addParameter(ExtensionParameterBuilder parameter)
     {
         parameters.add(parameter);
@@ -84,7 +104,7 @@ final class DefaultExtensionConfigurationBuilder implements NavigableExtensionCo
     @Override
     public ExtensionConfiguration build()
     {
-        return new ImmutableExtensionConfiguration(name, description, MuleExtensionUtils.build(parameters));
+        return new ImmutableExtensionConfiguration(name, description, declaringClass, MuleExtensionUtils.build(parameters));
     }
 
 }

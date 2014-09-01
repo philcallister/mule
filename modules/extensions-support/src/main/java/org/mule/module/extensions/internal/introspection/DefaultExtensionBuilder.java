@@ -45,7 +45,7 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
     private String description;
     private String version;
     private String minMuleVersion;
-    private Class<?> actingClass;
+    private Class<?> declaringClass;
     private List<ExtensionConfigurationBuilder> configurations = new LinkedList<>();
     private List<ExtensionOperationBuilder> operations = new LinkedList<>();
 
@@ -135,10 +135,19 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
      * {@inheritDoc}
      */
     @Override
-    public ExtensionBuilder setActingClass(Class<?> actingClass)
+    public ExtensionBuilder setDeclaringClass(Class<?> declaringClass)
     {
-        this.actingClass = actingClass;
+        this.declaringClass = declaringClass;
         return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Class<?> getDeclaringClass()
+    {
+        return declaringClass;
     }
 
     /**
@@ -194,7 +203,7 @@ public final class DefaultExtensionBuilder extends AbstractCapabilityAwareBuilde
                                       description,
                                       version,
                                       minMuleVersion,
-                                      actingClass,
+                                      declaringClass,
                                       sortConfigurations(MuleExtensionUtils.build(configurations)),
                                       sort(MuleExtensionUtils.build(operations)),
                                       capabilities);
