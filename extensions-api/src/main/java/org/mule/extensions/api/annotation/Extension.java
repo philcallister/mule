@@ -58,5 +58,7 @@ public @interface Extension
 
     String DEFAULT_CONFIG_NAME = "config";
 
+    String DEFAULT_CONFIG_DESCRIPTION = "Default configuration";
+
     String MIN_MULE_VERSION = "3.6.0";
 }

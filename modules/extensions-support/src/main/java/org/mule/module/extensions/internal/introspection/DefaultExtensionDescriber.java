@@ -42,9 +42,6 @@ import org.apache.commons.lang.StringUtils;
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {
 
-    private static final String DEFAULT_CONFIG_NAME = "config";
-    private static final String DEFAULT_CONFIG_DESCRIPTION = "Default configuration";
-
     private ServiceRegistry serviceRegistry;
     private CapabilitiesResolver capabilitiesResolver = new CapabilitiesResolver();
     private Iterator<ExtensionDescriberPostProcessor> postProcessors;
@@ -121,8 +118,8 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         }
         else
         {
-            configuration.setName(DEFAULT_CONFIG_NAME)
-                    .setDescription(DEFAULT_CONFIG_DESCRIPTION);
+            configuration.setName(Extension.DEFAULT_CONFIG_NAME)
+                    .setDescription(Extension.DEFAULT_CONFIG_DESCRIPTION);
         }
 
         for (Field field : MuleExtensionAnnotationParser.getConfigurableFields(declaringClass))
@@ -158,8 +155,6 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         {
             parseOperation(context, extensionType);
         }
-
-
     }
 
     private void parseOperation(ExtensionDescribingContext context, Class<?> declaringClass)
@@ -170,7 +165,6 @@ public final class DefaultExtensionDescriber implements ExtensionDescriber
         {
             Operation annotation = method.getAnnotation(Operation.class);
             ExtensionOperationBuilder operation = builder.newOperation();
-
 
             operation
                     .setName(resolveOperationName(method, annotation))

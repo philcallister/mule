@@ -9,6 +9,9 @@ package org.mule.module.extensions.internal;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
@@ -32,7 +35,14 @@ import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_DESCRIPTI
 import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_NAME;
 import static org.mule.module.extensions.HeisenbergExtension.EXTENSION_VERSION;
 import static org.mule.module.extensions.HeisenbergExtension.HEISENBERG;
+import static org.mule.module.extensions.HeisenbergExtension.NAMESPACE;
+import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_LOCATION;
+import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_VERSION;
 import org.mule.api.config.ServiceRegistry;
+import org.mule.extensions.api.annotation.Configurable;
+import org.mule.extensions.api.annotation.Configuration;
+import org.mule.extensions.api.annotation.Configurations;
+import org.mule.extensions.api.annotation.capability.Xml;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Extension;
@@ -71,6 +81,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
 {
 
+    private static final String EXTENDED_CONFIG_NAME = "extendedConfig";
+    private static final String EXTENDED_CONFIG_DESCRIPTION = "extendedDescription";
+
     private static final String SAY_MY_NAME_OPERATION = "sayMyName";
     private static final String GET_ENEMY_OPERATION = "getEnemy";
     private static final String KILL_OPERATION = "kill";
@@ -103,16 +116,10 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     @Test
     public void describeTestModule() throws Exception
     {
-
         describer.describe(describingContext);
 
         Extension extension = builder.build();
-        assertNotNull(extension);
-
-        assertEquals(EXTENSION_NAME, extension.getName());
-        assertEquals(EXTENSION_DESCRIPTION, extension.getDescription());
-        assertEquals(EXTENSION_VERSION, extension.getVersion());
-        assertEquals(MIN_MULE_VERSION, extension.getMinMuleVersion());
+        assertExtensionProperties(extension);
 
         assertTestModuleConfiguration(extension);
         assertTestModuleOperations(extension);
@@ -145,6 +152,39 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         describer.setServiceRegistry(null);
     }
 
+    @Test
+    public void heisengergPointer() throws Exception
+    {
+        describingContext = new ImmutableExtensionDescribingContext(HeisenbergPointer.class, builder);
+        describeTestModule();
+    }
+
+    @Test
+    public void heisengergPointerPlusExternalConfig() throws Exception
+    {
+        describingContext = new ImmutableExtensionDescribingContext(HeisengergPointerPlusExternalConfig.class, builder);
+        describer.describe(describingContext);
+
+        Extension extension = builder.build();
+        assertExtensionProperties(extension);
+
+        assertThat(extension.getConfigurations().size(), equalTo(2));
+        ExtensionConfiguration configuration = extension.getConfiguration(EXTENDED_CONFIG_NAME);
+        assertThat(configuration, notNullValue());
+        assertThat(configuration.getParameters().size(), equalTo(1));
+        assertParameter(configuration.getParameters().get(0), "extendedProperty", "", String.class, STRING, true, true, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void heisengergPointerPlusUnnamedExternalConfig() throws Exception
+    {
+        describingContext = new ImmutableExtensionDescribingContext(HeisengergPointerPlusUnnamedExternalConfig.class, builder);
+        describer.describe(describingContext);
+
+        describingContext.getExtensionBuilder().build();
+    }
+
+
     private void assertTestModuleConfiguration(Extension extension) throws Exception
     {
         assertEquals(1, extension.getConfigurations().size());
@@ -166,6 +206,16 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertParameter(parameters.get(8), "ricinPacks", "", Set.class, LIST, false, true, null);
         assertParameter(parameters.get(9), "nextDoor", "", Door.class, BEAN, false, true, null);
         assertParameter(parameters.get(10), "candidateDoors", "", Map.class, MAP, false, true, null);
+    }
+
+    private void assertExtensionProperties(Extension extension)
+    {
+        assertNotNull(extension);
+
+        assertEquals(EXTENSION_NAME, extension.getName());
+        assertEquals(EXTENSION_DESCRIPTION, extension.getDescription());
+        assertEquals(EXTENSION_VERSION, extension.getVersion());
+        assertEquals(MIN_MULE_VERSION, extension.getMinMuleVersion());
     }
 
     private void assertTestModuleOperations(Extension extension) throws Exception
@@ -253,6 +303,53 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         for (int i = 0; i < array.length; i++)
         {
             assertEquals(dataTypes.get(i).getRawType(), array[i]);
+        }
+    }
+
+    @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
+    @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
+    @Configurations(HeisenbergExtension.class)
+    private class HeisenbergPointer extends HeisenbergExtension
+    {
+
+    }
+
+    @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
+    @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
+    @Configurations({HeisenbergExtension.class, NamedHeisenbergAlternateConfig.class})
+    private class HeisengergPointerPlusExternalConfig
+    {
+
+    }
+
+    @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
+    @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
+    @Configurations({HeisenbergExtension.class, HeisenbergAlternateConfig.class})
+    private class HeisengergPointerPlusUnnamedExternalConfig
+    {
+
+    }
+
+    @Configuration(name = EXTENDED_CONFIG_NAME, description = EXTENDED_CONFIG_DESCRIPTION)
+    private class NamedHeisenbergAlternateConfig extends HeisenbergAlternateConfig
+    {
+
+    }
+
+    private class HeisenbergAlternateConfig
+    {
+
+        @Configurable
+        private String extendedProperty;
+
+        public String getExtendedProperty()
+        {
+            return extendedProperty;
+        }
+
+        public void setExtendedProperty(String extendedProperty)
+        {
+            this.extendedProperty = extendedProperty;
         }
     }
 

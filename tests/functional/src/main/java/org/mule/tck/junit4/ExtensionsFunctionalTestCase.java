@@ -72,6 +72,21 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
         return new String[] {"org.mule.extension"};
     }
 
+    /**
+     * Returns an array with extension types for which this test should
+     * generate resources. This is useful when several extensions exist in the same
+     * package but you want to focus the test on only a subset of them.
+     * If this method returns {@code null} or an empty array, then all discovered
+     * extensions will get resources generated. Otherwise, discovered extensions
+     * not listed here will depend exclusively on whatever resources are already
+     * present on the classpath.
+     * Default implementation of this method returns {@code null}
+     */
+    protected Class<?>[] getManagedExtensionTypes()
+    {
+        return null;
+    }
+
     private List<GenerableResourceContributor> getGenerableResourceContributors()
     {
         return ImmutableList.copyOf(ServiceRegistry.lookupProviders(GenerableResourceContributor.class));
@@ -80,11 +95,18 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
     private void discoverExtensions() throws Exception
     {
         Reflections reflections = new Reflections(getDiscoverablePackages());
-
         List<Extension> extensions = new LinkedList<>();
+
+        Class<?>[] managedExtensionTypes = getManagedExtensionTypes();
+        final boolean filtersExtensions = managedExtensionTypes != null && managedExtensionTypes.length > 0;
 
         for (Class<?> extensionType : reflections.getTypesAnnotatedWith(org.mule.extensions.api.annotation.Extension.class))
         {
+            if (filtersExtensions && !ArrayUtils.contains(managedExtensionTypes, extensionType))
+            {
+                continue;
+            }
+
             ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
 
             new DefaultExtensionDescriber().describe(new ImmutableExtensionDescribingContext(extensionType, builder));
@@ -142,13 +164,13 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
             return configFile;
         }
 
-        configFile = getConfigFileFromSpitable(getConfigurationResources());
+        configFile = getConfigFileFromSplittable(getConfigurationResources());
         if (configFile != null)
         {
             return configFile;
         }
 
-        configFile = getConfigFileFromSpitable(getConfigResources());
+        configFile = getConfigFileFromSplittable(getConfigResources());
         if (configFile != null)
         {
             return configFile;
@@ -163,7 +185,7 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
         throw new IllegalArgumentException("No valid config file was specified");
     }
 
-    private String getConfigFileFromSpitable(String configFile)
+    private String getConfigFileFromSplittable(String configFile)
     {
         if (configFile != null)
         {

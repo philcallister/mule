@@ -11,7 +11,6 @@ import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.api.annotation.Configurable;
-import org.mule.extensions.api.annotation.Configurations;
 import org.mule.extensions.api.annotation.Extension;
 import org.mule.extensions.api.annotation.Operation;
 import org.mule.extensions.api.annotation.capability.Xml;
@@ -28,7 +27,6 @@ import java.util.Set;
 
 @Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
 @Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
-@Configurations({HeisenbergExtension.class})
 public class HeisenbergExtension
 {
 
