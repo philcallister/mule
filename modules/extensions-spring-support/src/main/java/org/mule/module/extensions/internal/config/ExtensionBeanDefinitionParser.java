@@ -9,7 +9,9 @@ package org.mule.module.extensions.internal.config;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.config.spring.MuleHierarchicalBeanDefinitionParserDelegate;
+import org.mule.config.spring.factories.PollingMessageSourceFactoryBean;
 import org.mule.config.spring.util.SpringXMLUtils;
+import org.mule.enricher.MessageEnricher;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataQualifierVisitor;
 import org.mule.extensions.introspection.api.DataType;
@@ -74,7 +76,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
     protected boolean hasAttribute(Element element, String attributeName)
     {
         String value = element.getAttribute(attributeName);
-        return value != null && !StringUtils.isBlank(value);
+        return !StringUtils.isBlank(value);
     }
 
     protected void setRef(BeanDefinitionBuilder builder, String propertyName, String ref)
@@ -421,15 +423,16 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
                 .getPropertyValues();
         if (parserContext.getContainingBeanDefinition()
                 .getBeanClassName()
-                .equals("org.mule.config.spring.factories.PollingMessageSourceFactoryBean"))
+                .equals(PollingMessageSourceFactoryBean.class.getName()))
         {
+
             propertyValues.addPropertyValue("messageProcessor", definition);
         }
         else
         {
             if (parserContext.getContainingBeanDefinition()
                     .getBeanClassName()
-                    .equals("org.mule.enricher.MessageEnricher"))
+                    .equals(MessageEnricher.class.getName()))
             {
                 propertyValues.addPropertyValue("enrichmentMessageProcessor", definition);
             }
@@ -573,7 +576,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         if (StringUtils.isBlank(id))
         {
             String parentId = SpringXMLUtils.getNameOrId(((Element) element.getParentNode()));
-            return ((("." + parentId) + ":") + element.getLocalName());
+            return String.format(".%s:%s", parentId, element.getLocalName());
         }
         else
         {
@@ -737,7 +740,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
      */
     protected Object ref(String ref)
     {
-        return String.format("#[registry:%s]", ref);
+        return String.format("#[app.registry.%s]", ref);
     }
 
     protected void parseParameter(final ExtensionParameter parameter,
