@@ -235,15 +235,15 @@ public class SchemaBuilder
                     generateCollectionElement(all, parameter, false);
                 }
 
-                @Override
-                public void onBean()
-                {
-                    registerComplexTypeChildElement(all,
-                                                    parameter.getName(),
-                                                    parameter.getDescription(),
-                                                    parameter.getType(),
-                                                    parameter.isRequired());
-                }
+                //@Override
+                //public void onBean()
+                //{
+                //    registerComplexTypeChildElement(all,
+                //                                    parameter.getName(),
+                //                                    parameter.getDescription(),
+                //                                    parameter.getType(),
+                //                                    parameter.isRequired());
+                //}
 
                 @Override
                 protected void defaultOperation()
@@ -429,15 +429,6 @@ public class SchemaBuilder
         return enumValues;
     }
 
-    private void registerComplexTypeChildElement(ExplicitGroup all, ExtensionParameter parameter)
-    {
-        registerComplexTypeChildElement(all,
-                                        parameter.getName(),
-                                        parameter.getDescription(),
-                                        parameter.getType(),
-                                        parameter.isRequired());
-    }
-
     private void registerComplexTypeChildElement(ExplicitGroup all,
                                                  String name,
                                                  String description,
@@ -483,33 +474,44 @@ public class SchemaBuilder
         return complexContentExtension;
     }
 
-    private Attribute createAttribute(String name, DataType type, boolean required) {
+    private Attribute createAttribute(String name, DataType type, boolean required)
+    {
         return createAttribute(name, EMPTY, type, required);
     }
 
-    private Attribute createAttribute(String name, String description, DataType type, boolean required)
+    private Attribute createAttribute(final String name, String description, final DataType type, boolean required)
     {
-        Attribute attribute = new Attribute();
+        final Attribute attribute = new Attribute();
         attribute.setUse(required ? SchemaConstants.USE_REQUIRED : SchemaConstants.USE_OPTIONAL);
         attribute.setAnnotation(createDocAnnotation(description));
 
-        if (isTypeSupported(type))
+        type.getQualifier().accept(new BaseDataQualifierVisitor()
         {
-            attribute.setName(name);
-            attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
-        }
-        else if (ENUM.equals(type.getQualifier()))
-        {
-            attribute.setName(name);
-            attribute.setType(new QName(schema.getTargetNamespace(), type.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-            registeredEnums.add(type);
-        }
-        else
-        {
-            // non-supported types will get "-ref" so beans can be injected
-            attribute.setName(name + SchemaConstants.REF_SUFFIX);
-            attribute.setType(SchemaConstants.STRING);
-        }
+
+            @Override
+            public void onEnum()
+            {
+                attribute.setName(name);
+                attribute.setType(new QName(schema.getTargetNamespace(), type.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
+                registeredEnums.add(type);
+            }
+
+            @Override
+            protected void defaultOperation()
+            {
+                if (isTypeSupported(type))
+                {
+                    attribute.setName(name);
+                    attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
+                }
+                else
+                {
+                    // non-supported types will get "-ref" so they can be injected
+                    attribute.setName(name + SchemaConstants.REF_SUFFIX);
+                    attribute.setType(SchemaConstants.STRING);
+                }
+            }
+        });
 
         return attribute;
     }
@@ -778,12 +780,6 @@ public class SchemaBuilder
                     }
 
                     @Override
-                    public void onBean()
-                    {
-                        registerComplexTypeChildElement(all, parameter);
-                    }
-
-                    @Override
                     protected void defaultOperation()
                     {
                         complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
@@ -833,32 +829,6 @@ public class SchemaBuilder
     private void registerProcessorType(String name, ExtensionOperation operation)
     {
         registerExtendedType(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE, name, operation.getParameters());
-    }
-
-    private void createParameterElement(ExplicitGroup all, ExtensionParameter parameter)
-    {
-        createParameterElement(all,
-                               parameter.getName(),
-                               parameter.getDescription(),
-                               parameter.getType(),
-                               parameter.isRequired(),
-                               parameter.getDefaultValue());
-    }
-
-    private void createParameterElement(ExplicitGroup all,
-                                        String name,
-                                        String description,
-                                        DataType type,
-                                        boolean required,
-                                        Object defaultValue)
-    {
-        TopLevelElement textElement = new TopLevelElement();
-        textElement.setName(name);
-        textElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
-        textElement.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
-        textElement.setDefault(defaultValue != null ? defaultValue.toString() : EMPTY);
-        textElement.setAnnotation(createDocAnnotation(description));
-        all.getParticle().add(objectFactory.createElement(textElement));
     }
 
     private void generateNestedProcessorElement(ExplicitGroup all, String name, String description, boolean required)
