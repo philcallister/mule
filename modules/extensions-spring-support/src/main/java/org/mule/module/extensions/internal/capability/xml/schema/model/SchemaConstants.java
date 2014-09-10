@@ -39,13 +39,9 @@ public final class SchemaConstants
     public static final QName ANYURI = new QName(XSD_NAMESPACE, "anyURI", "xs");
     public static final String USE_REQUIRED = "required";
     public static final String USE_OPTIONAL = "optional";
-    public static final String REF_SUFFIX = "-ref";
     public static final String INNER_PREFIX = "inner-";
-    public static final String ATTRIBUTE_NAME_CONFIG_REF = "config-ref";
-    public static final String ATTRIBUTE_NAME_KEY = "key";
-    public static final String ATTRIBUTE_NAME_REF = "ref";
-    public static final String ATTRIBUTE_NAME_VALUE_REF = "value-ref";
-    public static final String ATTRIBUTE_NAME_KEY_REF = "key-ref";
+    public static final String ATTRIBUTE_NAME_CONFIG = "config";
+    //public static final String ATTRIBUTE_NAME_KEY = "key";
     public static final String ENUM_TYPE_SUFFIX = "EnumType";
     public static final String TYPE_SUFFIX = "Type";
     public static final String UNBOUNDED = "unbounded";

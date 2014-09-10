@@ -506,8 +506,7 @@ public class SchemaBuilder
                 }
                 else
                 {
-                    // non-supported types will get "-ref" so they can be injected
-                    attribute.setName(name + SchemaConstants.REF_SUFFIX);
+                    attribute.setName(name);
                     attribute.setType(SchemaConstants.STRING);
                 }
             }
@@ -518,6 +517,7 @@ public class SchemaBuilder
 
     private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
+
         generateCollectionElement(all,
                                   parameter.getName(),
                                   parameter.getDescription(),
@@ -533,6 +533,9 @@ public class SchemaBuilder
         String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
         LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
 
+
+        createAttribute(name, description, type, required);
+
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
         collectionElement.setMinOccurs(minOccurs);
@@ -547,26 +550,7 @@ public class SchemaBuilder
     {
         LocalComplexType collectionComplexType = new LocalComplexType();
         ExplicitGroup sequence = new ExplicitGroup();
-        ExplicitGroup choice = new ExplicitGroup();
-
-        if (MAP.equals(type.getQualifier()))
-        {
-            collectionComplexType.setChoice(choice);
-            choice.getParticle().add(objectFactory.createSequence(sequence));
-
-            Any any = new Any();
-            any.setProcessContents(SchemaConstants.LAX);
-            any.setMinOccurs(BigInteger.ZERO);
-            any.setMaxOccurs(SchemaConstants.UNBOUNDED);
-
-            ExplicitGroup anySequence = new ExplicitGroup();
-            anySequence.getParticle().add(any);
-            choice.getParticle().add(objectFactory.createSequence(anySequence));
-        }
-        else if (LIST.equals(type.getQualifier()))
-        {
-            collectionComplexType.setSequence(sequence);
-        }
+        collectionComplexType.setSequence(sequence);
 
         TopLevelElement collectionItemElement = new TopLevelElement();
         collectionItemElement.setName(name);
@@ -575,7 +559,7 @@ public class SchemaBuilder
         collectionItemElement.setComplexType(generateComplexType(name, type));
         sequence.getParticle().add(objectFactory.createElement(collectionItemElement));
 
-        Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_REF, true, SchemaConstants.STRING, "The reference object for this parameter");
+        Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, true, SchemaConstants.STRING, "The reference object for this parameter");
         collectionComplexType.getAttributeOrAttributeGroup().add(ref);
 
         return collectionComplexType;
@@ -612,59 +596,6 @@ public class SchemaBuilder
                 return generateRefComplexType(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF);
             }
         }
-        else if (MAP.equals(typeQualifier))
-        {
-            DataType[] genericTypes = type.getGenericTypes();
-
-            LocalComplexType mapComplexType = new LocalComplexType();
-            Attribute keyAttribute = new Attribute();
-
-            if (!ArrayUtils.isEmpty(genericTypes))
-            {
-                DataType keyType = genericTypes[0];
-                DataQualifier keyQualifier = keyType.getQualifier();
-
-                if (isTypeSupported(keyType))
-                {
-                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
-                    keyAttribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), keyType.getName()));
-                }
-                else if (ENUM.equals(keyQualifier))
-                {
-                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY);
-                    keyAttribute.setType(new QName(schema.getTargetNamespace(), keyType.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-                    registeredEnums.add(keyType);
-                }
-                else
-                {
-                    keyAttribute.setUse(SchemaConstants.USE_REQUIRED);
-                    keyAttribute.setName(SchemaConstants.ATTRIBUTE_NAME_KEY_REF);
-                    keyAttribute.setType(SchemaConstants.STRING);
-                }
-
-                QName baseType;
-                if (genericTypes.length > 1 && isTypeSupported(genericTypes[1]))
-                {
-                    baseType = SchemaTypeConversion.convertType(schema.getTargetNamespace(), genericTypes[1].getName());
-                }
-                else
-                {
-                    baseType = new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs");
-                }
-
-                SimpleContent simpleContent = new SimpleContent();
-                mapComplexType.setSimpleContent(simpleContent);
-                SimpleExtensionType complexContentExtension = new SimpleExtensionType();
-                complexContentExtension.setBase(baseType);
-                simpleContent.setExtension(complexContentExtension);
-
-                Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
-                complexContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
-                complexContentExtension.getAttributeOrAttributeGroup().add(keyAttribute);
-            }
-
-            return mapComplexType;
-        }
 
         return null;
     }
@@ -682,20 +613,20 @@ public class SchemaBuilder
         return complexType;
     }
 
-    private LocalComplexType generateComplexTypeWithRef(DataType type)
-    {
-        LocalComplexType complexType = new LocalComplexType();
-        SimpleContent simpleContent = new SimpleContent();
-        complexType.setSimpleContent(simpleContent);
-        SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
-        simpleContentExtension.setBase(extensionBase);
-        simpleContent.setExtension(simpleContentExtension);
-
-        Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
-        simpleContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
-        return complexType;
-    }
+    //private LocalComplexType generateComplexTypeWithRef(DataType type)
+    //{
+    //    LocalComplexType complexType = new LocalComplexType();
+    //    SimpleContent simpleContent = new SimpleContent();
+    //    complexType.setSimpleContent(simpleContent);
+    //    SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
+    //    QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
+    //    simpleContentExtension.setBase(extensionBase);
+    //    simpleContent.setExtension(simpleContentExtension);
+    //
+    //    Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
+    //    simpleContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
+    //    return complexType;
+    //}
 
     private LocalComplexType generateExtendedRefComplexType(DataType type, String name)
     {
@@ -742,7 +673,7 @@ public class SchemaBuilder
         complexContentExtension.setBase(base);
         complexContent.setExtension(complexContentExtension);
 
-        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG_REF, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
+        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
         complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
 
         final ExplicitGroup all = new ExplicitGroup();
