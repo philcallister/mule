@@ -7,9 +7,7 @@
 package org.mule.module.extensions.internal.capability.xml.schema;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
-import static org.mule.extensions.introspection.api.DataQualifier.MAP;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
 import org.mule.extensions.api.annotation.param.Ignore;
 import org.mule.extensions.api.annotation.param.Optional;
@@ -20,7 +18,6 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
-import org.mule.module.extensions.internal.capability.xml.schema.model.Any;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Attribute;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexContent;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexType;
@@ -49,6 +46,7 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelC
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelElement;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
+import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
@@ -211,7 +209,7 @@ public class SchemaBuilder
     {
         Map<QName, String> otherAttributes = new HashMap<>();
         final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
-        Attribute nameAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, true, SchemaConstants.STRING, SchemaConstants.ATTRIBUTE_NAME_NAME_DESCRIPTION);
+        Attribute nameAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, ImmutableDataType.of(String.class), true, false);
         config.getAttributeOrAttributeGroup().add(nameAttribute);
 
         final ExplicitGroup all = new ExplicitGroup();
@@ -230,27 +228,19 @@ public class SchemaBuilder
                 }
 
                 @Override
-                public void onMap()
+                public void onBean()
                 {
-                    generateCollectionElement(all, parameter, false);
+                    registerComplexTypeChildElement(all,
+                                                    parameter.getName(),
+                                                    parameter.getDescription(),
+                                                    parameter.getType(),
+                                                    parameter.isRequired());
                 }
-
-                //@Override
-                //public void onBean()
-                //{
-                //    registerComplexTypeChildElement(all,
-                //                                    parameter.getName(),
-                //                                    parameter.getDescription(),
-                //                                    parameter.getType(),
-                //                                    parameter.isRequired());
-                //}
 
                 @Override
                 protected void defaultOperation()
                 {
-                    config.getAttributeOrAttributeGroup().add(createAttribute(parameter.getName(),
-                                                                              parameter.getType(),
-                                                                              parameter.isRequired()));
+                    config.getAttributeOrAttributeGroup().add(createAttribute(parameter, parameter.isRequired()));
                 }
             });
         }
@@ -474,12 +464,18 @@ public class SchemaBuilder
         return complexContentExtension;
     }
 
-    private Attribute createAttribute(String name, DataType type, boolean required)
+    private Attribute createAttribute(ExtensionParameter parameter, boolean required)
     {
-        return createAttribute(name, EMPTY, type, required);
+        return createAttribute(parameter.getName(), parameter.getDescription(), parameter.getType(), required, parameter.isDynamic());
     }
 
-    private Attribute createAttribute(final String name, String description, final DataType type, boolean required)
+    private Attribute createAttribute(String name, DataType type, boolean required, boolean dynamic)
+    {
+        return createAttribute(name, EMPTY, type, required, dynamic);
+    }
+
+
+    private Attribute createAttribute(final String name, String description, final DataType type, boolean required, final boolean dynamic)
     {
         final Attribute attribute = new Attribute();
         attribute.setUse(required ? SchemaConstants.USE_REQUIRED : SchemaConstants.USE_OPTIONAL);
@@ -499,14 +495,18 @@ public class SchemaBuilder
             @Override
             protected void defaultOperation()
             {
-                if (isTypeSupported(type))
+                attribute.setName(name);
+
+                if (dynamic)
                 {
-                    attribute.setName(name);
+                    attribute.setType(SchemaConstants.EXPRESSION);
+                }
+                else if (isTypeSupported(type))
+                {
                     attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
                 }
                 else
                 {
-                    attribute.setName(name);
                     attribute.setType(SchemaConstants.STRING);
                 }
             }
@@ -517,30 +517,22 @@ public class SchemaBuilder
 
     private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
+        // create attribute for use with expressions or registry keys
+        createAttribute(parameter, false);
 
-        generateCollectionElement(all,
-                                  parameter.getName(),
-                                  parameter.getDescription(),
-                                  parameter.getType(),
-                                  !forceOptional && parameter.isRequired());
-    }
+        //create element for defining the collection in the XML
+        final String name = NameUtils.uncamel(parameter.getName());
+        final boolean required = !forceOptional && parameter.isRequired();
 
-    private void generateCollectionElement(ExplicitGroup all, String name, String description, DataType type, boolean required)
-    {
-        name = NameUtils.uncamel(name);
         BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
-
         String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
-        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
-
-
-        createAttribute(name, description, type, required);
+        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, parameter.getType());
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
         collectionElement.setMinOccurs(minOccurs);
         collectionElement.setMaxOccurs("1");
-        collectionElement.setAnnotation(createDocAnnotation(description));
+        collectionElement.setAnnotation(createDocAnnotation(parameter.getDescription()));
         all.getParticle().add(objectFactory.createElement(collectionElement));
 
         collectionElement.setComplexType(collectionComplexType);
@@ -556,48 +548,16 @@ public class SchemaBuilder
         collectionItemElement.setName(name);
         collectionItemElement.setMinOccurs(BigInteger.ZERO);
         collectionItemElement.setMaxOccurs(SchemaConstants.UNBOUNDED);
-        collectionItemElement.setComplexType(generateComplexType(name, type));
+        collectionItemElement.setComplexType(generateComplexValueType(name, type));
         sequence.getParticle().add(objectFactory.createElement(collectionItemElement));
-
-        Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, true, SchemaConstants.STRING, "The reference object for this parameter");
-        collectionComplexType.getAttributeOrAttributeGroup().add(ref);
 
         return collectionComplexType;
     }
 
-    private LocalComplexType generateComplexType(String name, DataType type)
+    private LocalComplexType generateComplexValueType(String name, DataType type)
     {
-        DataQualifier typeQualifier = type.getQualifier();
-        if (LIST.equals(typeQualifier))
-        {
-            if (!ArrayUtils.isEmpty(type.getGenericTypes()))
-            {
-                DataType genericType = type.getGenericTypes()[0];
-                if (isTypeSupported(genericType))
-                {
-                    return generateComplexTypeWithRef(genericType);
-                }
-                else if (MAP.equals(genericType.getQualifier()) ||
-                         LIST.equals(genericType.getQualifier()))
-                {
-                    return generateCollectionComplexType(SchemaConstants.INNER_PREFIX + name, genericType);
-                }
-                else if (ENUM.equals(typeQualifier))
-                {
-                    return generateEnumComplexType(genericType);
-                }
-                else
-                {
-                    return generateExtendedRefComplexType(genericType, SchemaConstants.ATTRIBUTE_NAME_VALUE_REF);
-                }
-            }
-            else
-            {
-                return generateRefComplexType(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF);
-            }
-        }
-
-        return null;
+        DataType genericType = ArrayUtils.isEmpty(type.getGenericTypes()) ? type : type.getGenericTypes()[0];
+        return generateComplexTypeWithValue(name, genericType);
     }
 
     private LocalComplexType generateEnumComplexType(DataType type)
@@ -613,34 +573,20 @@ public class SchemaBuilder
         return complexType;
     }
 
-    //private LocalComplexType generateComplexTypeWithRef(DataType type)
-    //{
-    //    LocalComplexType complexType = new LocalComplexType();
-    //    SimpleContent simpleContent = new SimpleContent();
-    //    complexType.setSimpleContent(simpleContent);
-    //    SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-    //    QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
-    //    simpleContentExtension.setBase(extensionBase);
-    //    simpleContent.setExtension(simpleContentExtension);
-    //
-    //    Attribute refAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE_REF, true, SchemaConstants.STRING, null);
-    //    simpleContentExtension.getAttributeOrAttributeGroup().add(refAttribute);
-    //    return complexType;
-    //}
-
-    private LocalComplexType generateExtendedRefComplexType(DataType type, String name)
+    private LocalComplexType generateComplexTypeWithValue(String name, DataType type)
     {
-        LocalComplexType itemComplexType = new LocalComplexType();
-        itemComplexType.setComplexContent(new ComplexContent());
-        itemComplexType.getComplexContent().setExtension(new ExtensionType());
-        itemComplexType.getComplexContent().getExtension().setBase(
-                new QName(schema.getTargetNamespace(), registerComplexType(type))
-        ); // base to the type type
+        LocalComplexType complexType = new LocalComplexType();
+        complexType.setName(name);
+        SimpleContent simpleContent = new SimpleContent();
+        complexType.setSimpleContent(simpleContent);
+        SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
+        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
+        simpleContentExtension.setBase(extensionBase);
+        simpleContent.setExtension(simpleContentExtension);
 
-
-        Attribute refAttribute = createAttribute(name, true, SchemaConstants.STRING, null);
-        itemComplexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(refAttribute);
-        return itemComplexType;
+        Attribute valueAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE, type, true, true);
+        simpleContentExtension.getAttributeOrAttributeGroup().add(valueAttribute);
+        return complexType;
     }
 
     private LocalComplexType generateRefComplexType(String name)
@@ -795,7 +741,7 @@ public class SchemaBuilder
         return createAttribute(parameter.getName(), parameter.getDescription(), parameter.getType(), !forceOptional && parameter.isRequired());
     }
 
-    private Attribute createAttribute(String name, boolean optional, QName type, String description)
+    private Attribute createAttribute(String name, String description, boolean optional, QName type)
     {
         Attribute attr = new Attribute();
         attr.setName(name);
