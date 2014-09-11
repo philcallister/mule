@@ -6,6 +6,8 @@
  */
 package org.mule.module.extensions.internal.capability.xml;
 
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionBuilder;
 import org.mule.extensions.introspection.api.capability.XmlCapability;
@@ -16,7 +18,9 @@ import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
+import org.mule.util.IOUtils;
 
+import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,20 +38,18 @@ public class SchemaGeneratorTestCase extends AbstractMuleTestCase
 
 
     @Test
-    public void generate()
+    public void generate() throws Exception
     {
+        String expectedSchema = IOUtils.getResourceAsString("heisenberg.xsd", getClass());
         ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
         new DefaultExtensionDescriber().describe(new ImmutableExtensionDescribingContext(HeisenbergExtension.class, builder));
         Extension extension = builder.build();
         XmlCapability capability = extension.getCapabilities(XmlCapability.class).iterator().next();
 
         String schema = generator.generate(extension, capability);
-
-        //TODO: assertions. For practical reasons, the assertions on this test will only be coded
-        // once the definition parser is ready
         System.out.println(schema);
 
+        XMLUnit.setIgnoreWhitespace(true);
+        assertThat(XMLUnit.compareXML(expectedSchema, schema).similar(), is(true));
     }
-
-
 }

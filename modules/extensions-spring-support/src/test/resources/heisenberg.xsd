@@ -12,14 +12,14 @@
                         <xs:documentation>Default configuration</xs:documentation>
                     </xs:annotation>
                     <xs:sequence>
-                        <xs:element minOccurs="1" maxOccurs="1" name="enemies">
+                        <xs:element minOccurs="0" maxOccurs="1" name="enemies">
                             <xs:annotation>
                                 <xs:documentation></xs:documentation>
                             </xs:annotation>
                             <xs:complexType>
                                 <xs:sequence>
                                     <xs:element minOccurs="0" maxOccurs="unbounded" name="enemy">
-                                        <xs:complexType name="enemy">
+                                        <xs:complexType>
                                             <xs:simpleContent>
                                                 <xs:extension base="xs:string">
                                                     <xs:attribute type="mule:expression" use="required" name="value">
@@ -41,16 +41,24 @@
                             <xs:complexType>
                                 <xs:sequence>
                                     <xs:element minOccurs="0" maxOccurs="unbounded" name="ricin-pack">
-                                        <xs:complexType name="ricin-pack">
-                                            <xs:simpleContent>
-                                                <xs:extension>
-                                                    <xs:attribute type="mule:expression" use="required" name="value">
-                                                        <xs:annotation>
-                                                            <xs:documentation></xs:documentation>
-                                                        </xs:annotation>
-                                                    </xs:attribute>
-                                                </xs:extension>
-                                            </xs:simpleContent>
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:element minOccurs="0" maxOccurs="1" name="destination">
+                                                    <xs:annotation>
+                                                        <xs:documentation></xs:documentation>
+                                                    </xs:annotation>
+                                                    <xs:complexType>
+                                                        <xs:complexContent>
+                                                            <xs:extension xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" base="org.mule.module.extensions.Door"></xs:extension>
+                                                        </xs:complexContent>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:sequence>
+                                            <xs:attribute type="mule:expression" use="required" name="microgramsPerKilo">
+                                                <xs:annotation>
+                                                    <xs:documentation></xs:documentation>
+                                                </xs:annotation>
+                                            </xs:attribute>
                                         </xs:complexType>
                                     </xs:element>
                                 </xs:sequence>
@@ -82,6 +90,11 @@
                             <xs:documentation></xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute type="mule:expression" use="optional" name="enemies">
+                        <xs:annotation>
+                            <xs:documentation></xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                     <xs:attribute type="mule:expression" use="required" name="money">
                         <xs:annotation>
                             <xs:documentation></xs:documentation>
@@ -107,12 +120,32 @@
                             <xs:documentation></xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute type="mule:expression" use="optional" name="ricinPacks">
+                        <xs:annotation>
+                            <xs:documentation></xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute type="mule:expression" use="optional" name="nextDoor">
+                        <xs:annotation>
+                            <xs:documentation></xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                     <xs:attribute type="mule:expression" use="optional" name="candidateDoors">
                         <xs:annotation>
                             <xs:documentation></xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
                 </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+    <xs:element xmlns:mule="http://www.mulesoft.org/schema/mule/core" substitutionGroup="mule:abstract-extension" name="previous">
+        <xs:annotation>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" base="org.mule.module.extensions.Door"></xs:extension>
             </xs:complexContent>
         </xs:complexType>
     </xs:element>
@@ -129,17 +162,56 @@
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
-        <xs:attribute type="xs:string" use="required" name="address">
+        <xs:attribute xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="mule:expression" use="required" name="address">
             <xs:annotation>
                 <xs:documentation></xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute type="xs:string" use="required" name="victim">
+        <xs:attribute xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="mule:expression" use="required" name="victim">
             <xs:annotation>
                 <xs:documentation></xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
+    <xs:element xmlns:mule="http://www.mulesoft.org/schema/mule/core" substitutionGroup="mule:abstract-extension" name="destination">
+        <xs:annotation>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" base="org.mule.module.extensions.Door"></xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="org.mule.module.extensions.Ricin">
+        <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="1" name="destination">
+                <xs:annotation>
+                    <xs:documentation></xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:complexContent>
+                        <xs:extension xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" base="org.mule.module.extensions.Door"></xs:extension>
+                    </xs:complexContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="mule:expression" use="required" name="microgramsPerKilo">
+            <xs:annotation>
+                <xs:documentation></xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    <xs:element xmlns:mule="http://www.mulesoft.org/schema/mule/core" substitutionGroup="mule:abstract-extension" name="next-door">
+        <xs:annotation>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" base="org.mule.module.extensions.Door"></xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
     <xs:element xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="GetEnemyType" substitutionGroup="mule:abstract-message-processor" name="get-enemy">
         <xs:annotation>
             <xs:documentation></xs:documentation>

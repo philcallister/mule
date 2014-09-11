@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:heisenberg="http://www.mulesoft.org/schema/mule/extension/heisenberg"
       xmlns:util="http://www.springframework.org/schema/util"
       xmlns:spring="http://www.springframework.org/schema/beans"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
                http://www.mulesoft.org/schema/mule/extension/heisenberg http://www.mulesoft.org/schema/mule/extension/heisenberg/current/mule-extension-heisenberg.xsd
                http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
@@ -15,10 +16,10 @@
                        dateOfDeath="2011-09-07T00:00:00-05:00"
                        money="1000000"
                        recipe="recipes"
-            >
+                       candidateDoors="candidateDoors">
         <heisenberg:enemies>
-            <heisenberg:enemy>Gustavo Fring</heisenberg:enemy>
-            <heisenberg:enemy>Hank</heisenberg:enemy>
+            <heisenberg:enemy value="Gustavo Fring"/>
+            <heisenberg:enemy value="Hank"/>
         </heisenberg:enemies>
         <heisenberg:ricin-packs>
             <heisenberg:ricin-pack microgramsPerKilo="22">
@@ -26,22 +27,20 @@
             </heisenberg:ricin-pack>
         </heisenberg:ricin-packs>
         <heisenberg:next-door address="pollos hermanos" victim="Gustavo Fring">
-            <heisenberg:previous victim="Krazy-8" address="Jesse's" />
+            <heisenberg:previous victim="Krazy-8" address="Jesse's"/>
         </heisenberg:next-door>
-        <heisenberg:candidate-doors>
-            <heisenberg:candidate-door key="skyler" value-ref="skylerDoor" />
-            <heisenberg:candidate-door key="saul" value-ref="saulDoor" />
-        </heisenberg:candidate-doors>
     </heisenberg:config>
 
-
-    <heisenberg:config name="heisenbergByRef" cancer="true" dateOfBirth="1959-09-07T00:00:00"
-                       dateOfDeath="2011-09-07T00:00:00-05:00" money="1000000">
-        <heisenberg:enemies ref="enemies"/>
-        <heisenberg:recipe ref="recipes"/>
-        <heisenberg:ricin-packs ref="ricinPacks"/>
-        <heisenberg:next-door ref="door"/>
-        <heisenberg:candidate-doors ref="candidateDoors" />
+    <heisenberg:config name="heisenbergByRef"
+                       cancer="true"
+                       dateOfBirth="1959-09-07T00:00:00"
+                       dateOfDeath="2011-09-07T00:00:00-05:00"
+                       money="1000000"
+                       enemies="enemies"
+                       recipe="recipes"
+                       ricinPacks="ricinPacks"
+                       nextDoor="door"
+                       candidateDoors="candidateDoors">
     </heisenberg:config>
 
     <spring:beans>
@@ -52,8 +51,8 @@
         </util:map>
 
         <util:map id="candidateDoors">
-            <spring:entry key="skyler" value-ref="skylerDoor" />
-            <spring:entry key="saul" value-ref="saulDoor" />
+            <spring:entry key="skyler" value-ref="skylerDoor"/>
+            <spring:entry key="saul" value-ref="saulDoor"/>
         </util:map>
 
         <util:list id="enemies">
@@ -87,13 +86,13 @@
         </spring:bean>
 
         <spring:bean id="skylerDoor" class="org.mule.module.extensions.Door">
-            <spring:property name="victim" value="Skyler" />
-            <spring:property name="address" value="308 Negra Arroyo Lane" />
+            <spring:property name="victim" value="Skyler"/>
+            <spring:property name="address" value="308 Negra Arroyo Lane"/>
         </spring:bean>
 
         <spring:bean id="saulDoor" class="org.mule.module.extensions.Door">
-            <spring:property name="victim" value="Saul" />
-            <spring:property name="address" value="Shopping Mall" />
+            <spring:property name="victim" value="Saul"/>
+            <spring:property name="address" value="Shopping Mall"/>
         </spring:bean>
 
     </spring:beans>

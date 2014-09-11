@@ -219,26 +219,32 @@ public class SchemaBuilder
             parameter.getType().getQualifier().accept(new BaseDataQualifierVisitor()
             {
 
+                private boolean forceOptional = false;
+
                 @Override
                 public void onList()
                 {
-                    generateCollectionElement(all, parameter, false);
+                    forceOptional = true;
+                    defaultOperation();
+                    generateCollectionElement(all, parameter, true);
                 }
 
                 @Override
                 public void onBean()
                 {
+                    forceOptional = true;
+                    defaultOperation();
                     registerComplexTypeChildElement(all,
                                                     parameter.getName(),
                                                     parameter.getDescription(),
                                                     parameter.getType(),
-                                                    parameter.isRequired());
+                                                    isRequired(parameter, forceOptional));
                 }
 
                 @Override
                 protected void defaultOperation()
                 {
-                    config.getAttributeOrAttributeGroup().add(createAttribute(parameter, parameter.isRequired()));
+                    config.getAttributeOrAttributeGroup().add(createAttribute(parameter, isRequired(parameter, forceOptional)));
                 }
             });
         }
@@ -407,9 +413,6 @@ public class SchemaBuilder
                                                  DataType type,
                                                  boolean required)
     {
-        // add reference attribute
-        createAttribute(name, description, type, false, true);
-
         LocalComplexType objectComplexType = new LocalComplexType();
         objectComplexType.setComplexContent(new ComplexContent());
         objectComplexType.getComplexContent().setExtension(new ExtensionType());
@@ -417,14 +420,25 @@ public class SchemaBuilder
                 new QName(schema.getTargetNamespace(), registerComplexType(type))
         ); // base to the element type
 
+        name = NameUtils.uncamel(name);
+        // this top level element is for declaring the object inside a config or operation
         TopLevelElement objectElement = new TopLevelElement();
-        objectElement.setName(NameUtils.uncamel(name));
+        objectElement.setName(name);
         objectElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
         objectElement.setMaxOccurs("1");
         objectElement.setComplexType(objectComplexType);
         objectElement.setAnnotation(createDocAnnotation(description));
 
         all.getParticle().add(objectFactory.createElement(objectElement));
+
+        // this top level element is for declaring a global instance
+        objectElement = new TopLevelElement();
+        objectElement.setName(name);
+        objectElement.setComplexType(objectComplexType);
+        objectElement.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_EXTENSION);
+        objectElement.setAnnotation(createDocAnnotation(description));
+
+        schema.getSimpleTypeOrComplexTypeOrGroup().add(objectElement);
     }
 
     private ExtensionType registerExtension(String name, Map<QName, String> otherAttributes)
@@ -502,16 +516,12 @@ public class SchemaBuilder
 
     private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
-        boolean required = !forceOptional && parameter.isRequired();
+        boolean required = isRequired(parameter, forceOptional);
         generateCollectionElement(all, parameter.getName(), parameter.getDescription(), parameter.getType(), required);
     }
 
     private void generateCollectionElement(ExplicitGroup all, String name, String description, DataType type, boolean required)
     {
-        // create attribute for use with expressions or registry keys
-        createAttribute(name, description, type, required, true);
-
-        //create element for defining the collection in the XML
         name = NameUtils.uncamel(name);
 
         BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
@@ -528,26 +538,67 @@ public class SchemaBuilder
         collectionElement.setComplexType(collectionComplexType);
     }
 
-    private LocalComplexType generateCollectionComplexType(String name, DataType type)
+    private LocalComplexType generateCollectionComplexType(String name, final DataType type)
     {
-        LocalComplexType collectionComplexType = new LocalComplexType();
-        ExplicitGroup sequence = new ExplicitGroup();
+        final LocalComplexType collectionComplexType = new LocalComplexType();
+        final ExplicitGroup sequence = new ExplicitGroup();
         collectionComplexType.setSequence(sequence);
 
-        TopLevelElement collectionItemElement = new TopLevelElement();
+        final TopLevelElement collectionItemElement = new TopLevelElement();
         collectionItemElement.setName(name);
         collectionItemElement.setMinOccurs(BigInteger.ZERO);
         collectionItemElement.setMaxOccurs(SchemaConstants.UNBOUNDED);
-        collectionItemElement.setComplexType(generateComplexValueType(name, type));
+
+        final DataType genericType = getGenericType(type);
+        genericType.getQualifier().accept(new BaseDataQualifierVisitor()
+        {
+
+            @Override
+            public void onBean()
+            {
+                registerComplexType(genericType);
+                ComplexType complexType = registeredComplexTypesHolders.get(genericType).getComplexType();
+                LocalComplexType localComplexType = new LocalComplexType();
+
+                localComplexType.setComplexContent(complexType.getComplexContent());
+                localComplexType.setAll(complexType.getAll());
+                localComplexType.setSequence(complexType.getSequence());
+                localComplexType.getAttributeOrAttributeGroup().addAll(complexType.getAttributeOrAttributeGroup());
+
+                collectionItemElement.setComplexType(localComplexType);
+            }
+
+            @Override
+            protected void defaultOperation()
+            {
+                collectionItemElement.setComplexType(generateComplexValueType(genericType));
+            }
+        });
+
         sequence.getParticle().add(objectFactory.createElement(collectionItemElement));
 
         return collectionComplexType;
     }
 
-    private LocalComplexType generateComplexValueType(String name, DataType type)
+    private LocalComplexType generateComplexValueType(DataType type)
     {
-        DataType genericType = ArrayUtils.isEmpty(type.getGenericTypes()) ? type : type.getGenericTypes()[0];
-        return generateComplexTypeWithValue(name, genericType);
+        LocalComplexType complexType = new LocalComplexType();
+        SimpleContent simpleContent = new SimpleContent();
+        complexType.setSimpleContent(simpleContent);
+        SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
+        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
+        simpleContentExtension.setBase(extensionBase);
+        simpleContent.setExtension(simpleContentExtension);
+
+        Attribute valueAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE, type, true, true);
+        simpleContentExtension.getAttributeOrAttributeGroup().add(valueAttribute);
+
+        return complexType;
+    }
+
+    private DataType getGenericType(DataType type)
+    {
+        return ArrayUtils.isEmpty(type.getGenericTypes()) ? type : type.getGenericTypes()[0];
     }
 
     private LocalComplexType generateEnumComplexType(DataType type)
@@ -560,22 +611,6 @@ public class SchemaBuilder
         simpleContent.setExtension(simpleContentExtension);
         registeredEnums.add(type);
 
-        return complexType;
-    }
-
-    private LocalComplexType generateComplexTypeWithValue(String name, DataType type)
-    {
-        LocalComplexType complexType = new LocalComplexType();
-        complexType.setName(name);
-        SimpleContent simpleContent = new SimpleContent();
-        complexType.setSimpleContent(simpleContent);
-        SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
-        simpleContentExtension.setBase(extensionBase);
-        simpleContent.setExtension(simpleContentExtension);
-
-        Attribute valueAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE, type, true, true);
-        simpleContentExtension.getAttributeOrAttributeGroup().add(valueAttribute);
         return complexType;
     }
 
@@ -753,10 +788,15 @@ public class SchemaBuilder
         return field.getAnnotation(Optional.class) == null;
     }
 
+    private boolean isRequired(ExtensionParameter parameter, boolean forceOptional)
+    {
+        return !forceOptional && parameter.isRequired();
+    }
+
     private boolean isDynamic(Field field)
     {
         Configurable configurable = field.getAnnotation(Configurable.class);
-        return configurable != null && configurable.isDynamic();
+        return configurable != null ? configurable.isDynamic() : true;
     }
 
     private class ComplexTypeHolder
