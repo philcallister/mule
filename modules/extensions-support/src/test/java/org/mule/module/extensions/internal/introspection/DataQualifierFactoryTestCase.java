@@ -9,7 +9,6 @@ package org.mule.module.extensions.internal.introspection;
 import static junit.framework.Assert.assertEquals;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.module.extensions.internal.introspection.DataQualifierFactory;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 import org.mule.tck.testmodels.fruit.Apple;
@@ -129,7 +128,7 @@ public class DataQualifierFactoryTestCase extends AbstractMuleTestCase
     @Test
     public void bean()
     {
-        doAssert(DataQualifier.BEAN, Apple.class, Banana.class, Object.class);
+        doAssert(DataQualifier.POJO, Apple.class, Banana.class, Object.class);
     }
 
     private void doAssert(DataQualifier expected, Class<?>... types)

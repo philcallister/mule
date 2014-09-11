@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mule.extensions.api.annotation.Extension.DEFAULT_CONFIG_NAME;
 import static org.mule.extensions.api.annotation.Extension.MIN_MULE_VERSION;
-import static org.mule.extensions.introspection.api.DataQualifier.BEAN;
+import static org.mule.extensions.introspection.api.DataQualifier.POJO;
 import static org.mule.extensions.introspection.api.DataQualifier.BOOLEAN;
 import static org.mule.extensions.introspection.api.DataQualifier.DATE;
 import static org.mule.extensions.introspection.api.DataQualifier.DATE_TIME;
@@ -204,7 +204,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertParameter(parameters.get(6), "dateOfDeath", "", Calendar.class, DATE_TIME, true, true, null);
         assertParameter(parameters.get(7), "recipe", "", Map.class, MAP, false, true, null);
         assertParameter(parameters.get(8), "ricinPacks", "", Set.class, LIST, false, true, null);
-        assertParameter(parameters.get(9), "nextDoor", "", Door.class, BEAN, false, true, null);
+        assertParameter(parameters.get(9), "nextDoor", "", Door.class, POJO, false, true, null);
         assertParameter(parameters.get(10), "candidateDoors", "", Map.class, MAP, false, true, null);
     }
 

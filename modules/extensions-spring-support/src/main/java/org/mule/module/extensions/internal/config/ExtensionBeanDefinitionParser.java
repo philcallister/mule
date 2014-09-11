@@ -18,7 +18,7 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.MuleExtensionUtils;
-import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
+import org.mule.module.extensions.internal.util.NameUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaTypeConversion;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.TemplateParser;
@@ -57,11 +57,6 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'hh:mm:ss";
     private static final String CALENDAR_FORMAT = "yyyy-MM-dd'T'hh:mm:ssX";
-    private static final String REF = "ref";
-    public static final String KEY_REF = "key-ref";
-    public static final String KEY = "key";
-    public static final String VALUE_REF = "value-ref";
-
 
     /**
      * Mule Pattern Info
@@ -813,7 +808,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
             }
 
             @Override
-            public void onBean()
+            public void onPojo()
             {
                 parseBean(element, builder, fieldName, uncameledFieldName, dataType);
             }

@@ -8,10 +8,12 @@ package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.DataType;
+import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.repackaged.internal.org.springframework.core.ResolvableType;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;
+import org.mule.util.ClassUtils;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -21,6 +23,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 
 /**
@@ -142,6 +145,25 @@ public class IntrospectionUtils
         }
 
         return map.build();
+    }
+
+    public static boolean hasSetter(ExtensionParameter parameter)
+    {
+        Class<?> declaringClass = parameter.getType().getRawType();
+        return ReflectionUtils.findMethod(declaringClass, NameUtils.getSetterName(parameter.getName()), declaringClass) != null;
+    }
+
+    public static boolean hasDefaultConstructor(Class<?> clazz) {
+        return ClassUtils.getConstructor(clazz, new Class[]{}) != null;
+    }
+
+    public static boolean isDescribable(ExtensionParameter parameter)
+    {
+        Class<?> declaringClass = parameter.getType().getRawType();
+        return !declaringClass.isInterface() &&
+               !Modifier.isAbstract(declaringClass.getModifiers()) &&
+               hasDefaultConstructor(declaringClass) &&
+               hasSetter(parameter);
     }
 
     private static DataType toDataType(ResolvableType type)

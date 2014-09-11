@@ -100,7 +100,7 @@ public class BaseDataQualifierVisitor implements DataQualifierVisitor
     }
 
     @Override
-    public void onBean()
+    public void onPojo()
     {
         defaultOperation();
     }

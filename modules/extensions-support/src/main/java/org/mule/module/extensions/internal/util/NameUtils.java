@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal.capability.xml.schema.model;
+package org.mule.module.extensions.internal.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +115,11 @@ public class NameUtils
         }
 
         return result;
+    }
+
+    public static String getSetterName(String name)
+    {
+        return "set" + name.substring(0, 0).toUpperCase() + name.substring(1);
     }
 
 

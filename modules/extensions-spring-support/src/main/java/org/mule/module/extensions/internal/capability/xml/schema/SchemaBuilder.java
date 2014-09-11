@@ -31,7 +31,6 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.GroupRef;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Import;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalComplexType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalSimpleType;
-import org.mule.module.extensions.internal.capability.xml.schema.model.NameUtils;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NoFixedFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NumFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ObjectFactory;
@@ -49,6 +48,7 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelS
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
 import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.module.extensions.internal.util.NameUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
 
@@ -230,15 +230,21 @@ public class SchemaBuilder
                 }
 
                 @Override
-                public void onBean()
+                public void onPojo()
                 {
-                    forceOptional = true;
+                    boolean describable = IntrospectionUtils.isDescribable(parameter);
+                    forceOptional = describable;
+
                     defaultOperation();
-                    registerComplexTypeChildElement(all,
-                                                    parameter.getName(),
-                                                    parameter.getDescription(),
-                                                    parameter.getType(),
-                                                    isRequired(parameter, forceOptional));
+
+                    if (describable)
+                    {
+                        registerComplexTypeChildElement(all,
+                                                        parameter.getName(),
+                                                        parameter.getDescription(),
+                                                        parameter.getType(),
+                                                        isRequired(parameter, forceOptional));
+                    }
                 }
 
                 @Override
@@ -333,7 +339,7 @@ public class SchemaBuilder
                 }
 
                 @Override
-                public void onBean()
+                public void onPojo()
                 {
                     registerComplexTypeChildElement(all, field.getName(), EMPTY, fieldType, false);
                 }
@@ -554,7 +560,7 @@ public class SchemaBuilder
         {
 
             @Override
-            public void onBean()
+            public void onPojo()
             {
                 registerComplexType(genericType);
                 ComplexType complexType = registeredComplexTypesHolders.get(genericType).getComplexType();

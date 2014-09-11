@@ -85,9 +85,9 @@ public interface DataQualifierVisitor
     void onDateTime();
 
     /**
-     * Invoked when visiting {@link org.mule.extensions.introspection.api.DataQualifier#BEAN}
+     * Invoked when visiting {@link org.mule.extensions.introspection.api.DataQualifier#POJO}
      */
-    void onBean();
+    void onPojo();
 
     /**
      * Invoked when visiting {@link org.mule.extensions.introspection.api.DataQualifier#LIST}

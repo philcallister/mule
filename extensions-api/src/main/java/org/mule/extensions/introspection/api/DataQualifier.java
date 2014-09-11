@@ -13,7 +13,7 @@ package org.mule.extensions.introspection.api;
  * type used for streaming, no matter if it's an {@link java.io.InputStream},
  * a {@link java.io.Reader} or whatever type used for that purpose.
  * At the same time, a {@link #DECIMAL} referes to a floating point numeric type and
- * a {@link #BEAN} refers to a pojo implementing the bean contract
+ * a {@link #POJO} refers to a pojo implementing the bean contract
  *
  * @since 1.0
  */
@@ -179,12 +179,12 @@ public enum DataQualifier
     /**
      * A pojo implementing the bean contract
      */
-    BEAN
+    POJO
             {
                 @Override
                 public void accept(DataQualifierVisitor visitor)
                 {
-                    visitor.onBean();
+                    visitor.onPojo();
                 }
             },
 

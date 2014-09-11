@@ -99,12 +99,12 @@ final class DataQualifierFactory
         }
     }
 
-    private static class BeanTypeQualifierEvaluator extends DefaultQualifierEvaluator
+    private static class PojoTypeQualifierEvaluator extends DefaultQualifierEvaluator
     {
 
-        private BeanTypeQualifierEvaluator()
+        private PojoTypeQualifierEvaluator()
         {
-            super(Object.class, DataQualifier.BEAN);
+            super(Object.class, DataQualifier.POJO);
         }
 
         @Override
@@ -159,7 +159,7 @@ final class DataQualifierFactory
     private static final DataTypeQualifierEvaluator OPERATION_EVALUATOR = new DefaultQualifierEvaluator(
             ExtensionOperation.class, DataQualifier.OPERATION);
 
-    private static final DataTypeQualifierEvaluator BEAN_EVALUATOR = new BeanTypeQualifierEvaluator();
+    private static final DataTypeQualifierEvaluator POJO_EVALUATOR = new PojoTypeQualifierEvaluator();
 
     private static final DataTypeQualifierEvaluator[] evaluators = new DataTypeQualifierEvaluator[] {
             VOID_EVALUATOR,
@@ -177,7 +177,7 @@ final class DataQualifierFactory
             LIST_EVALUATOR,
             MAP_EVALUATOR,
             OPERATION_EVALUATOR,
-            BEAN_EVALUATOR
+            POJO_EVALUATOR
     };
 
     /**

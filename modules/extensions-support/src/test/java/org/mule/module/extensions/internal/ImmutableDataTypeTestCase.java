@@ -42,7 +42,7 @@ public class ImmutableDataTypeTestCase extends AbstractMuleTestCase
     public void typeWithGeneric()
     {
         DataType type = ImmutableDataType.of(Map.class, String.class, Apple.class);
-        assertMap(type, String.class, DataQualifier.STRING, Apple.class, DataQualifier.BEAN);
+        assertMap(type, String.class, DataQualifier.STRING, Apple.class, DataQualifier.POJO);
         assertNoGenericTypes(type.getGenericTypes()[0]);
         assertNoGenericTypes(type.getGenericTypes()[1]);
     }
@@ -55,11 +55,11 @@ public class ImmutableDataTypeTestCase extends AbstractMuleTestCase
         DataType type = ImmutableDataType.of(Map.class, fruitMap, basketList);
 
         assertMap(type, Map.class, DataQualifier.MAP, List.class, DataQualifier.LIST);
-        assertMap(type.getGenericTypes()[0], Apple.class, DataQualifier.BEAN, Banana.class, DataQualifier.BEAN);
+        assertMap(type.getGenericTypes()[0], Apple.class, DataQualifier.POJO, Banana.class, DataQualifier.POJO);
         assertNoGenericTypes(type.getGenericTypes()[0].getGenericTypes()[0]);
         assertNoGenericTypes(type.getGenericTypes()[0].getGenericTypes()[1]);
 
-        assertList(type.getGenericTypes()[1], FruitBasket.class, DataQualifier.BEAN);
+        assertList(type.getGenericTypes()[1], FruitBasket.class, DataQualifier.POJO);
         assertNoGenericTypes(type.getGenericTypes()[1].getGenericTypes()[0]);
     }
 

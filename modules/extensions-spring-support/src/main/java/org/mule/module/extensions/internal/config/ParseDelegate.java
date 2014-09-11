@@ -85,7 +85,7 @@ abstract class ParseDelegate
         }
 
         @Override
-        public void onBean()
+        public void onPojo()
         {
             delegate = new BeanParseDelegate();
         }
