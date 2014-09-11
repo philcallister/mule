@@ -37,11 +37,12 @@ public final class SchemaConstants
     public static final QName BYTE = new QName(XSD_NAMESPACE, "byte", "xs");
     public static final QName BOOLEAN = new QName(MULE_NAMESPACE, SUBSTITUTABLE_BOOLEAN, "mule");
     public static final QName ANYURI = new QName(XSD_NAMESPACE, "anyURI", "xs");
-    public static final QName EXPRESSION = new QName(XSD_NAMESPACE, "expression", "mule");
+    public static final QName EXPRESSION = new QName(MULE_NAMESPACE, "expression", "mule");
     public static final String USE_REQUIRED = "required";
     public static final String USE_OPTIONAL = "optional";
     public static final String INNER_PREFIX = "inner-";
     public static final String ATTRIBUTE_NAME_CONFIG = "config";
+    public static final String ATTRIBUTE_DESCRIPTION_CONFIG = "Specify which configuration to use for this invocation.";
     public static final String ATTRIBUTE_NAME_VALUE = "value";
     public static final String ENUM_TYPE_SUFFIX = "EnumType";
     public static final String TYPE_SUFFIX = "Type";

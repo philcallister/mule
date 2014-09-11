@@ -9,6 +9,7 @@ package org.mule.module.extensions.internal.capability.xml.schema;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
+import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.param.Ignore;
 import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.introspection.api.DataQualifier;
@@ -66,11 +67,8 @@ import javax.xml.namespace.QName;
  * Builder class to generate a XSD schema that describes a
  * {@link org.mule.extensions.introspection.api.Extension}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
-//TODO: there're A LOT of ifs here... Keeping them just for now since
-// they're inherited from devkit. But we should really implement
-// visitor or double dispatch on the DatQualifier to avoid this madness
 public class SchemaBuilder
 {
 
@@ -310,25 +308,22 @@ public class SchemaBuilder
             }
 
             final DataType fieldType = entry.getValue();
+            final boolean required = isRequired(field);
+            final boolean dynamic = isDynamic(field);
+
             fieldType.getQualifier().accept(new BaseDataQualifierVisitor()
             {
 
                 @Override
                 public void onList()
                 {
-                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
-                }
-
-                @Override
-                public void onMap()
-                {
-                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, isRequired(field));
+                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, required);
                 }
 
                 @Override
                 public void onOperation()
                 {
-                    generateNestedProcessorElement(all, field.getName(), EMPTY, isRequired(field));
+                    generateNestedProcessorElement(all, field.getName(), EMPTY, required);
                 }
 
                 @Override
@@ -340,23 +335,10 @@ public class SchemaBuilder
                 @Override
                 protected void defaultOperation()
                 {
-                    Attribute attribute = createAttribute(field.getName(), fieldType, false);
-                    if (SchemaTypeConversion.isSupported(fieldType))
-                    {
-                        complexType.getAttributeOrAttributeGroup().add(attribute);
-                    }
-                    else
-                    {
-                        complexType.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(attribute);
-                    }
+                    Attribute attribute = createAttribute(field.getName(), fieldType, required, dynamic);
+                    complexType.getAttributeOrAttributeGroup().add(attribute);
                 }
             });
-        }
-
-        if (type.getSuperclass() == null)
-        {
-            Attribute ref = createAttribute(SchemaConstants.ATTRIBUTE_NAME_REF, true, SchemaConstants.STRING, "The reference object for this parameter");
-            complexType.getAttributeOrAttributeGroup().add(ref);
         }
 
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
@@ -425,6 +407,9 @@ public class SchemaBuilder
                                                  DataType type,
                                                  boolean required)
     {
+        // add reference attribute
+        createAttribute(name, description, type, false, true);
+
         LocalComplexType objectComplexType = new LocalComplexType();
         objectComplexType.setComplexContent(new ComplexContent());
         objectComplexType.getComplexContent().setExtension(new ExtensionType());
@@ -517,22 +502,27 @@ public class SchemaBuilder
 
     private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
     {
+        boolean required = !forceOptional && parameter.isRequired();
+        generateCollectionElement(all, parameter.getName(), parameter.getDescription(), parameter.getType(), required);
+    }
+
+    private void generateCollectionElement(ExplicitGroup all, String name, String description, DataType type, boolean required)
+    {
         // create attribute for use with expressions or registry keys
-        createAttribute(parameter, false);
+        createAttribute(name, description, type, required, true);
 
         //create element for defining the collection in the XML
-        final String name = NameUtils.uncamel(parameter.getName());
-        final boolean required = !forceOptional && parameter.isRequired();
+        name = NameUtils.uncamel(name);
 
         BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
         String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
-        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, parameter.getType());
+        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
         collectionElement.setMinOccurs(minOccurs);
         collectionElement.setMaxOccurs("1");
-        collectionElement.setAnnotation(createDocAnnotation(parameter.getDescription()));
+        collectionElement.setAnnotation(createDocAnnotation(description));
         all.getParticle().add(objectFactory.createElement(collectionElement));
 
         collectionElement.setComplexType(collectionComplexType);
@@ -589,14 +579,6 @@ public class SchemaBuilder
         return complexType;
     }
 
-    private LocalComplexType generateRefComplexType(String name)
-    {
-        LocalComplexType itemComplexType = new LocalComplexType();
-        Attribute refAttribute = createAttribute(name, false, SchemaConstants.STRING, null);
-        itemComplexType.getAttributeOrAttributeGroup().add(refAttribute);
-        return itemComplexType;
-    }
-
     private void registerProcessorElement(String name, String typeName, String docText)
     {
 
@@ -619,8 +601,8 @@ public class SchemaBuilder
         complexContentExtension.setBase(base);
         complexContent.setExtension(complexContentExtension);
 
-        Attribute configRefAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG, true, SchemaConstants.STRING, "Specify which configuration to use for this invocation.");
-        complexContentExtension.getAttributeOrAttributeGroup().add(configRefAttr);
+        Attribute configAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG, SchemaConstants.ATTRIBUTE_DESCRIPTION_CONFIG, false, SchemaConstants.EXPRESSION);
+        complexContentExtension.getAttributeOrAttributeGroup().add(configAttr);
 
         final ExplicitGroup all = new ExplicitGroup();
         complexContentExtension.setSequence(all);
@@ -659,7 +641,7 @@ public class SchemaBuilder
                     @Override
                     protected void defaultOperation()
                     {
-                        complexContentExtension.getAttributeOrAttributeGroup().add(createParameterAttribute(parameter, false));
+                        complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute(parameter, false));
                     }
                 });
             }
@@ -720,10 +702,6 @@ public class SchemaBuilder
         collectionElement.setComplexType(collectionComplexType);
         collectionElement.setAnnotation(createDocAnnotation(EMPTY));
         all.getParticle().add(objectFactory.createElement(collectionElement));
-
-        Attribute attribute = createAttribute("text", true, SchemaConstants.STRING, null);
-        attribute.setAnnotation(createDocAnnotation(description));
-        collectionComplexType.getAttributeOrAttributeGroup().add(attribute);
     }
 
     private GroupRef generateNestedProcessorGroup()
@@ -734,11 +712,6 @@ public class SchemaBuilder
         group.setMaxOccurs("unbounded");
 
         return group;
-    }
-
-    private Attribute createParameterAttribute(ExtensionParameter parameter, boolean forceOptional)
-    {
-        return createAttribute(parameter.getName(), parameter.getDescription(), parameter.getType(), !forceOptional && parameter.isRequired());
     }
 
     private Attribute createAttribute(String name, String description, boolean optional, QName type)
@@ -778,6 +751,12 @@ public class SchemaBuilder
     private boolean isRequired(Field field)
     {
         return field.getAnnotation(Optional.class) == null;
+    }
+
+    private boolean isDynamic(Field field)
+    {
+        Configurable configurable = field.getAnnotation(Configurable.class);
+        return configurable != null && configurable.isDynamic();
     }
 
     private class ComplexTypeHolder

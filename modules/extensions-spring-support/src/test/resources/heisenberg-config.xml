@@ -7,17 +7,19 @@
                http://www.mulesoft.org/schema/mule/extension/heisenberg http://www.mulesoft.org/schema/mule/extension/heisenberg/current/mule-extension-heisenberg.xsd
                http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-    <heisenberg:config name="heisenberg" cancer="true" dateOfBirth="1959-09-07T00:00:00"
-                       dateOfDeath="2011-09-07T00:00:00-05:00" money="1000000">
+    <heisenberg:config name="heisenberg"
+                       myName="Heisenberg"
+                       age="51"
+                       cancer="true"
+                       dateOfBirth="1959-09-07T00:00:00"
+                       dateOfDeath="2011-09-07T00:00:00-05:00"
+                       money="1000000"
+                       recipe="recipes"
+            >
         <heisenberg:enemies>
             <heisenberg:enemy>Gustavo Fring</heisenberg:enemy>
             <heisenberg:enemy>Hank</heisenberg:enemy>
         </heisenberg:enemies>
-        <heisenberg:recipe>
-            <heisenberg:recipe key="methylamine">75</heisenberg:recipe>
-            <heisenberg:recipe key="pseudoephedrine">0</heisenberg:recipe>
-            <heisenberg:recipe key="P2P">25</heisenberg:recipe>
-        </heisenberg:recipe>
         <heisenberg:ricin-packs>
             <heisenberg:ricin-pack microgramsPerKilo="22">
                 <heisenberg:destination victim="Lidia" address="Stevia coffe shop"/>
@@ -32,6 +34,15 @@
         </heisenberg:candidate-doors>
     </heisenberg:config>
 
+
+    <heisenberg:config name="heisenbergByRef" cancer="true" dateOfBirth="1959-09-07T00:00:00"
+                       dateOfDeath="2011-09-07T00:00:00-05:00" money="1000000">
+        <heisenberg:enemies ref="enemies"/>
+        <heisenberg:recipe ref="recipes"/>
+        <heisenberg:ricin-packs ref="ricinPacks"/>
+        <heisenberg:next-door ref="door"/>
+        <heisenberg:candidate-doors ref="candidateDoors" />
+    </heisenberg:config>
 
     <spring:beans>
         <util:map id="recipes">
@@ -86,16 +97,6 @@
         </spring:bean>
 
     </spring:beans>
-
-
-    <heisenberg:config name="heisenbergByRef" cancer="true" dateOfBirth="1959-09-07T00:00:00"
-                       dateOfDeath="2011-09-07T00:00:00-05:00" money="1000000">
-        <heisenberg:enemies ref="enemies"/>
-        <heisenberg:recipe ref="recipes"/>
-        <heisenberg:ricin-packs ref="ricinPacks"/>
-        <heisenberg:next-door ref="door"/>
-        <heisenberg:candidate-doors ref="candidateDoors" />
-    </heisenberg:config>
 
 
 </mule>
