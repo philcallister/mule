@@ -601,22 +601,8 @@ public class SchemaBuilder
         return ArrayUtils.isEmpty(type.getGenericTypes()) ? type : type.getGenericTypes()[0];
     }
 
-    private LocalComplexType generateEnumComplexType(DataType type)
-    {
-        LocalComplexType complexType = new LocalComplexType();
-        SimpleContent simpleContent = new SimpleContent();
-        complexType.setSimpleContent(simpleContent);
-        SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        simpleContentExtension.setBase(new QName(schema.getTargetNamespace(), type.getName() + SchemaConstants.ENUM_TYPE_SUFFIX));
-        simpleContent.setExtension(simpleContentExtension);
-        registeredEnums.add(type);
-
-        return complexType;
-    }
-
     private void registerProcessorElement(String name, String typeName, String docText)
     {
-
         Element element = new TopLevelElement();
         element.setName(NameUtils.uncamel(name));
         element.setType(new QName(schema.getTargetNamespace(), typeName));

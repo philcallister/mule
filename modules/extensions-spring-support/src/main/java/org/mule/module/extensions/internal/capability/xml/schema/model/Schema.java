@@ -16,7 +16,9 @@
 package org.mule.module.extensions.internal.capability.xml.schema.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -92,7 +94,7 @@ public class Schema extends OpenAttrs
                          @XmlElement(name = "complexType", type = TopLevelComplexType.class),
                          @XmlElement(name = "simpleType", type = TopLevelSimpleType.class)
                  })
-    protected List<OpenAttrs> simpleTypeOrComplexTypeOrGroup;
+    protected Set<OpenAttrs> simpleTypeOrComplexTypeOrGroup;
     @XmlAttribute(name = "targetNamespace")
     @XmlSchemaType(name = "anyURI")
     protected String targetNamespace;
@@ -177,11 +179,11 @@ public class Schema extends OpenAttrs
      * {@link TopLevelComplexType }
      * {@link TopLevelSimpleType }
      */
-    public List<OpenAttrs> getSimpleTypeOrComplexTypeOrGroup()
+    public Set<OpenAttrs> getSimpleTypeOrComplexTypeOrGroup()
     {
         if (simpleTypeOrComplexTypeOrGroup == null)
         {
-            simpleTypeOrComplexTypeOrGroup = new ArrayList<OpenAttrs>();
+            simpleTypeOrComplexTypeOrGroup = new LinkedHashSet<>();
         }
         return this.simpleTypeOrComplexTypeOrGroup;
     }
@@ -254,7 +256,7 @@ public class Schema extends OpenAttrs
     {
         if (finalDefault == null)
         {
-            finalDefault = new ArrayList<String>();
+            finalDefault = new ArrayList<>();
         }
         return this.finalDefault;
     }
