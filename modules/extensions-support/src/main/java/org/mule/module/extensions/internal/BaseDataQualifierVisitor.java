@@ -16,7 +16,7 @@ import org.mule.extensions.introspection.api.DataQualifierVisitor;
  * <p/>
  * This default implementation of {@link #defaultOperation()} is a no-op
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class BaseDataQualifierVisitor implements DataQualifierVisitor
 {

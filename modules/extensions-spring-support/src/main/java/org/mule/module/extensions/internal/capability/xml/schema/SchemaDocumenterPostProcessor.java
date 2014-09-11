@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * If any of the above requirements is not met, then the post processor will skip the extension
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class SchemaDocumenterPostProcessor implements ExtensionDescriberPostProcessor
 {

@@ -11,7 +11,7 @@ import org.mule.extensions.resources.api.GenerableResource;
 /**
  * Immutable implementation of a {@link org.mule.extensions.resources.api.GenerableResource
  *
- * @since 3.6.0}
+ * @since 3.7.0}
  */
 final class ImmutableGenerableResource implements GenerableResource
 {

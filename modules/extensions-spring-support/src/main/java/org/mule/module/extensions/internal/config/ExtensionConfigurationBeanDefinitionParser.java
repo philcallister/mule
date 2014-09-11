@@ -27,7 +27,7 @@ import org.w3c.dom.Element;
  * It the given config doesn't provide a name, then one will be automatically generated in order to register the config
  * in the {@link org.mule.api.registry.Registry}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDefinitionParser
 {

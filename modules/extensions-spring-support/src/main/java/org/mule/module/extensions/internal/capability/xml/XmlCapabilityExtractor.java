@@ -18,7 +18,7 @@ import org.mule.module.extensions.internal.introspection.NavigableExtensionBuild
  * that verifies if the extension is annotated with {@link org.mule.extensions.introspection.api.capability.XmlCapability}
  * and if so, registers into the builder a {@link org.mule.extensions.introspection.api.capability.XmlCapability
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class XmlCapabilityExtractor implements CapabilityExtractor
 {

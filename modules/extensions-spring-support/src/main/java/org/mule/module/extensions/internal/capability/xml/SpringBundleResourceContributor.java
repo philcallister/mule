@@ -22,7 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
  * Implementation of {@link org.mule.extensions.resources.spi.GenerableResourceContributor}
  * spring bundles
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class SpringBundleResourceContributor implements GenerableResourceContributor
 {

@@ -17,7 +17,7 @@ import java.util.Map;
  * The fact that this class's attributes are immutable, doesn't mean that their inner state
  * is in fact immutable also.
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class ImmutableExtensionDescribingContext implements ExtensionDescribingContext
 {

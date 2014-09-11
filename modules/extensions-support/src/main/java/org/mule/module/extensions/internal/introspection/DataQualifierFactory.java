@@ -30,7 +30,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
  * {@link org.mule.extensions.introspection.api.DataQualifier} for a given
  * {@link java.lang.Class}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 final class DataQualifierFactory
 {

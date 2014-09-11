@@ -36,7 +36,7 @@ import javax.lang.model.element.VariableElement;
  * This is necessary because such documentation is not available on runtime, thus this class
  * uses the annotation processor's AST access to extract it
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 final class SchemaDocumenter
 {

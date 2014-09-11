@@ -17,7 +17,7 @@ import java.util.Objects;
 /**
  * Immutable implementation of {@link org.mule.extensions.introspection.api.DataType}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class ImmutableDataType implements DataType
 {

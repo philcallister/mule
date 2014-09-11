@@ -17,7 +17,7 @@ import org.w3c.dom.Element;
  * Implementations of this class are not to be considered
  * thread safe
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 abstract class ParseDelegate
 {
@@ -71,7 +71,7 @@ abstract class ParseDelegate
      * which resolves which concrete instance of {@link org.mule.module.extensions.internal.config.ParseDelegate}
      * should be use to parse a particular type
      *
-     * @since 3.6.0
+     * @since 3.7.0
      */
     private static class ParseDelegateResolver extends BaseDataQualifierVisitor
     {
@@ -102,7 +102,7 @@ abstract class ParseDelegate
      * By default, it returns the same one that was provided in the constructor, but in some
      * cases like in lists, then a generic type might be chosen if available
      *
-     * @since 3.6.0
+     * @since 3.7.0
      */
     private static class DataTypeSelector extends BaseDataQualifierVisitor
     {
@@ -134,7 +134,7 @@ abstract class ParseDelegate
      * Implementation of {@link org.mule.module.extensions.internal.config.ParseDelegate}
      * which returns the text content of the given element
      *
-     * @since 3.6.0
+     * @since 3.7.0
      */
     private static class TextParseDelegate extends ParseDelegate
     {

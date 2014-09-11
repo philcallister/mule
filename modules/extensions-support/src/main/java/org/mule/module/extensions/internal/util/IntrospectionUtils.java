@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Set of utility operations to get insights about objects and their operations
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class IntrospectionUtils
 {

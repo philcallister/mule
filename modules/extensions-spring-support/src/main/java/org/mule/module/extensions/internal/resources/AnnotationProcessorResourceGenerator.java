@@ -22,7 +22,7 @@ import javax.tools.FileObject;
  * that writes files using a {@link javax.annotation.processing.Filer} obtained
  * through a annotation {@link javax.annotation.processing.Processor} context
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 final class AnnotationProcessorResourceGenerator extends AbstractResourcesGenerator
 {

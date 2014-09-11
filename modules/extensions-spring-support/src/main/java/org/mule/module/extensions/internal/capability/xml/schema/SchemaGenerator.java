@@ -31,7 +31,7 @@ import org.dom4j.io.XMLWriter;
  * with a {@link org.mule.extensions.introspection.api.capability.XmlCapability} and returns
  * a XSD schema as a String
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class SchemaGenerator
 {

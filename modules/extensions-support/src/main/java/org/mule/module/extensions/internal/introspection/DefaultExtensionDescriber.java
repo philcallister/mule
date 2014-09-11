@@ -37,7 +37,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Default implementation of {@link org.mule.extensions.introspection.api.ExtensionDescriber}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class DefaultExtensionDescriber implements ExtensionDescriber
 {

@@ -12,7 +12,7 @@ import java.util.Map;
  * A summary object to group a method's javadoc combined
  * with the ones of its parameters.
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 final class MethodDocumentation
 {

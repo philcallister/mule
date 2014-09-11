@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation of {@link org.mule.extensions.api.ExtensionsManager}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class DefaultExtensionsManager implements ExtensionsManager
 {

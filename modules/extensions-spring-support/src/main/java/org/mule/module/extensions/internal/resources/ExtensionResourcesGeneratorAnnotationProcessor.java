@@ -50,7 +50,7 @@ import javax.tools.Diagnostic;
  * Depending on the capabilities declared by each extension, some of those resources
  * might or might not be generated
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 @SupportedAnnotationTypes(value = {"org.mule.extensions.api.annotation.Extension"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)

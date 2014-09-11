@@ -15,7 +15,7 @@ import org.mule.extensions.resources.spi.GenerableResourceContributor;
  * that registers the given extension into a standard SPI service registration file
  * located in the path &quot;extensions/mule.extensions&quot;
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class ExtensionRegistrationResourceContributor implements GenerableResourceContributor
 {

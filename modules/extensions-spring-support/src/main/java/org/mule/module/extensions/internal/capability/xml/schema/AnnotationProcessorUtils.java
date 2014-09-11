@@ -24,7 +24,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Utility class for annotation processing using the {@link javax.annotation.processing.Processor} API
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 final class AnnotationProcessorUtils
 {

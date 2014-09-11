@@ -34,7 +34,7 @@ import org.w3c.dom.Element;
  * has to be accessible and the {@link org.mule.extensions.api.ExtensionsManager#discoverExtensions(ClassLoader)}
  * needs to have successfully discovered and register extensions.
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
 {

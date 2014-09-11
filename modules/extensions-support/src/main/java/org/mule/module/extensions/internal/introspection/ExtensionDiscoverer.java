@@ -15,7 +15,7 @@ import java.util.List;
  * A component capable of searching the classpath for extensions
  * according to the algorithm described in {@link org.mule.extensions.api.ExtensionsManager#discoverExtensions(ClassLoader)}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public interface ExtensionDiscoverer
 {

@@ -11,7 +11,7 @@ import org.mule.extensions.introspection.api.capability.XmlCapability;
 /**
  * Immutable implementation of {@link org.mule.extensions.introspection.api.capability.XmlCapability}
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class ImmutableXmlCapability implements XmlCapability
 {

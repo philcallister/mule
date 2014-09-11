@@ -29,7 +29,7 @@ import java.util.Map;
  * by using the {@link #write(org.mule.extensions.resources.api.GenerableResource)}
  * template method
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public abstract class AbstractResourcesGenerator implements ResourcesGenerator
 {

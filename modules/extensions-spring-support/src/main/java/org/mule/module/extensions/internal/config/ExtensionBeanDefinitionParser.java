@@ -50,7 +50,7 @@ import org.w3c.dom.Element;
  * Base implementation of {@link org.springframework.beans.factory.xml.BeanDefinitionParser}
  * for all parsers capable of handling objects described by the extensions introspection API
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
 {

@@ -21,7 +21,7 @@ import javax.imageio.spi.ServiceRegistry;
  * To do this, it relies on {@link org.mule.extensions.introspection.spi.CapabilityExtractor}s
  * that are obtained via SPI
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public final class CapabilitiesResolver
 {
