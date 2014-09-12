@@ -4,31 +4,28 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal.runtime;
+package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import org.mule.module.extensions.internal.runtime.resolver.ExpressionTemplateValueResolver;
-import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
+import org.mule.api.expression.InvalidExpressionException;
 
 import org.junit.Test;
 
-public class ExpressionTemplateValueResolverTestCase extends AbstractValueResolverTestCase
+public class ExpressionLanguageValueResolverTestCase extends AbstractValueResolverTestCase
 {
 
     @Test
-    public void template() throws Exception
+    public void expression() throws Exception
     {
         final String expected = "Hello World!";
-        Object evaluated = getResolver("Hello #[payload]").resolve(getTestEvent("World!"));
+        Object evaluated = getResolver("#['Hello ' + payload]").resolve(getTestEvent("World!"));
         assertEvaluation(evaluated, expected);
     }
 
-    @Test
+    @Test(expected = InvalidExpressionException.class)
     public void constant() throws Exception
     {
-        final String expected = "Hello World!";
-        Object evaluated = getResolver(expected).resolve(getTestEvent(EMPTY));
-        assertEvaluation(evaluated, expected);
+        getResolver("Hello World!").resolve(getTestEvent(EMPTY));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -37,16 +34,22 @@ public class ExpressionTemplateValueResolverTestCase extends AbstractValueResolv
         getResolver(null).resolve(getTestEvent(EMPTY));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void blankExpression() throws Exception
     {
         Object evaluated = getResolver(EMPTY).resolve(getTestEvent("I'm blank!"));
         assertEvaluation(evaluated, EMPTY);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void nullExpressionLanguage()
+    {
+        new ExpressionLanguageValueResolver("#[payload]", null);
+    }
+
     @Override
     protected ValueResolver getResolver(String expression)
     {
-        return new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
+        return new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage());
     }
 }
