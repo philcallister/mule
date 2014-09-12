@@ -89,6 +89,16 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
         assertThat(resolved, instanceOf(getExpectedCollectionType()));
     }
 
+    @Test
+    public void resolvedCollectionIsMutalbe() throws Exception
+    {
+        Collection<Object> resolved = (Collection<Object>) resolver.resolve(mock(MuleEvent.class));
+        int originalSize = resolved.size();
+        resolved.add(-1);
+
+        assertThat(resolved.size(), equalTo(originalSize + 1));
+    }
+
     protected abstract CollectionValueResolver createCollectionResolver(List<ValueResolver> childResolvers);
 
     protected abstract Class<? extends Collection> getExpectedCollectionType();
