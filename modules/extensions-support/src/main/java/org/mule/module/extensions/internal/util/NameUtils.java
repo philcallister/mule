@@ -119,7 +119,7 @@ public class NameUtils
 
     public static String getSetterName(String name)
     {
-        return "set" + name.substring(0, 0).toUpperCase() + name.substring(1);
+        return "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
 

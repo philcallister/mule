@@ -86,7 +86,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                         builder.newConfiguration()
                                 .setName(CONFIG_NAME)
                                 .setDescription(CONFIG_DESCRIPTION)
-                                .setDeclaringClass(DECLARING_CLASS)
+                                .setDeclaringClass(WsConsumerConfig.class)
                                 .addParameter(builder.newParameter()
                                                       .setName(WSDL_LOCATION)
                                                       .setDescription(URI_TO_FIND_THE_WSDL)
@@ -341,7 +341,7 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void operationNamedName()
+    public void operationWithParameterNamedName()
     {
         builder.addOperation(builder.newOperation()
                                      .setName("invalidOperation")
@@ -354,10 +354,36 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
                 .build();
     }
 
+
     @Test(expected = IllegalArgumentException.class)
     public void nameWithSpaces()
     {
         builder.setName("i have spaces").build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void configurationWithFiledWithoutGetter()
+    {
+        builder.addConfiguration(builder.newConfiguration()
+                                         .setName("fail")
+                                         .setDescription("fail")
+                                         .setDeclaringClass(getClass())
+                                         .addParameter(builder.newParameter()
+                                                               .setName("notExistent")
+                                                               .setType(STRING_DATA_TYPE)
+                                                               .setDescription("no setter")))
+                .build();
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void configurationWithoutValidConstructor()
+    {
+        builder.addConfiguration(builder.newConfiguration()
+                                         .setName("fail")
+                                         .setDescription("fail")
+                                         .setDeclaringClass(InvalidConstructorConfiguration.class))
+                .build();
     }
 
     private void assertConsumeOperation(List<ExtensionOperation> operations) throws NoSuchOperationException
@@ -433,4 +459,42 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         Arrays.equals(genericTypes, type.getGenericTypes());
     }
 
+    @SuppressWarnings("unused")
+    private static class WsConsumerConfig
+    {
+
+        public WsConsumerConfig()
+        {
+
+        }
+
+        public void setWsdlLocation(String wsdlLocation)
+        {
+
+        }
+
+        public void setService(String service)
+        {
+
+        }
+
+        public void setPort(String port)
+        {
+
+        }
+
+        public void setAddress(String address)
+        {
+
+        }
+    }
+
+    private static class InvalidConstructorConfiguration
+    {
+
+        @SuppressWarnings("unused")
+        public InvalidConstructorConfiguration(String value)
+        {
+        }
+    }
 }

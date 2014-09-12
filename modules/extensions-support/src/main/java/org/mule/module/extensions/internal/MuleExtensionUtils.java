@@ -13,6 +13,8 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
+import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.util.IntrospectionUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -155,5 +157,32 @@ public final class MuleExtensionUtils
     public static void checkDeclaringClass(Class<?> declaringClass)
     {
         checkArgument(declaringClass != null, "declaringClass cannot be null");
+        checkArgument(IntrospectionUtils.hasDefaultConstructor(declaringClass),
+                      String.format("Class %s must have a default constructor", declaringClass.getName()));
+    }
+
+    public static void checkSetters(Class<?> declaringClass, Collection<ExtensionParameter> parameters)
+    {
+        Set<ExtensionParameter> faultParameters = new HashSet<>(parameters.size());
+        for (ExtensionParameter parameter : parameters)
+        {
+            if (!IntrospectionUtils.hasSetter(declaringClass, parameter))
+            {
+                faultParameters.add(parameter);
+            }
+        }
+
+        if (!faultParameters.isEmpty())
+        {
+            StringBuilder message = new StringBuilder("The following attributes don't have a valid setter on class ")
+                    .append(declaringClass.getName()).append(":\n");
+
+            for (ExtensionParameter parameter : faultParameters)
+            {
+                message.append(parameter.getName()).append("\n");
+            }
+
+            throw new IllegalArgumentException(message.toString());
+        }
     }
 }

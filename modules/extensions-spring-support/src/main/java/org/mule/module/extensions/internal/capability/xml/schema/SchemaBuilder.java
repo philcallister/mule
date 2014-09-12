@@ -203,7 +203,7 @@ public class SchemaBuilder
         return simpleType;
     }
 
-    public SchemaBuilder registerConfigElement(ExtensionConfiguration configuration)
+    public SchemaBuilder registerConfigElement(final ExtensionConfiguration configuration)
     {
         Map<QName, String> otherAttributes = new HashMap<>();
         final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
@@ -232,7 +232,7 @@ public class SchemaBuilder
                 @Override
                 public void onPojo()
                 {
-                    boolean describable = IntrospectionUtils.isDescribable(parameter);
+                    boolean describable = IntrospectionUtils.isDescribable(configuration.getDeclaringClass(), parameter);
                     forceOptional = describable;
 
                     defaultOperation();

@@ -8,6 +8,7 @@ package org.mule.module.extensions.internal.introspection;
 
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
 import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
+import static org.mule.module.extensions.internal.MuleExtensionUtils.checkSetters;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.MuleExtensionUtils;
@@ -35,6 +36,7 @@ final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed i
         checkNullOrRepeatedNames(parameters, "parameters");
 
         this.parameters = MuleExtensionUtils.immutableList(parameters);
+        checkSetters(declaringClass, this.parameters);
         this.declaringClass = declaringClass;
     }
 

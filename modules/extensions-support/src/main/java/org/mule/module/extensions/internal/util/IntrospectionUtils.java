@@ -147,23 +147,22 @@ public class IntrospectionUtils
         return map.build();
     }
 
-    public static boolean hasSetter(ExtensionParameter parameter)
+    public static boolean hasSetter(Class<?> declaringClass, ExtensionParameter parameter)
     {
-        Class<?> declaringClass = parameter.getType().getRawType();
-        return ReflectionUtils.findMethod(declaringClass, NameUtils.getSetterName(parameter.getName()), declaringClass) != null;
+        return ReflectionUtils.findMethod(declaringClass, NameUtils.getSetterName(parameter.getName()), parameter.getType().getRawType()) != null;
     }
 
-    public static boolean hasDefaultConstructor(Class<?> clazz) {
-        return ClassUtils.getConstructor(clazz, new Class[]{}) != null;
+    public static boolean hasDefaultConstructor(Class<?> clazz)
+    {
+        return ClassUtils.getConstructor(clazz, new Class[] {}) != null;
     }
 
-    public static boolean isDescribable(ExtensionParameter parameter)
+    public static boolean isDescribable(Class<?> declaringClass, ExtensionParameter parameter)
     {
-        Class<?> declaringClass = parameter.getType().getRawType();
         return !declaringClass.isInterface() &&
                !Modifier.isAbstract(declaringClass.getModifiers()) &&
                hasDefaultConstructor(declaringClass) &&
-               hasSetter(parameter);
+               hasSetter(declaringClass, parameter);
     }
 
     private static DataType toDataType(ResolvableType type)
