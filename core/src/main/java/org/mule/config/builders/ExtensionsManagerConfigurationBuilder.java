@@ -16,7 +16,7 @@ import org.mule.util.ClassUtils;
  * that register a {@link org.mule.extensions.api.ExtensionsManager} if
  * it's present in the classpath
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public class ExtensionsManagerConfigurationBuilder extends AbstractConfigurationBuilder
 {
