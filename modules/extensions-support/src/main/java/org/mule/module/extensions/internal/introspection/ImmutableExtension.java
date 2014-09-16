@@ -6,10 +6,10 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNamesClashes;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.toMap;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.checkNamesClashes;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.checkNullOrRepeatedNames;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.toMap;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
@@ -51,7 +51,7 @@ final class ImmutableExtension extends AbstractImmutableCapableDescribed impleme
         super(name, description, capabilities);
 
         checkArgument(!name.contains(" "), "Extension name cannot contain spaces");
-        checkDeclaringClass(declaringClass);
+        checkInstantiable(declaringClass);
         this.declaringClass = declaringClass;
 
         checkNullOrRepeatedNames(configurations, "configurations");

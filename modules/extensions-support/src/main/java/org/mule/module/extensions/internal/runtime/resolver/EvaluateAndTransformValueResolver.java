@@ -6,7 +6,8 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import static org.mule.util.TemplateParser.PatternInfo;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.containsExpression;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimpleExpression;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.context.MuleContextAware;
@@ -43,11 +44,11 @@ public class EvaluateAndTransformValueResolver implements ValueResolver, MuleCon
         if (source instanceof String)
         {
             String expression = (String) source;
-            if (isSimpleExpression(expression))
+            if (isSimpleExpression(expression, PARSER))
             {
                 delegate = new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage());
             }
-            else if (containsExpression(expression))
+            else if (containsExpression(expression, PARSER))
             {
                 delegate = new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
             }
@@ -59,16 +60,6 @@ public class EvaluateAndTransformValueResolver implements ValueResolver, MuleCon
         }
     }
 
-    private boolean isSimpleExpression(String expression)
-    {
-        PatternInfo style = PARSER.getStyle();
-        return expression.startsWith(style.getPrefix()) && expression.endsWith(style.getSuffix());
-    }
-
-    private boolean containsExpression(String expression)
-    {
-        return PARSER.isContainsTemplate(expression);
-    }
 
     @Override
     public Object resolve(MuleEvent event) throws Exception

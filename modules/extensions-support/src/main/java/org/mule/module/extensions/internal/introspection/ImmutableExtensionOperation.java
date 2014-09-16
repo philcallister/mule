@@ -6,8 +6,8 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.immutableList;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.immutableList;
 import static org.mule.util.Preconditions.checkArgument;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.extensions.introspection.api.DataType;
@@ -40,7 +40,7 @@ final class ImmutableExtensionOperation extends AbstractImmutableDescribed imple
     {
         super(name, description);
 
-        checkDeclaringClass(declaringClass);
+        checkInstantiable(declaringClass);
         checkArgument(!CollectionUtils.isEmpty(inputTypes), "Must provide at least one input type");
         checkState(outputType != null, "Must provide an output type");
 

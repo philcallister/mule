@@ -9,7 +9,7 @@ package org.mule.module.extensions.internal.introspection;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionConfigurationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
-import org.mule.module.extensions.internal.MuleExtensionUtils;
+import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import com.google.common.collect.ImmutableList;
 

@@ -9,9 +9,9 @@ package org.mule.module.extensions.internal.capability.xml.schema;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.mule.extensions.introspection.api.DataQualifier.LIST;
 import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
-import org.mule.extensions.api.annotation.Configurable;
-import org.mule.extensions.api.annotation.param.Ignore;
-import org.mule.extensions.api.annotation.param.Optional;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.isDynamic;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.isIgnored;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.isRequired;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
@@ -203,7 +203,7 @@ public class SchemaBuilder
         return simpleType;
     }
 
-    public SchemaBuilder registerConfigElement(final ExtensionConfiguration configuration)
+    public SchemaBuilder registerConfigElement(ExtensionConfiguration configuration)
     {
         Map<QName, String> otherAttributes = new HashMap<>();
         final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
@@ -232,8 +232,7 @@ public class SchemaBuilder
                 @Override
                 public void onPojo()
                 {
-                    boolean describable = IntrospectionUtils.isDescribable(configuration.getDeclaringClass(), parameter);
-                    forceOptional = describable;
+                    boolean describable = forceOptional = IntrospectionUtils.isDescribable(parameter.getType().getRawType(), parameter);
 
                     defaultOperation();
 
@@ -314,7 +313,7 @@ public class SchemaBuilder
         for (Map.Entry<Field, DataType> entry : IntrospectionUtils.getFieldsDataTypes(type.getRawType()).entrySet())
         {
             final Field field = entry.getKey();
-            if (skipField(field))
+            if (isIgnored(field))
             {
                 continue;
             }
@@ -426,7 +425,7 @@ public class SchemaBuilder
                 new QName(schema.getTargetNamespace(), registerComplexType(type))
         ); // base to the element type
 
-        name = NameUtils.uncamel(name);
+        name = NameUtils.hyphenize(name);
         // this top level element is for declaring the object inside a config or operation
         TopLevelElement objectElement = new TopLevelElement();
         objectElement.setName(name);
@@ -528,10 +527,10 @@ public class SchemaBuilder
 
     private void generateCollectionElement(ExplicitGroup all, String name, String description, DataType type, boolean required)
     {
-        name = NameUtils.uncamel(name);
+        name = NameUtils.hyphenize(name);
 
         BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
-        String collectionName = NameUtils.uncamel(NameUtils.singularize(name));
+        String collectionName = NameUtils.hyphenize(NameUtils.singularize(name));
         LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
 
         TopLevelElement collectionElement = new TopLevelElement();
@@ -610,7 +609,7 @@ public class SchemaBuilder
     private void registerProcessorElement(String name, String typeName, String docText)
     {
         Element element = new TopLevelElement();
-        element.setName(NameUtils.uncamel(name));
+        element.setName(NameUtils.hyphenize(name));
         element.setType(new QName(schema.getTargetNamespace(), typeName));
         element.setAnnotation(createDocAnnotation(docText));
         element.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR);
@@ -724,7 +723,7 @@ public class SchemaBuilder
         collectionComplexType.setGroup(group);
 
         TopLevelElement collectionElement = new TopLevelElement();
-        collectionElement.setName(NameUtils.uncamel(name));
+        collectionElement.setName(NameUtils.hyphenize(name));
         collectionElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
         collectionElement.setComplexType(collectionComplexType);
         collectionElement.setAnnotation(createDocAnnotation(EMPTY));
@@ -768,27 +767,6 @@ public class SchemaBuilder
     private boolean isTypeSupported(DataType type)
     {
         return SchemaTypeConversion.isSupported(type);
-    }
-
-    private boolean skipField(Field field)
-    {
-        return field == null || field.getAnnotation(Ignore.class) != null;
-    }
-
-    private boolean isRequired(Field field)
-    {
-        return field.getAnnotation(Optional.class) == null;
-    }
-
-    private boolean isRequired(ExtensionParameter parameter, boolean forceOptional)
-    {
-        return !forceOptional && parameter.isRequired();
-    }
-
-    private boolean isDynamic(Field field)
-    {
-        Configurable configurable = field.getAnnotation(Configurable.class);
-        return configurable != null ? configurable.isDynamic() : true;
     }
 
     private class ComplexTypeHolder

@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal;
+package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.api.Builder;
@@ -14,7 +14,7 @@ import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.util.TemplateParser;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -154,13 +154,6 @@ public final class MuleExtensionUtils
                of.equals(type.getGenericTypes()[0].getQualifier());
     }
 
-    public static void checkDeclaringClass(Class<?> declaringClass)
-    {
-        checkArgument(declaringClass != null, "declaringClass cannot be null");
-        checkArgument(IntrospectionUtils.hasDefaultConstructor(declaringClass),
-                      String.format("Class %s must have a default constructor", declaringClass.getName()));
-    }
-
     public static void checkSetters(Class<?> declaringClass, Collection<ExtensionParameter> parameters)
     {
         Set<ExtensionParameter> faultParameters = new HashSet<>(parameters.size());
@@ -185,4 +178,27 @@ public final class MuleExtensionUtils
             throw new IllegalArgumentException(message.toString());
         }
     }
+
+    public static boolean isSimpleExpression(String expression, TemplateParser parser)
+    {
+        TemplateParser.PatternInfo style = parser.getStyle();
+        return expression.startsWith(style.getPrefix()) && expression.endsWith(style.getSuffix());
+    }
+
+    public static boolean containsExpression(String expression, TemplateParser parser)
+    {
+        return parser.isContainsTemplate(expression);
+    }
+
+    public static boolean isExpression(Object value, TemplateParser parser)
+    {
+        if (value instanceof String)
+        {
+            String maybeExpression = (String) value;
+            return isSimpleExpression(maybeExpression, parser) || containsExpression(maybeExpression, parser);
+        }
+
+        return false;
+    }
+
 }

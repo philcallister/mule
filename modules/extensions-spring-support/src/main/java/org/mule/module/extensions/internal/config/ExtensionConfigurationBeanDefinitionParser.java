@@ -10,9 +10,11 @@ import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
+import org.mule.module.extensions.internal.runtime.ObjectBuilder;
+import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
@@ -29,7 +31,7 @@ import org.w3c.dom.Element;
  *
  * @since 3.7.0
  */
-public class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDefinitionParser
+abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDefinitionParser
 {
 
     private final Extension extension;
@@ -42,21 +44,35 @@ public class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDef
     }
 
     @Override
-    public BeanDefinition parse(Element element, ParserContext parserContext)
+    public final BeanDefinition parse(Element element, ParserContext parserContext)
     {
         parseConfigName(element);
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(configuration.getDeclaringClass());
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(getResolverClass());
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
+        applyLifecycle(builder, configuration.getDeclaringClass());
 
-        for (ExtensionParameter parameter : configuration.getParameters())
-        {
-            parseParameter(parameter, builder, element);
-        }
+        doParse(element, builder, parserContext);
 
         BeanDefinition definition = builder.getBeanDefinition();
         setNoRecurseOnDefinition(definition);
 
         return definition;
+    }
+
+    protected abstract Class<? extends ValueResolver> getResolverClass();
+
+    protected abstract void doParse(Element element, BeanDefinitionBuilder builder, ParserContext parserContext);
+
+    protected ObjectBuilder getObjectBuilder(Element element) {
+        ObjectBuilder builder = new DefaultObjectBuilder();
+        builder.setPrototypeClass(configuration.getDeclaringClass());
+
+        for (ExtensionParameter parameter : configuration.getParameters())
+        {
+            builder.addProperty(parameter, parseParameter(element, parameter));
+        }
+
+        return builder;
     }
 
     private void parseConfigName(Element element)
@@ -65,19 +81,5 @@ public class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDef
         {
             element.setAttribute("name", AutoIdUtils.getUniqueName(element, "mule-bean"));
         }
-    }
-
-    /**
-     * Generates a reference by returning
-     * a {@link org.springframework.beans.factory.config.RuntimeBeanReference}
-     * pointing to the given {@code ref}
-     *
-     * @param ref a reference to a bean present in the spring context
-     * @return a {@link org.springframework.beans.factory.config.RuntimeBeanReference}
-     */
-    @Override
-    protected Object ref(String ref)
-    {
-        return new RuntimeBeanReference(ref);
     }
 }

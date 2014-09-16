@@ -6,12 +6,12 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkDeclaringClass;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkNullOrRepeatedNames;
-import static org.mule.module.extensions.internal.MuleExtensionUtils.checkSetters;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.checkNullOrRepeatedNames;
+import static org.mule.module.extensions.internal.util.MuleExtensionUtils.checkSetters;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.MuleExtensionUtils;
+import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ final class ImmutableExtensionConfiguration extends AbstractImmutableDescribed i
                                               List<ExtensionParameter> parameters)
     {
         super(name, description);
-        checkDeclaringClass(declaringClass);
+        checkInstantiable(declaringClass);
         checkNullOrRepeatedNames(parameters, "parameters");
 
         this.parameters = MuleExtensionUtils.immutableList(parameters);

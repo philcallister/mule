@@ -13,11 +13,19 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
-abstract class CollectionValueResolver implements ValueResolver
+public abstract class CollectionValueResolver implements ValueResolver
 {
 
     private final List<ValueResolver> resolvers;
+
+    public static CollectionValueResolver of(Class<? extends Collection> collectionType, List<ValueResolver> resolvers)
+    {
+        return Set.class.isAssignableFrom(collectionType)
+               ? new SetValueResolver(resolvers)
+               : new ListValueResolver(resolvers);
+    }
 
     public CollectionValueResolver(List<ValueResolver> resolvers)
     {

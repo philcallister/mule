@@ -81,7 +81,10 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         try
         {
             Extension extension = locateExtensionByNamespace(namespace);
-            register(extension, extension.getConfigurations(), ExtensionConfigurationBeanDefinitionParser.class);
+
+            //TODO: Configuration parser should be determined based on capabilities
+            register(extension, extension.getConfigurations(), ModuleConfigurationBeanDefinitionParser.class);
+
             register(extension, extension.getOperations(), ExtensionOperationBeanDefinitionParser.class);
 
             handledExtensions.put(namespace, extension);

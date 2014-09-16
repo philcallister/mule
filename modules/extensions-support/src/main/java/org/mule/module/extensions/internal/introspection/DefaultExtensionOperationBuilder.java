@@ -10,7 +10,7 @@ import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionOperationBuilder;
 import org.mule.extensions.introspection.api.ExtensionParameterBuilder;
-import org.mule.module.extensions.internal.MuleExtensionUtils;
+import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import com.google.common.collect.ImmutableList;
 

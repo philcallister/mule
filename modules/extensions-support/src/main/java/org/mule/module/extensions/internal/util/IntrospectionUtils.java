@@ -7,24 +7,34 @@
 package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
+import static org.reflections.ReflectionUtils.getAllFields;
+import static org.reflections.ReflectionUtils.getAllMethods;
+import static org.reflections.ReflectionUtils.withAnnotation;
+import static org.reflections.ReflectionUtils.withModifier;
+import static org.reflections.ReflectionUtils.withName;
+import static org.reflections.ReflectionUtils.withParameters;
+import static org.reflections.ReflectionUtils.withParametersCount;
+import static org.reflections.ReflectionUtils.withPrefix;
+import static org.reflections.ReflectionUtils.withReturnType;
+import org.mule.extensions.api.annotation.Configurable;
+import org.mule.extensions.api.annotation.param.Ignore;
+import org.mule.extensions.api.annotation.param.Optional;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.introspection.ImmutableDataType;
 import org.mule.repackaged.internal.org.springframework.core.ResolvableType;
-import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.ClassUtils;
+import org.mule.util.CollectionUtils;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Set of utility operations to get insights about objects and their operations
@@ -99,57 +109,75 @@ public class IntrospectionUtils
         return toDataType(ResolvableType.forField(field));
     }
 
-    /**
-     * Uses {@link java.beans.Introspector} to extract the {@link java.lang.reflect.Field}s
-     * from {@code clazz} that have getters and setters. Then returns a {@link java.util.Map}
-     * in which those fields are keys and the values are {@link org.mule.extensions.introspection.api.DataType}
-     * representing those field's types (using {@link #getFieldDataType(java.lang.reflect.Field)}.
-     * <p/>
-     * For this to work, {@code clazz} has to be introspector friendly.
-     *
-     * @param clazz a non {@code null} {@link java.lang.Class}
-     * @return a {@link java.util.Map} with {@link java.lang.reflect.Field} as keys and {@link org.mule.extensions.introspection.api.DataType}
-     * as values. It might be empty but it will never be {@code null}
-     */
-    public static Map<Field, DataType> getFieldsDataTypes(Class<?> clazz)
-    {
-        BeanInfo info;
-        try
-        {
-            info = Introspector.getBeanInfo(clazz);
-        }
-        catch (IntrospectionException e)
-        {
-            throw new RuntimeException(String.format("Could not introspect class %s", clazz.getName()), e);
-        }
 
-        // use the property descriptors to only get the attributes compliant with the bean contract
-        PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
-        if (ArrayUtils.isEmpty(descriptors))
+    public static Map<Field, DataType> getFieldsDataTypes(Class<?> declaringClass)
+    {
+        Set<Field> fields = getAllFields(declaringClass, withAnnotation(Configurable.class));
+
+        if (CollectionUtils.isEmpty(fields))
         {
             return ImmutableMap.of();
         }
 
         ImmutableMap.Builder<Field, DataType> map = ImmutableMap.builder();
-
-        // use the property descriptors to only get the attributes compliant with the bean contract
-        for (PropertyDescriptor property : info.getPropertyDescriptors())
+        for (Field field : fields)
         {
-            Field field = ReflectionUtils.findField(clazz, property.getName());
-            if (field == null)
+            if (isIgnored(field))
             {
                 continue;
             }
-            DataType fieldType = IntrospectionUtils.getFieldDataType(field);
-            map.put(field, fieldType);
+
+            map.put(field, ImmutableDataType.of(field.getType()));
         }
 
         return map.build();
     }
 
+    public static Map<Method, DataType> getSettersDataTypes(Class<?> declaringClass)
+    {
+        Set<Method> setters = getSetters(declaringClass);
+
+        if (CollectionUtils.isEmpty(setters))
+        {
+            return ImmutableMap.of();
+        }
+
+        ImmutableMap.Builder<Method, DataType> map = ImmutableMap.builder();
+        for (Method setter : setters)
+        {
+            if (isIgnored(setter))
+            {
+                continue;
+            }
+
+            map.put(setter, ImmutableDataType.of(setter.getParameterTypes()[0]));
+        }
+
+        return map.build();
+    }
+
+    public static Set<Method> getSetters(Class<?> clazz)
+    {
+        return getAllMethods(clazz, withModifier(Modifier.PUBLIC),
+                             withPrefix("set"),
+                             withParametersCount(1),
+                             withReturnType(Void.class));
+    }
+
+    public static Method getSetter(Class<?> declaringClass, ExtensionParameter parameter)
+    {
+        Set<Method> setters = getAllMethods(declaringClass, withModifier(Modifier.PUBLIC),
+                                            withName(NameUtils.getSetterName(parameter.getName())),
+                                            withParametersCount(1),
+                                            withParameters(parameter.getType().getRawType()),
+                                            withReturnType(Void.class));
+
+        return CollectionUtils.isEmpty(setters) ? null : setters.iterator().next();
+    }
+
     public static boolean hasSetter(Class<?> declaringClass, ExtensionParameter parameter)
     {
-        return ReflectionUtils.findMethod(declaringClass, NameUtils.getSetterName(parameter.getName()), parameter.getType().getRawType()) != null;
+        return getSetter(declaringClass, parameter) != null;
     }
 
     public static boolean hasDefaultConstructor(Class<?> clazz)
@@ -159,10 +187,16 @@ public class IntrospectionUtils
 
     public static boolean isDescribable(Class<?> declaringClass, ExtensionParameter parameter)
     {
-        return !declaringClass.isInterface() &&
-               !Modifier.isAbstract(declaringClass.getModifiers()) &&
-               hasDefaultConstructor(declaringClass) &&
-               hasSetter(declaringClass, parameter);
+        try
+        {
+            checkInstantiable(declaringClass);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return false;
+        }
+
+        return hasSetter(declaringClass, parameter);
     }
 
     private static DataType toDataType(ResolvableType type)
@@ -179,5 +213,36 @@ public class IntrospectionUtils
         }
 
         return types;
+    }
+
+    public static void checkInstantiable(Class<?> declaringClass)
+    {
+        checkArgument(declaringClass != null, "declaringClass cannot be null");
+        checkArgument(hasDefaultConstructor(declaringClass),
+                      String.format("Class %s must have a default constructor", declaringClass.getName()));
+        checkArgument(!declaringClass.isInterface(), String.format("Class %s cannot be instantiated since it's an interface", declaringClass.getName()));
+        checkArgument(!Modifier.isAbstract(declaringClass.getModifiers()), String.format("Class %s cannot be instantiated since it's abstract", declaringClass.getName()));
+        checkArgument(hasDefaultConstructor(declaringClass), String.format("Class %s cannot be instantiated since it doesn't have a default constructor", declaringClass.getName()));
+    }
+
+    public static boolean isIgnored(AccessibleObject object)
+    {
+        return object == null || object.getAnnotation(Ignore.class) != null;
+    }
+
+    public static boolean isRequired(AccessibleObject object)
+    {
+        return object.getAnnotation(Optional.class) == null;
+    }
+
+    public static boolean isRequired(ExtensionParameter parameter, boolean forceOptional)
+    {
+        return !forceOptional && parameter.isRequired();
+    }
+
+    public static boolean isDynamic(AccessibleObject object)
+    {
+        Configurable configurable = object.getAnnotation(Configurable.class);
+        return configurable != null ? configurable.isDynamic() : true;
     }
 }

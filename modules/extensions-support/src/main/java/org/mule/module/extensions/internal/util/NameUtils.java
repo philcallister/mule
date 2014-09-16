@@ -18,6 +18,7 @@ public class NameUtils
     private static final List<Inflection> singular = new ArrayList<>();
     private static final List<String> uncountable = new ArrayList<>();
 
+    //TODO: Refactor this. This was fine on devkit but we can't keep all these static info in runtime
     static
     {
         // plural is "singular to plural form"
@@ -122,8 +123,12 @@ public class NameUtils
         return "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
+    public static String getFieldNameFromSetter(String setterName)
+    {
+        return setterName.substring(3, 4).toLowerCase() + setterName.substring(4);
+    }
 
-    public static String uncamel(String camelCaseName)
+    public static String hyphenize(String camelCaseName)
     {
         String result = "";
         String[] parts = camelCaseName.split("(?<!^)(?=[A-Z])");
@@ -134,11 +139,6 @@ public class NameUtils
         }
 
         return result;
-    }
-
-    public static String friendlyNameFromCamelCase(String camelCaseName)
-    {
-        return StringUtils.capitalize(uncamel(camelCaseName)).replaceAll("-", " ");
     }
 
     /**
