@@ -1,7 +1,7 @@
 import org.mule.gradle.ContentsVerifierTask
 
 project.ext {
-    dummyProjects = [ project(":modules"), project(":transports"), project(":patterns"), project(":tests") ]
+    dummyProjects = [ project(":modules"), project(":transports"), project(":tests") ]
 }
 
 allprojects {
@@ -125,7 +125,6 @@ dependencies {
     allMule project(':tests:functional')
     allMule project(':modules').subprojects
     allMule project(':transports').subprojects
-    allMule project(':patterns').subprojects
 
     libBoot project(':modules:boot')
     libBoot project(':modules:reboot')

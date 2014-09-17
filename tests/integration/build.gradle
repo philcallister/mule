@@ -7,7 +7,6 @@ dependencies {
     testCompile project(':tests:functional'),
         project(':tests:infrastructure'),
         project(":core"),
-        project(':patterns').subprojects,
         project(':transports').subprojects,
         project(':modules').subprojects,
         "org.eclipse.jetty:jetty-server:$jettyVersion",

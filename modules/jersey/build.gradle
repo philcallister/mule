@@ -4,7 +4,6 @@ description = 'A module for Jersey, the JAX-RS RI.'
 
 dependencies {
     compile project(':modules:spring-config'),
-        project(":patterns:core"),
         project(":transports:http"),
         project(":transports:servlet"),
         project(":transports:vm"),

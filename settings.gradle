@@ -1,7 +1,6 @@
 include 'core'
 includeNested 'transports', ['build', 'target', 'all-transports']
 includeNested 'modules', ['build', 'target', 'all-modules']
-includeNested 'patterns', ['build', 'target', 'all-patterns']
 includeNested 'tests', ['build', 'target', 'archetypes', 'manual', 'performance']
 //includeNested 'examples', ['build', 'target', 'all-examples']
 
