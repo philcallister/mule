@@ -52,7 +52,7 @@ import org.mule.module.extensions.internal.util.NameUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.StringUtils;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -203,12 +203,11 @@ public class SchemaBuilder
         return simpleType;
     }
 
-    public SchemaBuilder registerConfigElement(ExtensionConfiguration configuration)
+    public SchemaBuilder registerConfigElement(final ExtensionConfiguration configuration)
     {
         Map<QName, String> otherAttributes = new HashMap<>();
         final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
-        Attribute nameAttribute = createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, ImmutableDataType.of(String.class), true, false);
-        config.getAttributeOrAttributeGroup().add(nameAttribute);
+        config.getAttributeOrAttributeGroup().add(createNameAttribute());
 
         final ExplicitGroup all = new ExplicitGroup();
         config.setSequence(all);
@@ -232,7 +231,7 @@ public class SchemaBuilder
                 @Override
                 public void onPojo()
                 {
-                    boolean describable = forceOptional = IntrospectionUtils.isDescribable(parameter.getType().getRawType(), parameter);
+                    boolean describable = forceOptional = IntrospectionUtils.isDescribable(configuration.getDeclaringClass(), parameter);
 
                     defaultOperation();
 
@@ -264,6 +263,11 @@ public class SchemaBuilder
         return this;
     }
 
+    private Attribute createNameAttribute()
+    {
+        return createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, ImmutableDataType.of(String.class), true, false);
+    }
+
     public SchemaBuilder registerOperation(ExtensionOperation operation)
     {
         String typeName = StringUtils.capitalize(operation.getName()) + SchemaConstants.TYPE_SUFFIX;
@@ -274,29 +278,46 @@ public class SchemaBuilder
     }
 
     /**
-     * Registers one type creating its complex type and assign it an unique name
+     * Registers a pojo type creating a base complex type and a substitutable
+     * top level type while assigning it a name. This method will not register
+     * the same type twice even if requested to
      *
-     * @param type
+     * @param type        a {@link org.mule.extensions.introspection.api.DataType} referencing a pojo type
+     * @param description the type's description
      * @return the reference name of the complexType
      */
-    private String registerComplexType(DataType type)
+    private String registerPojoType(DataType type, String description)
     {
-        //check if the type is already registered
-        if (registeredComplexTypesHolders.containsKey(type))
+        ComplexTypeHolder alreadyRegisteredType = registeredComplexTypesHolders.get(type);
+        if (alreadyRegisteredType != null)
         {
-            return registeredComplexTypesHolders.get(type).getComplexType().getName();
+            return alreadyRegisteredType.getComplexType().getName();
         }
 
+        registerBasePojoType(type, description);
+        registerPojoGlobalElement(type, description);
+
+        return getBaseTypeName(type);
+    }
+
+    private String getBaseTypeName(DataType type)
+    {
+        return type.getName() + SchemaConstants.BASE_TYPE_SUFFIX;
+    }
+
+    private TopLevelComplexType registerBasePojoType(DataType type, String description)
+    {
         final TopLevelComplexType complexType = new TopLevelComplexType();
-        complexType.setName(type.getName());
         registeredComplexTypesHolders.put(type, new ComplexTypeHolder(complexType, type));
+
+        complexType.setName(getBaseTypeName(type));
 
         final ExplicitGroup all = new ExplicitGroup();
 
         DataType superclass = type.getSuperclass();
         if (superclass != null)
         {
-            String superClassName = registerComplexType(superclass);
+            String superClassName = registerPojoType(superclass, description);
             ComplexContent complexContent = new ComplexContent();
             complexType.setComplexContent(complexContent);
             complexType.getComplexContent().setExtension(new ExtensionType());
@@ -310,51 +331,53 @@ public class SchemaBuilder
             complexType.setSequence(all);
         }
 
-        for (Map.Entry<Field, DataType> entry : IntrospectionUtils.getFieldsDataTypes(type.getRawType()).entrySet())
+        complexType.setAnnotation(createDocAnnotation(description));
+
+        for (Map.Entry<Method, DataType> entry : IntrospectionUtils.getSettersDataTypes(type.getRawType()).entrySet())
         {
-            final Field field = entry.getKey();
-            if (isIgnored(field))
+            final Method method = entry.getKey();
+            if (isIgnored(method))
             {
                 continue;
             }
 
-            final DataType fieldType = entry.getValue();
-            final boolean required = isRequired(field);
-            final boolean dynamic = isDynamic(field);
+            final String name = NameUtils.getFieldNameFromSetter(method.getName());
+            final DataType methodType = entry.getValue();
+            final boolean required = isRequired(method);
+            final boolean dynamic = isDynamic(method);
 
-            fieldType.getQualifier().accept(new BaseDataQualifierVisitor()
+            methodType.getQualifier().accept(new BaseDataQualifierVisitor()
             {
 
                 @Override
                 public void onList()
                 {
-                    generateCollectionElement(all, field.getName(), EMPTY, fieldType, required);
+                    generateCollectionElement(all, name, EMPTY, methodType, required);
                 }
 
                 @Override
                 public void onOperation()
                 {
-                    generateNestedProcessorElement(all, field.getName(), EMPTY, required);
+                    generateNestedProcessorElement(all, name, EMPTY, required);
                 }
 
                 @Override
                 public void onPojo()
                 {
-                    registerComplexTypeChildElement(all, field.getName(), EMPTY, fieldType, false);
+                    registerComplexTypeChildElement(all, name, EMPTY, methodType, false);
                 }
 
                 @Override
                 protected void defaultOperation()
                 {
-                    Attribute attribute = createAttribute(field.getName(), fieldType, required, dynamic);
+                    Attribute attribute = createAttribute(name, methodType, required, dynamic);
                     complexType.getAttributeOrAttributeGroup().add(attribute);
                 }
             });
         }
 
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
-
-        return type.getName();
+        return complexType;
     }
 
     public SchemaBuilder registerEnums()
@@ -418,32 +441,44 @@ public class SchemaBuilder
                                                  DataType type,
                                                  boolean required)
     {
-        LocalComplexType objectComplexType = new LocalComplexType();
-        objectComplexType.setComplexContent(new ComplexContent());
-        objectComplexType.getComplexContent().setExtension(new ExtensionType());
-        objectComplexType.getComplexContent().getExtension().setBase(
-                new QName(schema.getTargetNamespace(), registerComplexType(type))
-        ); // base to the element type
-
         name = NameUtils.hyphenize(name);
+
         // this top level element is for declaring the object inside a config or operation
         TopLevelElement objectElement = new TopLevelElement();
         objectElement.setName(name);
         objectElement.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
         objectElement.setMaxOccurs("1");
-        objectElement.setComplexType(objectComplexType);
+        objectElement.setComplexType(newLocalComplexTypeWithBase(type, description));
         objectElement.setAnnotation(createDocAnnotation(description));
 
         all.getParticle().add(objectFactory.createElement(objectElement));
+    }
 
-        // this top level element is for declaring a global instance
-        objectElement = new TopLevelElement();
-        objectElement.setName(name);
-        objectElement.setComplexType(objectComplexType);
+    private void registerPojoGlobalElement(DataType type, String description)
+    {
+        TopLevelElement objectElement = new TopLevelElement();
+        objectElement.setName(NameUtils.hyphenize(type.getRawType().getSimpleName()));
+
+        LocalComplexType complexContent = newLocalComplexTypeWithBase(type, description);
+        complexContent.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(createNameAttribute());
+        objectElement.setComplexType(complexContent);
+
         objectElement.setSubstitutionGroup(SchemaConstants.MULE_ABSTRACT_EXTENSION);
         objectElement.setAnnotation(createDocAnnotation(description));
 
         schema.getSimpleTypeOrComplexTypeOrGroup().add(objectElement);
+    }
+
+    private LocalComplexType newLocalComplexTypeWithBase(DataType type, String description)
+    {
+        LocalComplexType objectComplexType = new LocalComplexType();
+        objectComplexType.setComplexContent(new ComplexContent());
+        objectComplexType.getComplexContent().setExtension(new ExtensionType());
+        objectComplexType.getComplexContent().getExtension().setBase(
+                new QName(schema.getTargetNamespace(), registerPojoType(type, description))
+        ); // base to the pojo type
+
+        return objectComplexType;
     }
 
     private ExtensionType registerExtension(String name, Map<QName, String> otherAttributes)
@@ -531,7 +566,7 @@ public class SchemaBuilder
 
         BigInteger minOccurs = required ? BigInteger.ONE : BigInteger.ZERO;
         String collectionName = NameUtils.hyphenize(NameUtils.singularize(name));
-        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, type);
+        LocalComplexType collectionComplexType = generateCollectionComplexType(collectionName, description, type);
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(name);
@@ -543,7 +578,7 @@ public class SchemaBuilder
         collectionElement.setComplexType(collectionComplexType);
     }
 
-    private LocalComplexType generateCollectionComplexType(String name, final DataType type)
+    private LocalComplexType generateCollectionComplexType(String name, final String description, final DataType type)
     {
         final LocalComplexType collectionComplexType = new LocalComplexType();
         final ExplicitGroup sequence = new ExplicitGroup();
@@ -561,16 +596,16 @@ public class SchemaBuilder
             @Override
             public void onPojo()
             {
-                registerComplexType(genericType);
-                ComplexType complexType = registeredComplexTypesHolders.get(genericType).getComplexType();
-                LocalComplexType localComplexType = new LocalComplexType();
+                //registerPojoType(genericType, description);
+                //ComplexType complexType = registeredComplexTypesHolders.get(genericType).getComplexType();
+                //LocalComplexType localComplexType = newLocalComplexTypeWithBase(genericType, EMPTY);
+                //
+                //localComplexType.setComplexContent(complexType.getComplexContent());
+                //localComplexType.setAll(complexType.getAll());
+                //localComplexType.setSequence(complexType.getSequence());
+                //localComplexType.getAttributeOrAttributeGroup().addAll(complexType.getAttributeOrAttributeGroup());
 
-                localComplexType.setComplexContent(complexType.getComplexContent());
-                localComplexType.setAll(complexType.getAll());
-                localComplexType.setSequence(complexType.getSequence());
-                localComplexType.getAttributeOrAttributeGroup().addAll(complexType.getAttributeOrAttributeGroup());
-
-                collectionItemElement.setComplexType(localComplexType);
+                collectionItemElement.setComplexType(newLocalComplexTypeWithBase(genericType, description));
             }
 
             @Override
@@ -757,6 +792,11 @@ public class SchemaBuilder
 
     private Annotation createDocAnnotation(String content)
     {
+        if (StringUtils.isBlank(content))
+        {
+            return null;
+        }
+
         Annotation annotation = new Annotation();
         Documentation doc = new Documentation();
         doc.getContent().add(content);

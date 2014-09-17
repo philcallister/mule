@@ -29,6 +29,7 @@ import org.mule.util.CollectionUtils;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -109,11 +110,22 @@ public class IntrospectionUtils
         return toDataType(ResolvableType.forField(field));
     }
 
-
-    public static Map<Field, DataType> getFieldsDataTypes(Class<?> declaringClass)
+    public static DataType getMethodDataType(Method method)
     {
-        Set<Field> fields = getAllFields(declaringClass, withAnnotation(Configurable.class));
+        checkArgument(method != null, "Can't introspect a null method");
+        return toDataType(ResolvableType.forMethodReturnType(method));
+    }
 
+    public static DataType getMethodArgumentDataType(Method method, int argumentIndex)
+    {
+        checkArgument(method != null, "Can't introspect a null method");
+        return toDataType(ResolvableType.forMethodParameter(method, argumentIndex));
+    }
+
+
+    public static Map<Field, DataType> getAnnotatedFieldsDataTypes(Class<?> declaringClass, Class<? extends Annotation> annotationClass)
+    {
+        Set<Field> fields = getAllFields(declaringClass, withAnnotation(annotationClass));
         if (CollectionUtils.isEmpty(fields))
         {
             return ImmutableMap.of();
@@ -127,7 +139,7 @@ public class IntrospectionUtils
                 continue;
             }
 
-            map.put(field, ImmutableDataType.of(field.getType()));
+            map.put(field, getFieldDataType(field));
         }
 
         return map.build();
@@ -150,7 +162,7 @@ public class IntrospectionUtils
                 continue;
             }
 
-            map.put(setter, ImmutableDataType.of(setter.getParameterTypes()[0]));
+            map.put(setter, getMethodArgumentDataType(setter, 0));
         }
 
         return map.build();
@@ -161,7 +173,7 @@ public class IntrospectionUtils
         return getAllMethods(clazz, withModifier(Modifier.PUBLIC),
                              withPrefix("set"),
                              withParametersCount(1),
-                             withReturnType(Void.class));
+                             withReturnType(void.class));
     }
 
     public static Method getSetter(Class<?> declaringClass, ExtensionParameter parameter)
@@ -170,7 +182,7 @@ public class IntrospectionUtils
                                             withName(NameUtils.getSetterName(parameter.getName())),
                                             withParametersCount(1),
                                             withParameters(parameter.getType().getRawType()),
-                                            withReturnType(Void.class));
+                                            withReturnType(void.class));
 
         return CollectionUtils.isEmpty(setters) ? null : setters.iterator().next();
     }

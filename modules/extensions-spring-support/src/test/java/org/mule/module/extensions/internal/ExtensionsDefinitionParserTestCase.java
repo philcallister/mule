@@ -10,9 +10,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.mule.VoidMuleEvent;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.Ricin;
+import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.tck.junit4.ExtensionsFunctionalTestCase;
 
 import java.math.BigDecimal;
@@ -52,10 +54,10 @@ public class ExtensionsDefinitionParserTestCase extends ExtensionsFunctionalTest
     }
 
     @Test
-    public void heisenbergConfig()
+    public void heisenbergConfig() throws Exception
     {
-        HeisenbergExtension heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
-        assertHeisenbergConfig(heisenberg);
+        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
+        assertHeisenbergConfig((HeisenbergExtension) heisenbergResolver.resolve(VoidMuleEvent.getInstance()));
     }
 
     @Test
