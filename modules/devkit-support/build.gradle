@@ -8,7 +8,7 @@ dependencies {
         "oauth.signpost:signpost-core:1.2.1.2"
 
 
-    testCompile project(path: ':core', configuration: 'testFixtures'),
+    testCompile project(":tests:functional"),
         project(":transports:http")
 }
 

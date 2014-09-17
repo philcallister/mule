@@ -13,7 +13,8 @@ dependencies {
             project(":transports:vm"),
             project(":tests:functional"),
             "org.apache.derby:derby:10.9.1.0",
-            "hsqldb:hsqldb:1.8.0.7"
+            "hsqldb:hsqldb:1.8.0.7",
+            "commons-dbcp:commons-dbcp:1.4"
 }
 
 perJdkSources project

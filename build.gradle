@@ -8,16 +8,11 @@ allprojects {
     apply plugin: 'maven'
 
     group = 'org.mule'
-    version = '3.5.0-M5-SNAPSHOT'
+    version = '4.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
-        mavenCentral()
-        maven { url "http://repository.codehaus.org"  }
-        maven { url "http://snapshots.repository.codehaus.org" }
-        maven { url "http://download.java.net/maven/2" }
-        maven { url "http://repository.jboss.org/nexus/content/groups/public-jboss" }
-        maven { url "http://dist.codehaus.org/mule/dependencies/maven2" }
+        maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
     }
 }
 
@@ -25,11 +20,12 @@ subprojects {
     apply plugin: 'java'
 
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
 
-    tasks.withType(Compile) {
+    tasks.withType(JavaCompile) {
         options.encoding = 'ISO-8859-1'
+//        options.incremental = true
     }
 
     configurations {
@@ -56,13 +52,16 @@ subprojects {
     dependencies {
     log "org.slf4j:jcl-over-slf4j:$slf4jVersion",
             "org.slf4j:slf4j-api:$slf4jVersion",
-            "org.slf4j:slf4j-log4j12:$slf4jVersion",
-            'log4j:log4j:1.2.16'
+            'org.apache.logging.log4j:log4j-api:2.0.2',
+            'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
+            'org.apache.logging.log4j:log4j-core:2.0.2',
+            'org.apache.logging.log4j:log4j-jcl:2.0.2',
+            'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2'
 
 //    compile configurations.log
-    testCompile 'org.mockito:mockito-all:1.9.0',
-            'com.googlecode.multithreadedtc:multithreadedtc:1.01',
-            'junit:junit:4.9',
+    testCompile 'com.googlecode.multithreadedtc:multithreadedtc:1.01',
+            'junit:junit:4.11',
+            'org.mockito:mockito-core:1.9.0',
             'xmlunit:xmlunit:1.1'
     }
 }

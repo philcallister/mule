@@ -8,10 +8,10 @@ dependencies {
         project(":modules:jboss-transactions"),
         "c3p0:c3p0:0.9.1.2",
         "com.experlog:xapool:1.5.0",
-        "org.mule.common:mule-common:$version"
+        "org.mule.common:mule-common:$muleCommonVersion"
 
 
-    testCompile project(path: ':core', configuration: 'testFixtures'),
+        testCompile project(path: ':core', configuration: 'testFixtures'),
         "xalan:xalan:2.7.1",
         "commons-dbutils:commons-dbutils:1.2",
         project(":transports:vm"),
