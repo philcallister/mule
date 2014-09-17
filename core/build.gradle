@@ -20,6 +20,7 @@ dependencies {
             "org.mule.common:mule-common:$muleCommonVersion",
             'com.google.guava:guava:16.0.1',
             "com.github.stephenc.eaio-uuid:uuid:3.4.0",
+            "com.lmax:disruptor:3.2.1",
             configurations.log
 }
 
