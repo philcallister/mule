@@ -15,8 +15,10 @@ abstract class ConfigurationValueResolver implements ValueResolver, MuleContextA
 
     protected MuleContext muleContext;
 
-    protected void injectMuleContext(Object configuration) {
-        if (configuration instanceof MuleContextAware) {
+    protected void injectMuleContextIfNeeded(Object configuration)
+    {
+        if (configuration instanceof MuleContextAware)
+        {
             ((MuleContextAware) configuration).setMuleContext(muleContext);
         }
     }

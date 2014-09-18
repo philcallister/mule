@@ -6,9 +6,8 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import static org.mule.module.extensions.internal.util.MuleExtensionUtils.containsExpression;
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimpleExpression;
-import static org.mule.util.Preconditions.checkState;
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
@@ -27,23 +26,26 @@ import org.mule.util.TemplateParser;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EvaluateAndTransformValueResolver implements ValueResolver, MuleContextAware, Lifecycle
+public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResolver implements MuleContextAware, Lifecycle
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EvaluateAndTransformValueResolver.class);
     private static final TemplateParser PARSER = TemplateParser.createMuleStyleParser();
 
-    private final Object source;
+    private final String expression;
     private final DataType expectedType;
     private ValueResolver delegate;
     private MuleContext muleContext;
 
-    public EvaluateAndTransformValueResolver(Object source, DataType expectedType)
+    public EvaluateAndTransformValueResolver(String expression, DataType expectedType)
     {
-        this.source = source;
+        checkArgument(!StringUtils.isBlank(expression), "Expression cannot be blank or null");
+        checkArgument(expectedType != null, "expected type cannot be null");
+        this.expression = expression;
         this.expectedType = expectedType;
     }
 
@@ -87,32 +89,11 @@ public class EvaluateAndTransformValueResolver implements ValueResolver, MuleCon
     }
 
     @Override
-    public boolean isDynamic()
-    {
-        checkState(delegate != null, "This value resolver needs to be initialised before it can perform any operation");
-        return delegate.isDynamic();
-    }
-
-    @Override
     public void initialise() throws InitialisationException
     {
-        if (source instanceof String)
-        {
-            String expression = (String) source;
-            if (isSimpleExpression(expression, PARSER))
-            {
-                delegate = new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage());
-            }
-            else if (containsExpression(expression, PARSER))
-            {
-                delegate = new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
-            }
-        }
-
-        if (delegate == null)
-        {
-            delegate = new StaticValueResolver(source);
-        }
+        delegate = isSimpleExpression(expression, PARSER)
+                   ? new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage())
+                   : new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
 
         LifecycleUtils.initialiseIfNeeded(delegate);
     }

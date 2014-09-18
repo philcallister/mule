@@ -9,7 +9,6 @@ package org.mule.module.extensions.internal.runtime.resolver;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Startable;
@@ -40,11 +39,7 @@ public class ModuleValueResolver extends ConfigurationValueResolver
     @Override
     public void initialise() throws InitialisationException
     {
-        if (resolver instanceof MuleContextAware)
-        {
-            ((MuleContextAware) resolver).setMuleContext(muleContext);
-        }
-
+        injectMuleContextIfNeeded(resolver);
         LifecycleUtils.initialiseIfNeeded(resolver);
 
         if (!resolver.isDynamic())

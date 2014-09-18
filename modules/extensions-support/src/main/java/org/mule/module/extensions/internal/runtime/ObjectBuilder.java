@@ -22,6 +22,4 @@ public interface ObjectBuilder
     ObjectBuilder addProperty(Method method, ValueResolver resolver);
 
     Object build(MuleEvent event) throws Exception;
-
-    boolean isDynamic();
 }

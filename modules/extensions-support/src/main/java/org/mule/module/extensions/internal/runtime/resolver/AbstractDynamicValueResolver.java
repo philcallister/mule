@@ -10,7 +10,7 @@ abstract class AbstractDynamicValueResolver implements ValueResolver
 {
 
     @Override
-    public boolean isDynamic()
+    public final boolean isDynamic()
     {
         return true;
     }

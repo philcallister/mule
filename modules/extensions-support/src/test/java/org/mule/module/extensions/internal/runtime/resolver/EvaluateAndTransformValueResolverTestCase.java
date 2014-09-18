@@ -6,8 +6,8 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.core.Is.is;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -20,11 +20,8 @@ import org.mule.DefaultMuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.expression.DefaultExpressionManager;
 import org.mule.module.extensions.internal.introspection.ImmutableDataType;
-import org.mule.module.extensions.internal.runtime.resolver.EvaluateAndTransformValueResolver;
-import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mockito.verification.VerificationMode;
 
@@ -59,7 +56,7 @@ public class EvaluateAndTransformValueResolverTestCase extends AbstractMuleConte
     @Test
     public void constant() throws Exception
     {
-        assertResolved(getResolver("Hello World!", String.class).resolve(getTestEvent(HELLO_WORLD)), HELLO_WORLD, never());
+        assertResolved(getResolver("Hello World!", String.class).resolve(getTestEvent(HELLO_WORLD)), HELLO_WORLD, times(1));
     }
 
     @Test
@@ -74,18 +71,29 @@ public class EvaluateAndTransformValueResolverTestCase extends AbstractMuleConte
         assertResolved(getResolver("tru#['e']", String.class).resolve(getTestEvent(HELLO_WORLD)), "true", times(1));
     }
 
-    @Test
-    public void nullConstant() throws Exception
+    @Test(expected = IllegalArgumentException.class)
+    public void nullExpression() throws Exception
     {
-        Object resolved = getResolver(null, String.class).resolve(getTestEvent(HELLO_WORLD));
-        assertThat(resolved, is(nullValue()));
-        verifyExpressionManager(never());
+        getResolver(null, String.class);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void blankExpression() throws Exception
+    {
+        getResolver(EMPTY, String.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nullExpectedType() throws Exception
+    {
+        getResolver("#[payload]", null);
+    }
+
 
     private void assertResolved(Object resolvedValue, Object expected, VerificationMode expressionManagerVerificationMode)
     {
         assertThat(resolvedValue, instanceOf(String.class));
-        assertThat(resolvedValue, CoreMatchers.equalTo(expected));
+        assertThat(resolvedValue, equalTo(expected));
         verifyExpressionManager(expressionManagerVerificationMode);
     }
 

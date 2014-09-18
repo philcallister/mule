@@ -18,7 +18,7 @@ import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ObjectBuilderValueResolver implements ValueResolver, Lifecycle
+public class ObjectBuilderValueResolver extends AbstractDynamicValueResolver implements Lifecycle
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectBuilderValueResolver.class);
@@ -34,12 +34,6 @@ public class ObjectBuilderValueResolver implements ValueResolver, Lifecycle
     public Object resolve(MuleEvent event) throws Exception
     {
         return builder.build(event);
-    }
-
-    @Override
-    public boolean isDynamic()
-    {
-        return builder.isDynamic();
     }
 
     @Override

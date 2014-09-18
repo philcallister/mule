@@ -76,20 +76,6 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle
     }
 
     @Override
-    public boolean isDynamic()
-    {
-        for (ValueResolver resolver : properties.values())
-        {
-            if (resolver.isDynamic())
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
     public void initialise() throws InitialisationException
     {
         LifecycleUtils.initialiseIfNeeded(properties.values().toArray());

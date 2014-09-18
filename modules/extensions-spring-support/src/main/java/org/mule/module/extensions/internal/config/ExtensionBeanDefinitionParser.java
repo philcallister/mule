@@ -142,7 +142,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
     {
         if (isExpression(value, parser))
         {
-            return new EvaluateAndTransformValueResolver(value, expectedDataType);
+            return new EvaluateAndTransformValueResolver((String) value, expectedDataType);
         }
 
         if (value != null)
@@ -306,7 +306,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         Object value = getAttributeValue(element, attributeName, defaultValue);
         if (isExpression(value, parser))
         {
-            return new EvaluateAndTransformValueResolver(value, dataType);
+            return new EvaluateAndTransformValueResolver((String) value, dataType);
         }
 
         Date date = doParseDate(element, attributeName, CALENDAR_FORMAT, defaultValue);
@@ -321,7 +321,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         Object value = getAttributeValue(element, attributeName, defaultValue);
         if (isExpression(value, parser))
         {
-            return new EvaluateAndTransformValueResolver(value, dataType);
+            return new EvaluateAndTransformValueResolver((String) value, dataType);
         }
         else
         {
