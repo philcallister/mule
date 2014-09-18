@@ -10,7 +10,7 @@ import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleEvent;
 import org.mule.api.expression.ExpressionManager;
 
-public class ExpressionTemplateValueResolver implements ValueResolver
+public class ExpressionTemplateValueResolver extends AbstractDynamicValueResolver
 {
 
     private final String expression;

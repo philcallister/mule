@@ -26,4 +26,13 @@ public class StaticValueResolver implements ValueResolver
     {
         return value;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDynamic()
+    {
+        return false;
+    }
 }

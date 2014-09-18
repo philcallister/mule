@@ -12,7 +12,7 @@ import org.mule.api.el.ExpressionLanguage;
 
 import org.apache.commons.lang.StringUtils;
 
-public class ExpressionLanguageValueResolver implements ValueResolver
+public class ExpressionLanguageValueResolver extends AbstractDynamicValueResolver
 {
 
     private final String expression;

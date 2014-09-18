@@ -6,71 +6,75 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import org.mule.api.MuleContext;
+import static org.mule.util.Preconditions.checkState;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.lifecycle.Disposable;
-import org.mule.api.lifecycle.Initialisable;
+import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
+import org.mule.module.extensions.internal.runtime.ObjectBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ModuleValueResolver extends ConfigurationValueResolver
 {
 
-    private final Object configuration;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModuleValueResolver.class);
 
-    public ModuleValueResolver(Object configuration)
+    private ValueResolver resolver;
+
+    public ModuleValueResolver(ObjectBuilder objectBuilder)
     {
-        this.configuration = configuration;
+        resolver = new ObjectBuilderValueResolver(objectBuilder);
     }
 
     @Override
     public Object resolve(MuleEvent event) throws Exception
     {
-        return configuration;
+        return resolver.resolve(event);
     }
 
     @Override
     public void initialise() throws InitialisationException
     {
-        if (configuration instanceof Initialisable)
+        if (resolver instanceof MuleContextAware)
         {
-            ((Initialisable) configuration).initialise();
+            ((MuleContextAware) resolver).setMuleContext(muleContext);
         }
+
+        LifecycleUtils.initialiseIfNeeded(resolver);
+
+        if (!resolver.isDynamic())
+        {
+            resolver = new CachingValueResolverWrapper(resolver);
+        }
+    }
+
+    @Override
+    public boolean isDynamic()
+    {
+        checkState(resolver != null, "This resolver has yet not been initialised");
+        return resolver.isDynamic();
     }
 
     @Override
     public void start() throws MuleException
     {
-        if (configuration instanceof Startable)
-        {
-            ((Startable) configuration).start();
-        }
+        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, resolver);
     }
 
     @Override
     public void stop() throws MuleException
     {
-        if (configuration instanceof Stoppable)
-        {
-            ((Stoppable) configuration).stop();
-        }
+        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, resolver);
     }
 
     @Override
     public void dispose()
     {
-        if (configuration instanceof Disposable)
-        {
-            ((Disposable) configuration).dispose();
-        }
-    }
-
-    @Override
-    public void setMuleContext(MuleContext context)
-    {
-        super.setMuleContext(context);
-        injectMuleContext(configuration);
+        LifecycleUtils.disposeIfNeeded(LOGGER, resolver);
     }
 }

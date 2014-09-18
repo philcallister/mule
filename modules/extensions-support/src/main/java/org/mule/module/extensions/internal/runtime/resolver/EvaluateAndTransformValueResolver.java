@@ -8,11 +8,16 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.containsExpression;
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimpleExpression;
+import static org.mule.util.Preconditions.checkState;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
-import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
+import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 import org.mule.api.transformer.MessageTransformer;
 import org.mule.api.transformer.Transformer;
 import org.mule.extensions.introspection.api.DataType;
@@ -22,9 +27,13 @@ import org.mule.util.TemplateParser;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-public class EvaluateAndTransformValueResolver implements ValueResolver, MuleContextAware, Initialisable
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class EvaluateAndTransformValueResolver implements ValueResolver, MuleContextAware, Lifecycle
 {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EvaluateAndTransformValueResolver.class);
     private static final TemplateParser PARSER = TemplateParser.createMuleStyleParser();
 
     private final Object source;
@@ -37,29 +46,6 @@ public class EvaluateAndTransformValueResolver implements ValueResolver, MuleCon
         this.source = source;
         this.expectedType = expectedType;
     }
-
-    @Override
-    public void initialise() throws InitialisationException
-    {
-        if (source instanceof String)
-        {
-            String expression = (String) source;
-            if (isSimpleExpression(expression, PARSER))
-            {
-                delegate = new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage());
-            }
-            else if (containsExpression(expression, PARSER))
-            {
-                delegate = new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
-            }
-        }
-
-        if (delegate == null)
-        {
-            delegate = new StaticValueResolver(source);
-        }
-    }
-
 
     @Override
     public Object resolve(MuleEvent event) throws Exception
@@ -98,6 +84,55 @@ public class EvaluateAndTransformValueResolver implements ValueResolver, MuleCon
         }
 
         return object;
+    }
+
+    @Override
+    public boolean isDynamic()
+    {
+        checkState(delegate != null, "This value resolver needs to be initialised before it can perform any operation");
+        return delegate.isDynamic();
+    }
+
+    @Override
+    public void initialise() throws InitialisationException
+    {
+        if (source instanceof String)
+        {
+            String expression = (String) source;
+            if (isSimpleExpression(expression, PARSER))
+            {
+                delegate = new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage());
+            }
+            else if (containsExpression(expression, PARSER))
+            {
+                delegate = new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
+            }
+        }
+
+        if (delegate == null)
+        {
+            delegate = new StaticValueResolver(source);
+        }
+
+        LifecycleUtils.initialiseIfNeeded(delegate);
+    }
+
+    @Override
+    public void start() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, delegate);
+    }
+
+    @Override
+    public void stop() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, delegate);
+    }
+
+    @Override
+    public void dispose()
+    {
+        LifecycleUtils.disposeIfNeeded(LOGGER, delegate);
     }
 
     @Override

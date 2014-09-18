@@ -7,10 +7,21 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
+import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
+import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 
-public class ObjectBuilderValueResolver implements ValueResolver
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ObjectBuilderValueResolver implements ValueResolver, Lifecycle
 {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ObjectBuilderValueResolver.class);
 
     private final ObjectBuilder builder;
 
@@ -23,5 +34,35 @@ public class ObjectBuilderValueResolver implements ValueResolver
     public Object resolve(MuleEvent event) throws Exception
     {
         return builder.build(event);
+    }
+
+    @Override
+    public boolean isDynamic()
+    {
+        return builder.isDynamic();
+    }
+
+    @Override
+    public void initialise() throws InitialisationException
+    {
+        LifecycleUtils.initialiseIfNeeded(builder);
+    }
+
+    @Override
+    public void start() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, builder);
+    }
+
+    @Override
+    public void stop() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, builder);
+    }
+
+    @Override
+    public void dispose()
+    {
+        LifecycleUtils.disposeIfNeeded(LOGGER, builder);
     }
 }

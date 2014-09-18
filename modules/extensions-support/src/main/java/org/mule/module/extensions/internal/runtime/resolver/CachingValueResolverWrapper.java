@@ -22,11 +22,20 @@ public class CachingValueResolverWrapper implements ValueResolver
     @Override
     public Object resolve(MuleEvent event) throws Exception
     {
-        if (value != null)
+        if (value == null)
         {
             value = delegate.resolve(event);
         }
 
         return value;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDynamic()
+    {
+        return false;
     }
 }

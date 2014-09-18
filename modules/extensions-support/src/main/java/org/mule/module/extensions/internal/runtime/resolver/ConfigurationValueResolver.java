@@ -13,7 +13,7 @@ import org.mule.api.lifecycle.Lifecycle;
 abstract class ConfigurationValueResolver implements ValueResolver, MuleContextAware, Lifecycle
 {
 
-    private MuleContext muleContext;
+    protected MuleContext muleContext;
 
     protected void injectMuleContext(Object configuration) {
         if (configuration instanceof MuleContextAware) {

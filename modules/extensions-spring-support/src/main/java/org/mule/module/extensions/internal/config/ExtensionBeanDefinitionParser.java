@@ -16,6 +16,7 @@ import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants;
 import org.mule.module.extensions.internal.introspection.ImmutableDataType;
+import org.mule.module.extensions.internal.introspection.SimpleTypeDataQualifierVisitor;
 import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
 import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 import org.mule.module.extensions.internal.runtime.resolver.CachingValueResolverWrapper;
@@ -70,27 +71,35 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         return !StringUtils.isBlank(value);
     }
 
-    private ValueResolver parseCollectionAsInnerElement(Element element,
-                                                        String parentElementName,
+    private ValueResolver parseCollectionAsInnerElement(Element collectionElement,
                                                         String childElementName,
                                                         DataType collectionType)
     {
-        Element collectionElement = DomUtils.getChildElementByTagName(element, parentElementName);
-        if (collectionElement != null)
+        final DataType itemsType = collectionType.getGenericTypes().length > 0 ? collectionType.getGenericTypes()[0] : ImmutableDataType.of(Object.class);
+        final List<ValueResolver> resolvers = new LinkedList<>();
+
+        for (final Element item : DomUtils.getChildElementsByTagName(collectionElement, childElementName))
         {
-            DataType itemsType = collectionType.getGenericTypes().length > 0 ? collectionType.getGenericTypes()[0] : ImmutableDataType.of(Object.class);
-            List<ValueResolver> resolvers = new LinkedList<>();
-
-            for (Element item : DomUtils.getChildElementsByTagName(collectionElement, childElementName))
+            DataQualifierVisitor visitor = new BaseDataQualifierVisitor()
             {
-                String value = item.getAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE);
-                resolvers.add(getResolverFromValue(value, itemsType));
-            }
+                @Override
+                public void onPojo()
+                {
+                    resolvers.add(new ObjectBuilderValueResolver(recursePojoProperties(itemsType.getRawType(), item)));
+                }
 
-            return CollectionValueResolver.of((Class<? extends Collection>) collectionType.getRawType(), resolvers);
+                @Override
+                protected void defaultOperation()
+                {
+                    String value = item.getAttribute(SchemaConstants.ATTRIBUTE_NAME_VALUE);
+                    resolvers.add(getResolverFromValue(value, itemsType));
+                }
+            };
+
+            itemsType.getQualifier().accept(visitor);
         }
 
-        return new StaticValueResolver(null);
+        return CollectionValueResolver.of((Class<? extends Collection>) collectionType.getRawType(), resolvers);
     }
 
     private ValueResolver parseCollection(Element element,
@@ -106,7 +115,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
             Element collectionElement = DomUtils.getChildElementByTagName(element, parentElementName);
             if (collectionElement != null)
             {
-                resolver = parseCollectionAsInnerElement(collectionElement, parentElementName, childElementName, collectionDataType);
+                resolver = parseCollectionAsInnerElement(collectionElement, childElementName, collectionDataType);
             }
             else
             {
@@ -129,28 +138,45 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
                : defaultValue;
     }
 
-    private ValueResolver getResolverFromValue(Object value, DataType expectedDataType)
+    private ValueResolver getResolverFromValue(final Object value, final DataType expectedDataType)
     {
         if (isExpression(value, parser))
         {
             return new EvaluateAndTransformValueResolver(value, expectedDataType);
         }
-        else if (value != null)
+
+        if (value != null)
         {
-            // if it's a simple type
-            if (conversionService.canConvert(value.getClass(), expectedDataType.getRawType()))
+            final ValueHolder<ValueResolver> resolverValueHolder = new ValueHolder<>();
+            DataQualifierVisitor visitor = new SimpleTypeDataQualifierVisitor()
             {
-                return new StaticValueResolver(conversionService.convert(value, expectedDataType.getRawType()));
-            }
-            else
-            {
-                return new CachingValueResolverWrapper(new RegistryLookupValueResolver(value.toString()));
-            }
+
+                @Override
+                protected void onSimpleType()
+                {
+                    if (conversionService.canConvert(value.getClass(), expectedDataType.getRawType()))
+                    {
+                        resolverValueHolder.set(new StaticValueResolver(conversionService.convert(value, expectedDataType.getRawType())));
+                    }
+                    else
+                    {
+                        defaultOperation();
+
+                    }
+                }
+
+                @Override
+                protected void defaultOperation()
+                {
+                    resolverValueHolder.set(new CachingValueResolverWrapper(new RegistryLookupValueResolver(value.toString())));
+                }
+            };
+
+            expectedDataType.getQualifier().accept(visitor);
+            return resolverValueHolder.get();
         }
-        else
-        {
-            return new StaticValueResolver(null);
-        }
+
+        return null;
     }
 
     /**
@@ -164,7 +190,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
      * @return a {@link org.springframework.beans.factory.config.BeanDefinition} if the bean could be parsed, {@code null}
      * if the bean is not present on the XML definition
      */
-    private ValueResolver parseBean(Element element,
+    private ValueResolver parsePojo(Element element,
                                     String fieldName,
                                     String parentElementName,
                                     DataType pojoType,
@@ -184,10 +210,10 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
             return new StaticValueResolver(null);
         }
 
-        return new ObjectBuilderValueResolver(recurseBeanProperties(pojoType.getRawType(), element));
+        return new ObjectBuilderValueResolver(recursePojoProperties(pojoType.getRawType(), element));
     }
 
-    private ObjectBuilder recurseBeanProperties(Class<?> declaringClass, Element element)
+    private ObjectBuilder recursePojoProperties(Class<?> declaringClass, Element element)
     {
         ObjectBuilder builder = new DefaultObjectBuilder();
         builder.setPrototypeClass(declaringClass);
@@ -212,7 +238,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
                 Element childElement = DomUtils.getChildElementByTagName(element, parameterName);
                 if (childElement != null)
                 {
-                    ObjectBuilder childBuilder = recurseBeanProperties(dataType.getRawType(), childElement);
+                    ObjectBuilder childBuilder = recursePojoProperties(dataType.getRawType(), childElement);
                     resolver = new ObjectBuilderValueResolver(childBuilder);
                 }
             }
@@ -287,7 +313,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
 
-        return new StaticValueResolver(date);
+        return new StaticValueResolver(calendar);
     }
 
     private ValueResolver parseDate(Element element, String attributeName, DataType dataType, Object defaultValue)
@@ -347,7 +373,7 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
             @Override
             public void onPojo()
             {
-                resolverReference.set(parseBean(element, fieldName, hyphenizedFieldName, dataType, defaultValue));
+                resolverReference.set(parsePojo(element, fieldName, hyphenizedFieldName, dataType, defaultValue));
             }
 
             @Override

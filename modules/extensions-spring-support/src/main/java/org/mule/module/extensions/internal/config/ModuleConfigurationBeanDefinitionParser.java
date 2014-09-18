@@ -8,8 +8,7 @@ package org.mule.module.extensions.internal.config;
 
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.module.extensions.internal.runtime.resolver.CachingValueResolverWrapper;
-import org.mule.module.extensions.internal.runtime.resolver.ObjectBuilderValueResolver;
+import org.mule.module.extensions.internal.runtime.resolver.ModuleValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -27,13 +26,12 @@ public class ModuleConfigurationBeanDefinitionParser extends ExtensionConfigurat
     @Override
     protected void doParse(Element element, BeanDefinitionBuilder builder, ParserContext parserContext)
     {
-        ValueResolver resolver = new ObjectBuilderValueResolver(getObjectBuilder(element));
-        builder.addConstructorArgValue(resolver);
+        builder.addConstructorArgValue(getObjectBuilder(element));
     }
 
     @Override
     protected Class<? extends ValueResolver> getResolverClass()
     {
-        return CachingValueResolverWrapper.class;
+        return ModuleValueResolver.class;
     }
 }

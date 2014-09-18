@@ -10,7 +10,7 @@
 
     <heisenberg:config name="heisenberg"
                        myName="Heisenberg"
-                       age="51"
+                       age="50"
                        cancer="true"
                        dateOfBirth="1959-09-07T00:00:00"
                        dateOfDeath="2011-09-07T00:00:00-05:00"
@@ -44,7 +44,7 @@
     </heisenberg:config>
 
     <spring:beans>
-        <util:map id="recipes">
+        <util:map id="recipes" value-type="java.lang.Long">
             <spring:entry key="methylamine" value="75"/>
             <spring:entry key="pseudoephedrine" value="0"/>
             <spring:entry key="P2P" value="25"/>

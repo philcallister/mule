@@ -6,11 +6,12 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import org.mule.VoidMuleEvent;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.Ricin;
@@ -25,7 +26,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-public class ExtensionsDefinitionParserTestCase extends ExtensionsFunctionalTestCase
+public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
 {
 
     private static final String HEISENBERG_NAME = "heisenberg";
@@ -56,15 +57,19 @@ public class ExtensionsDefinitionParserTestCase extends ExtensionsFunctionalTest
     @Test
     public void heisenbergConfig() throws Exception
     {
-        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(HEISENBERG_NAME);
-        assertHeisenbergConfig((HeisenbergExtension) heisenbergResolver.resolve(VoidMuleEvent.getInstance()));
+        lookupHeisenbergAndAssert(HEISENBERG_NAME);
     }
 
     @Test
     public void heisenbergByRef() throws Exception
     {
-        HeisenbergExtension heisenberg = muleContext.getRegistry().lookupObject(HEISENBERG_BYREF);
-        assertHeisenbergConfig(heisenberg);
+        lookupHeisenbergAndAssert(HEISENBERG_BYREF);
+    }
+
+    private void lookupHeisenbergAndAssert(String key) throws Exception
+    {
+        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(key);
+        assertHeisenbergConfig((HeisenbergExtension) heisenbergResolver.resolve(getTestEvent("")));
     }
 
     private void assertHeisenbergConfig(HeisenbergExtension heisenberg)
@@ -115,6 +120,7 @@ public class ExtensionsDefinitionParserTestCase extends ExtensionsFunctionalTest
         assertEquals(Integer.valueOf(HeisenbergExtension.AGE), heisenberg.getAge());
 
         List<String> enemies = heisenberg.getEnemies();
+        assertThat(enemies, notNullValue());
         assertEquals(2, enemies.size());
         assertEquals("Gustavo Fring", enemies.get(0));
         assertEquals("Hank", enemies.get(1));

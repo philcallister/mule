@@ -8,6 +8,12 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
+import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
+import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 
 import com.google.common.collect.ImmutableList;
 
@@ -15,8 +21,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public abstract class CollectionValueResolver implements ValueResolver
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public abstract class CollectionValueResolver implements ValueResolver, Lifecycle
 {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final List<ValueResolver> resolvers;
 
@@ -45,6 +55,46 @@ public abstract class CollectionValueResolver implements ValueResolver
         return collection;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDynamic()
+    {
+        for (ValueResolver resolver : resolvers)
+        {
+            if (resolver.isDynamic())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected abstract Collection<Object> instantiateCollection(int resolversCount);
+
+    @Override
+    public void initialise() throws InitialisationException
+    {
+        LifecycleUtils.initialiseIfNeeded(resolvers.toArray());
+    }
+
+    @Override
+    public void start() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, resolvers.toArray());
+    }
+
+    @Override
+    public void stop() throws MuleException
+    {
+        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, resolvers.toArray());
+    }
+
+    @Override
+    public void dispose()
+    {
+        LifecycleUtils.disposeIfNeeded(logger, resolvers.toArray());
+    }
 
 }

@@ -6,13 +6,12 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import org.mule.api.MuleEvent;
-
-public interface ValueResolver
+abstract class AbstractDynamicValueResolver implements ValueResolver
 {
 
-    Object resolve(MuleEvent event) throws Exception;
-
-    boolean isDynamic();
-
+    @Override
+    public boolean isDynamic()
+    {
+        return true;
+    }
 }

@@ -8,7 +8,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleEvent;
 
-public class RegistryLookupValueResolver implements ValueResolver
+public class RegistryLookupValueResolver extends AbstractDynamicValueResolver
 {
 
     private final String key;
