@@ -45,7 +45,6 @@ public final class SchemaConstants
     public static final String ATTRIBUTE_DESCRIPTION_CONFIG = "Specify which configuration to use for this invocation.";
     public static final String ATTRIBUTE_NAME_VALUE = "value";
     public static final String ENUM_TYPE_SUFFIX = "EnumType";
-    public static final String BASE_TYPE_SUFFIX = "_BaseType";
     public static final String TYPE_SUFFIX = "Type";
     public static final String UNBOUNDED = "unbounded";
     public static final String LAX = "lax";

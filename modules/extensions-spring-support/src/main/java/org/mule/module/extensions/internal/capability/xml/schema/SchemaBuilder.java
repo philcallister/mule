@@ -302,7 +302,7 @@ public class SchemaBuilder
 
     private String getBaseTypeName(DataType type)
     {
-        return type.getName() + SchemaConstants.BASE_TYPE_SUFFIX;
+        return type.getName();
     }
 
     private TopLevelComplexType registerBasePojoType(DataType type, String description)
@@ -310,28 +310,18 @@ public class SchemaBuilder
         final TopLevelComplexType complexType = new TopLevelComplexType();
         registeredComplexTypesHolders.put(type, new ComplexTypeHolder(complexType, type));
 
-        complexType.setName(getBaseTypeName(type));
+        complexType.setName(type.getName());
+        complexType.setAnnotation(createDocAnnotation(description));
+
+        ComplexContent complexContent = new ComplexContent();
+        complexType.setComplexContent(complexContent);
+
+        final ExtensionType extension = new ExtensionType();
+        extension.setBase(SchemaConstants.MULE_ABSTRACT_EXTENSION_TYPE);
+        complexContent.setExtension(extension);
 
         final ExplicitGroup all = new ExplicitGroup();
-
-        DataType superclass = type.getSuperclass();
-        if (superclass != null)
-        {
-            String superClassName = registerPojoType(superclass, description);
-            ComplexContent complexContent = new ComplexContent();
-            complexType.setComplexContent(complexContent);
-            complexType.getComplexContent().setExtension(new ExtensionType());
-            complexType.getComplexContent().getExtension().setBase(
-                    new QName(schema.getTargetNamespace(), superClassName)
-            ); // base to the element type
-            complexContent.getExtension().setSequence(all);
-        }
-        else
-        {
-            complexType.setSequence(all);
-        }
-
-        complexType.setAnnotation(createDocAnnotation(description));
+        extension.setSequence(all);
 
         for (Map.Entry<Method, DataType> entry : IntrospectionUtils.getSettersDataTypes(type.getRawType()).entrySet())
         {
@@ -371,7 +361,7 @@ public class SchemaBuilder
                 protected void defaultOperation()
                 {
                     Attribute attribute = createAttribute(name, methodType, required, dynamic);
-                    complexType.getAttributeOrAttributeGroup().add(attribute);
+                    extension.getAttributeOrAttributeGroup().add(attribute);
                 }
             });
         }
