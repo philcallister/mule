@@ -10,5 +10,4 @@ dependencies {
     testCompile project(path: ':core', configuration: 'testFixtures')
 }
 
-
-
+exportTestFixture project

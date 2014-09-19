@@ -29,10 +29,10 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.xml.dtm.ref.DTMNodeList;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import static org.junit.Assert.assertEquals;
@@ -187,7 +187,7 @@ public class XPathExtractorTestCase extends AbstractMuleContextTestCase
         final Object objResult = extractor.transform(doc);
         assertNotNull(objResult);
 
-        final DTMNodeList result = (DTMNodeList)objResult;
+        final NodeList result = (NodeList)objResult;
         assertEquals("Wrong value extracted.", "node2", result.item(0).getNodeName());
     }
 
