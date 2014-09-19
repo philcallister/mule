@@ -6,6 +6,7 @@ dependencies {
     compile project(':modules:spring-config'),
         "org.springframework:spring-jdbc:$springVersion",
         "org.springframework:spring-jms:$springVersion",
+        "org.springframework:spring-web:$springVersion",
         "org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1"
 
     testCompile project(":tests:functional"),

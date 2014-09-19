@@ -140,6 +140,25 @@ public class MuleManifest
         return manifest;
     }
 
+    /**
+     * To be used only for testing, to provide a custom manifest
+     */
+    public static synchronized void initializeManifest(URL manifestUrl)
+    {
+        manifest = new Manifest();
+
+        try(InputStream is = manifestUrl.openStream())
+        {
+            manifest.read(is);
+        }
+        catch (IOException e)
+        {
+            logger.warn("Failed to read manifest Info, Manifest information will not display correctly: "
+                        + e.getMessage());
+        }
+
+    }
+
     protected static String getManifestProperty(String name)
     {
         return getManifest().getMainAttributes().getValue(new Attributes.Name(name));
