@@ -13,7 +13,6 @@ import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
-import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +24,18 @@ public class ModuleValueResolver extends ConfigurationValueResolver
 
     private ValueResolver resolver;
 
-    public ModuleValueResolver(ObjectBuilder objectBuilder)
+    public ModuleValueResolver(String name, Class<?> moduleClass, ResolverSet resolverSet)
     {
-        resolver = new ObjectBuilderValueResolver(objectBuilder);
+        super(name);
+
+        if (resolverSet.isDynamic())
+        {
+            // TODO: add resolver which caches based on ResolverSetResult instances
+        }
+        else
+        {
+            resolver = new ObjectBuilderValueResolver(resolverSet.toObjectBuilderOf(moduleClass));
+        }
     }
 
     @Override

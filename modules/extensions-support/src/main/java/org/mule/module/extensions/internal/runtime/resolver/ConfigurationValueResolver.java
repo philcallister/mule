@@ -7,13 +7,20 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleContext;
+import org.mule.api.NamedObject;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Lifecycle;
 
-abstract class ConfigurationValueResolver implements ValueResolver, MuleContextAware, Lifecycle
+abstract class ConfigurationValueResolver implements ValueResolver, MuleContextAware, Lifecycle, NamedObject
 {
 
+    private final String name;
     protected MuleContext muleContext;
+
+    ConfigurationValueResolver(String name)
+    {
+        this.name = name;
+    }
 
     protected void injectMuleContextIfNeeded(Object configuration)
     {
@@ -21,6 +28,12 @@ abstract class ConfigurationValueResolver implements ValueResolver, MuleContextA
         {
             ((MuleContextAware) configuration).setMuleContext(muleContext);
         }
+    }
+
+    @Override
+    public String getName()
+    {
+        return name;
     }
 
     @Override

@@ -10,8 +10,7 @@ import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
-import org.mule.module.extensions.internal.runtime.ObjectBuilder;
+import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -35,7 +34,7 @@ abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanD
 {
 
     private final Extension extension;
-    private final ExtensionConfiguration configuration;
+    protected final ExtensionConfiguration configuration;
 
     public ExtensionConfigurationBeanDefinitionParser(Extension extension, ExtensionConfiguration configuration)
     {
@@ -46,10 +45,10 @@ abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanD
     @Override
     public final BeanDefinition parse(Element element, ParserContext parserContext)
     {
-        parseConfigName(element);
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(getResolverClass());
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
         applyLifecycle(builder, configuration.getDeclaringClass());
+        parseConfigName(element, builder);
 
         doParse(element, builder, parserContext);
 
@@ -63,23 +62,22 @@ abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanD
 
     protected abstract void doParse(Element element, BeanDefinitionBuilder builder, ParserContext parserContext);
 
-    protected ObjectBuilder getObjectBuilder(Element element) {
-        ObjectBuilder builder = new DefaultObjectBuilder();
-        builder.setPrototypeClass(configuration.getDeclaringClass());
+    protected ResolverSet getResolverSet(Element element)
+    {
+        ResolverSet resolverSet = new ResolverSet();
 
         for (ExtensionParameter parameter : configuration.getParameters())
         {
-            builder.addProperty(parameter, parseParameter(element, parameter));
+            resolverSet.add(parameter, parseParameter(element, parameter));
         }
 
-        return builder;
+        return resolverSet;
     }
 
-    private void parseConfigName(Element element)
+    private void parseConfigName(Element element, BeanDefinitionBuilder builder)
     {
-        if (hasAttribute(element, "name"))
-        {
-            element.setAttribute("name", AutoIdUtils.getUniqueName(element, "mule-bean"));
-        }
+        String name = AutoIdUtils.getUniqueName(element, "mule-bean");
+        element.setAttribute("name", name);
+        builder.addConstructorArgValue(name);
     }
 }

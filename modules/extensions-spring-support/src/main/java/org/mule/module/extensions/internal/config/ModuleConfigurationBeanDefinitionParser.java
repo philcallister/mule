@@ -26,7 +26,8 @@ public class ModuleConfigurationBeanDefinitionParser extends ExtensionConfigurat
     @Override
     protected void doParse(Element element, BeanDefinitionBuilder builder, ParserContext parserContext)
     {
-        builder.addConstructorArgValue(getObjectBuilder(element));
+        builder.addConstructorArgValue(configuration.getDeclaringClass());
+        builder.addConstructorArgValue(getResolverSet(element));
     }
 
     @Override
