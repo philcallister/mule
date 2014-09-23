@@ -43,6 +43,43 @@
                        candidateDoors="candidateDoors">
     </heisenberg:config>
 
+    <heisenberg:config name="expressionHeisenberg"
+                       myName="#[myName]"
+                       age="#[age]"
+                       cancer="#[true]"
+                       dateOfBirth="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfBirth().getTime()]"
+                       dateOfDeath="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfDeath()]"
+                       money="#[money]"
+                       recipe="#[app.registry.recipes]"
+                       candidateDoors="#[app.registry.candidateDoors]">
+        <heisenberg:enemies>
+            <heisenberg:enemy value="#[gustavoFring]"/>
+            <heisenberg:enemy value="#[hank]"/>
+        </heisenberg:enemies>
+        <heisenberg:ricin-packs>
+            <heisenberg:ricin-pack microgramsPerKilo="#[microgramsPerKilo]">
+                <heisenberg:destination victim="#[lidia]" address="#[steviaCoffeShop]"/>
+            </heisenberg:ricin-pack>
+        </heisenberg:ricin-packs>
+        <heisenberg:next-door address="#[pollosHermanos]" victim="#[gustavoFring]">
+            <heisenberg:previous victim="#[krazy8]" address="#[jesses]"/>
+        </heisenberg:next-door>
+    </heisenberg:config>
+
+    <heisenberg:config name="expressionHeisenbergByRef"
+                       myName="#[myName]"
+                       age="#[age]"
+                       cancer="#[true]"
+                       dateOfBirth="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfBirth().getTime()]"
+                       dateOfDeath="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfDeath()]"
+                       money="#[money]"
+                       recipe="#[app.registry.recipes]"
+                       candidateDoors="#[app.registry.candidateDoors]"
+                       enemies="#[app.registry.enemies]"
+                       ricinPacks="#[app.registry.ricinPacks]"
+                       nextDoor="#[app.registry.door]">
+    </heisenberg:config>
+
     <spring:beans>
         <util:map id="recipes" value-type="java.lang.Long">
             <spring:entry key="methylamine" value="75"/>

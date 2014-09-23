@@ -14,6 +14,7 @@ import org.mule.extensions.introspection.api.Described;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
 import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.util.TemplateParser;
 
 import com.google.common.base.Joiner;
@@ -177,6 +178,18 @@ public final class MuleExtensionUtils
 
             throw new IllegalArgumentException(message.toString());
         }
+    }
+
+    public static boolean hasAnyDynamic(Iterable<ValueResolver> resolvers)
+    {
+        for (ValueResolver resolver : resolvers)
+        {
+            if (resolver.isDynamic())
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isSimpleExpression(String expression, TemplateParser parser)

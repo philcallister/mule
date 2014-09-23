@@ -12,6 +12,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
+import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.lifecycle.LifecycleUtils;
@@ -19,6 +20,7 @@ import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
 import org.mule.api.transformer.MessageTransformer;
 import org.mule.api.transformer.Transformer;
+import org.mule.api.transformer.TransformerException;
 import org.mule.extensions.introspection.api.DataType;
 import org.mule.transformer.types.DataTypeFactory;
 import org.mule.util.TemplateParser;
@@ -71,7 +73,17 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
 
         org.mule.api.transformer.DataType sourceDataType = DataTypeFactory.create(object.getClass());
         org.mule.api.transformer.DataType targetDataType = DataTypeFactory.create((Class) expectedClass);
-        Transformer transformer = muleContext.getRegistry().lookupTransformer(sourceDataType, targetDataType);
+
+        Transformer transformer;
+        try
+        {
+            transformer = muleContext.getRegistry().lookupTransformer(sourceDataType, targetDataType);
+        }
+        catch (TransformerException e)
+        {
+            // no transformer found. Return the object we have and let's hope for the best
+            return object;
+        }
 
         if (transformer != null)
         {
@@ -95,25 +107,34 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
                    ? new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage())
                    : new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
 
-        LifecycleUtils.initialiseIfNeeded(delegate);
+        if (delegate instanceof Initialisable)
+        {
+            ((Initialisable) delegate).initialise();
+        }
     }
 
     @Override
     public void start() throws MuleException
     {
-        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, delegate);
+        if (delegate instanceof Startable)
+        {
+            ((Startable) delegate).start();
+        }
     }
 
     @Override
     public void stop() throws MuleException
     {
-        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, delegate);
+        if (delegate instanceof Stoppable)
+        {
+            ((Stoppable) delegate).stop();
+        }
     }
 
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(LOGGER, delegate);
+        LifecycleUtils.disposeIfNeeded(delegate, LOGGER);
     }
 
     @Override

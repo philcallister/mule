@@ -7,9 +7,18 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
+import org.mule.api.lifecycle.Disposable;
+import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Stoppable;
 
-public class CachingValueResolverWrapper implements ValueResolver
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CachingValueResolverWrapper implements ValueResolver, Stoppable, Disposable
 {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachingValueResolverWrapper.class);
 
     private final ValueResolver delegate;
     private Object value;
@@ -37,5 +46,19 @@ public class CachingValueResolverWrapper implements ValueResolver
     public boolean isDynamic()
     {
         return false;
+    }
+
+    @Override
+    public void stop() throws MuleException
+    {
+        LifecycleUtils.stopIfNeeded(value);
+        LifecycleUtils.stopIfNeeded(delegate);
+    }
+
+    @Override
+    public void dispose()
+    {
+        LifecycleUtils.disposeIfNeeded(value, LOGGER);
+        LifecycleUtils.disposeIfNeeded(delegate, LOGGER);
     }
 }

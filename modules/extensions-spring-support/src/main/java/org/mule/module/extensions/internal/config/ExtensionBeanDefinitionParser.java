@@ -252,19 +252,6 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
         return builder;
     }
 
-    protected void applyLifecycle(BeanDefinitionBuilder builder, Class declaringClass)
-    {
-        if (Initialisable.class.isAssignableFrom(declaringClass))
-        {
-            builder.setInitMethodName(Initialisable.PHASE_NAME);
-        }
-
-        if (Disposable.class.isAssignableFrom(declaringClass))
-        {
-            builder.setDestroyMethodName(Disposable.PHASE_NAME);
-        }
-    }
-
     private Date doParseDate(Element element,
                              String attributeName,
                              String parseFormat,
@@ -298,6 +285,20 @@ abstract class ExtensionBeanDefinitionParser implements BeanDefinitionParser
 
         throw new IllegalArgumentException(
                 String.format("Could not transform value of type '%s' to Date", value != null ? value.getClass().getName() : "null"));
+    }
+
+    protected void applyLifecycle(BeanDefinitionBuilder builder)
+    {
+        Class<?> declaringClass = builder.getBeanDefinition().getBeanClass();
+        if (Initialisable.class.isAssignableFrom(declaringClass))
+        {
+            builder.setInitMethodName(Initialisable.PHASE_NAME);
+        }
+
+        if (Disposable.class.isAssignableFrom(declaringClass))
+        {
+            builder.setDestroyMethodName(Disposable.PHASE_NAME);
+        }
     }
 
 

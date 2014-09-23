@@ -6,20 +6,76 @@
  */
 package org.mule.api.lifecycle;
 
-import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleException;
-import org.mule.util.ArrayUtils;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 
 public abstract class LifecycleUtils
 {
 
-    public static void applyPhaseIfNeeded(String phase, Object... objects) throws MuleException
+    public static void initialiseIfNeeded(Collection<? extends Object> objects) throws InitialisationException
     {
-        checkArgument(!StringUtils.isBlank(phase), "phase cannot be blank");
-        if (ArrayUtils.isEmpty(objects))
+        try
+        {
+            doApplyPhase(Initialisable.PHASE_NAME, objects, null);
+        }
+        catch (MuleException e)
+        {
+            throw (InitialisationException) e;
+        }
+    }
+
+    public static void startIfNeeded(Collection<? extends Object> objects) throws MuleException
+    {
+        doApplyPhase(Startable.PHASE_NAME, objects, null);
+    }
+
+    public static void stopIfNeeded(Collection<? extends Object> objects) throws MuleException
+    {
+        doApplyPhase(Stoppable.PHASE_NAME, objects, null);
+    }
+
+    public static void stopIfNeeded(Object object) throws MuleException
+    {
+        doApplyPhase(Stoppable.PHASE_NAME, Arrays.asList(object), null);
+    }
+
+    public static void stopIfNeeded(Collection<Object> objects, Logger logger)
+    {
+        try
+        {
+            doApplyPhase(Stoppable.PHASE_NAME, objects, logger);
+        }
+        catch (MuleException e)
+        {
+            logger.error("Exception found trying to stop objects. Shutdown will continue", e);
+        }
+    }
+
+    public static void disposeIfNeeded(Object object, Logger logger)
+    {
+        disposeIfNeeded(Arrays.asList(object), logger);
+    }
+
+    public static void disposeIfNeeded(Collection<Object> objects, Logger logger)
+    {
+        try
+        {
+            doApplyPhase(Disposable.PHASE_NAME, objects, logger);
+        }
+        catch (MuleException e)
+        {
+            logger.error("Exception found trying to dispose object. Shutdown will continue", e);
+        }
+    }
+
+    private static void doApplyPhase(String phase, Collection<? extends Object> objects, Logger logger) throws MuleException
+    {
+        if (CollectionUtils.isEmpty(objects))
         {
             return;
         }
@@ -31,67 +87,36 @@ public abstract class LifecycleUtils
                 continue;
             }
 
-            if (Initialisable.PHASE_NAME.equals(phase))
+            try
             {
-                if (object instanceof Initialisable)
+                if (Initialisable.PHASE_NAME.equals(phase) && object instanceof Initialisable)
                 {
                     ((Initialisable) object).initialise();
                 }
-            }
-            else if (Startable.PHASE_NAME.equals(phase))
-            {
-                if (object instanceof Startable)
+                else if (Startable.PHASE_NAME.equals(phase) && object instanceof Startable)
                 {
                     ((Startable) object).start();
                 }
-            }
-            else if (Stoppable.PHASE_NAME.equals(phase))
-            {
-                if (object instanceof Stoppable)
+                else if (Stoppable.PHASE_NAME.equals(phase) && object instanceof Stoppable)
                 {
                     ((Stoppable) object).stop();
                 }
-            }
-            else if (Disposable.PHASE_NAME.equals(phase))
-            {
-                if (object instanceof Disposable)
+                else if (Disposable.PHASE_NAME.equals(phase) && object instanceof Disposable)
                 {
                     ((Disposable) object).dispose();
                 }
             }
-            else
+            catch (MuleException e)
             {
-                throw new IllegalArgumentException("Unknown phase " + phase);
+                if (logger != null)
+                {
+                    logger.error(String.format("Could not apply phase %s on object of class %s", phase, object.getClass().getName()), e);
+                }
+                else
+                {
+                    throw e;
+                }
             }
-
-        }
-    }
-
-    public static void initialiseIfNeeded(Object... objects) throws InitialisationException
-    {
-        if (ArrayUtils.isEmpty(objects))
-        {
-            return;
-        }
-
-        for (Object object : objects)
-        {
-            if (object instanceof Initialisable)
-            {
-                ((Initialisable) object).initialise();
-            }
-        }
-    }
-
-    public static void disposeIfNeeded(Logger logger, Object... objects)
-    {
-        try
-        {
-            applyPhaseIfNeeded(Disposable.PHASE_NAME, objects);
-        }
-        catch (Exception e)
-        {
-            logger.error("Found exception trying to dispose. Shutdown will continue", e);
         }
     }
 }

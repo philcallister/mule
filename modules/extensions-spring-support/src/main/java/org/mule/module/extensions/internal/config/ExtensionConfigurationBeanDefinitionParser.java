@@ -47,7 +47,7 @@ abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanD
     {
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(getResolverClass());
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
-        applyLifecycle(builder, configuration.getDeclaringClass());
+        applyLifecycle(builder);
         parseConfigName(element, builder);
 
         doParse(element, builder, parserContext);

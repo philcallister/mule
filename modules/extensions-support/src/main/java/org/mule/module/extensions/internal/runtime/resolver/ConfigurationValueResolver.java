@@ -7,9 +7,12 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleContext;
+import org.mule.api.MuleException;
 import org.mule.api.NamedObject;
 import org.mule.api.context.MuleContextAware;
+import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.Lifecycle;
+import org.mule.api.lifecycle.Startable;
 
 abstract class ConfigurationValueResolver implements ValueResolver, MuleContextAware, Lifecycle, NamedObject
 {
@@ -27,6 +30,20 @@ abstract class ConfigurationValueResolver implements ValueResolver, MuleContextA
         if (configuration instanceof MuleContextAware)
         {
             ((MuleContextAware) configuration).setMuleContext(muleContext);
+        }
+    }
+
+    protected void applyInitialLifeCycle(Object configuration) throws MuleException
+    {
+        injectMuleContextIfNeeded(configuration);
+        if (configuration instanceof Initialisable)
+        {
+            ((Initialisable) configuration).initialise();
+        }
+
+        if (configuration instanceof Startable)
+        {
+            ((Startable) configuration).start();
         }
     }
 

@@ -6,25 +6,81 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
+import org.mule.VoidMuleEvent;
 import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
+import org.mule.module.extensions.internal.runtime.ObjectBuilder;
+import org.mule.module.extensions.internal.util.IntrospectionUtils;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 
 public class ResolverSetResult
 {
 
-    private Map<ExtensionParameter, Object> evaluationResult;
+    public static class Builder
+    {
 
-    public ResolverSetResult(Map<ExtensionParameter, Object> evaluationResult)
+        private int hashCode = 1;
+        private ImmutableMap.Builder<ExtensionParameter, Object> values = ImmutableMap.builder();
+
+        private Builder()
+        {
+        }
+
+        public Builder add(ExtensionParameter parameter, Object value)
+        {
+            values.put(parameter, value);
+            hashCode = 31 * hashCode + (value == null ? 0 : value.hashCode());
+            return this;
+        }
+
+        public ResolverSetResult build()
+        {
+            return new ResolverSetResult(values.build(), hashCode);
+        }
+
+    }
+
+    public static Builder newBuilder()
+    {
+        return new Builder();
+    }
+
+    private final Map<ExtensionParameter, Object> evaluationResult;
+    private final int hashCode;
+
+    private ResolverSetResult(Map<ExtensionParameter, Object> evaluationResult, int hashCode)
     {
         this.evaluationResult = evaluationResult;
+        this.hashCode = hashCode;
     }
 
     public Object get(ExtensionParameter parameter)
     {
         return evaluationResult.get(parameter);
+    }
+
+    public Map<ExtensionParameter, Object> getValues()
+    {
+        return evaluationResult;
+    }
+
+    public <T> T toInstanceOf(Class<T> prototypeClass) throws Exception
+    {
+        ObjectBuilder objectBuilder = new DefaultObjectBuilder();
+        objectBuilder.setPrototypeClass(prototypeClass);
+
+        for (Map.Entry<ExtensionParameter, Object> entry : evaluationResult.entrySet())
+        {
+            Method setter = IntrospectionUtils.getSetter(prototypeClass, entry.getKey());
+            objectBuilder.addProperty(setter, new StaticValueResolver(entry.getValue()));
+        }
+
+        return (T) objectBuilder.build(VoidMuleEvent.getInstance());
     }
 
     @Override
@@ -51,13 +107,6 @@ public class ResolverSetResult
     @Override
     public int hashCode()
     {
-        int result = 1;
-
-        for (Object value : evaluationResult.values())
-        {
-            result = 31 * result + (value == null ? 0 : value.hashCode());
-        }
-
-        return result;
+        return hashCode;
     }
 }

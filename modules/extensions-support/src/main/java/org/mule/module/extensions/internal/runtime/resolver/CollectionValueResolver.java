@@ -7,13 +7,14 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
+import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.lifecycle.LifecycleUtils;
-import org.mule.api.lifecycle.Startable;
-import org.mule.api.lifecycle.Stoppable;
+import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import com.google.common.collect.ImmutableList;
 
@@ -24,11 +25,13 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class CollectionValueResolver implements ValueResolver, Lifecycle
+public abstract class CollectionValueResolver implements ValueResolver, Lifecycle, MuleContextAware
 {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     private final List<ValueResolver> resolvers;
+    private MuleContext muleContext;
 
     public static CollectionValueResolver of(Class<? extends Collection> collectionType, List<ValueResolver> resolvers)
     {
@@ -61,14 +64,7 @@ public abstract class CollectionValueResolver implements ValueResolver, Lifecycl
     @Override
     public boolean isDynamic()
     {
-        for (ValueResolver resolver : resolvers)
-        {
-            if (resolver.isDynamic())
-            {
-                return true;
-            }
-        }
-        return false;
+        return MuleExtensionUtils.hasAnyDynamic(resolvers);
     }
 
     protected abstract Collection<Object> instantiateCollection(int resolversCount);
@@ -76,25 +72,38 @@ public abstract class CollectionValueResolver implements ValueResolver, Lifecycl
     @Override
     public void initialise() throws InitialisationException
     {
-        LifecycleUtils.initialiseIfNeeded(resolvers.toArray());
+        for (ValueResolver resolver : resolvers)
+        {
+            if (resolver instanceof MuleContextAware)
+            {
+                ((MuleContextAware) resolver).setMuleContext(muleContext);
+            }
+        }
+
+        LifecycleUtils.initialiseIfNeeded(resolvers);
     }
 
     @Override
     public void start() throws MuleException
     {
-        LifecycleUtils.applyPhaseIfNeeded(Startable.PHASE_NAME, resolvers.toArray());
+        LifecycleUtils.startIfNeeded(resolvers);
     }
 
     @Override
     public void stop() throws MuleException
     {
-        LifecycleUtils.applyPhaseIfNeeded(Stoppable.PHASE_NAME, resolvers.toArray());
+        LifecycleUtils.stopIfNeeded(resolvers);
     }
 
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(logger, resolvers.toArray());
+        LifecycleUtils.disposeIfNeeded(resolvers, LOGGER);
     }
 
+    @Override
+    public void setMuleContext(MuleContext context)
+    {
+        muleContext = context;
+    }
 }
