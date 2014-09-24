@@ -8,16 +8,8 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimpleExpression;
 import static org.mule.util.Preconditions.checkArgument;
-import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
-import org.mule.api.MuleException;
-import org.mule.api.context.MuleContextAware;
-import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
-import org.mule.api.lifecycle.Lifecycle;
-import org.mule.api.lifecycle.LifecycleUtils;
-import org.mule.api.lifecycle.Startable;
-import org.mule.api.lifecycle.Stoppable;
 import org.mule.api.transformer.MessageTransformer;
 import org.mule.api.transformer.Transformer;
 import org.mule.api.transformer.TransformerException;
@@ -29,22 +21,19 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResolver implements MuleContextAware, Lifecycle
+public class EvaluateAndTransformValueResolver extends BaseValueResolverWrapper
 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EvaluateAndTransformValueResolver.class);
     private static final TemplateParser PARSER = TemplateParser.createMuleStyleParser();
 
     private final String expression;
     private final DataType expectedType;
-    private ValueResolver delegate;
-    private MuleContext muleContext;
 
     public EvaluateAndTransformValueResolver(String expression, DataType expectedType)
     {
+        super(null);
+
         checkArgument(!StringUtils.isBlank(expression), "Expression cannot be blank or null");
         checkArgument(expectedType != null, "expected type cannot be null");
         this.expression = expression;
@@ -56,6 +45,12 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
     {
         Object evaluated = delegate.resolve(event);
         return evaluated != null ? transform(evaluated, event) : null;
+    }
+
+    @Override
+    public boolean isDynamic()
+    {
+        return true;
     }
 
     private Object transform(Object object, MuleEvent event) throws Exception
@@ -107,39 +102,6 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
                    ? new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage())
                    : new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
 
-        if (delegate instanceof Initialisable)
-        {
-            ((Initialisable) delegate).initialise();
-        }
-    }
-
-    @Override
-    public void start() throws MuleException
-    {
-        if (delegate instanceof Startable)
-        {
-            ((Startable) delegate).start();
-        }
-    }
-
-    @Override
-    public void stop() throws MuleException
-    {
-        if (delegate instanceof Stoppable)
-        {
-            ((Stoppable) delegate).stop();
-        }
-    }
-
-    @Override
-    public void dispose()
-    {
-        LifecycleUtils.disposeIfNeeded(delegate, LOGGER);
-    }
-
-    @Override
-    public void setMuleContext(MuleContext context)
-    {
-        muleContext = context;
+        super.initialise();
     }
 }

@@ -11,14 +11,12 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.Startable;
 
-public class LifecycleValueResolver implements ValueResolver
+public class LifecycleValueResolver extends BaseValueResolverWrapper
 {
-
-    private final ValueResolver delegate;
 
     public LifecycleValueResolver(ValueResolver delegate)
     {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     @Override
@@ -42,11 +40,5 @@ public class LifecycleValueResolver implements ValueResolver
         }
 
         return resolved;
-    }
-
-    @Override
-    public boolean isDynamic()
-    {
-        return delegate.isDynamic();
     }
 }

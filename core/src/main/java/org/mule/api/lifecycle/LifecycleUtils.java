@@ -44,18 +44,6 @@ public abstract class LifecycleUtils
         doApplyPhase(Stoppable.PHASE_NAME, Arrays.asList(object), null);
     }
 
-    public static void stopIfNeeded(Collection<Object> objects, Logger logger)
-    {
-        try
-        {
-            doApplyPhase(Stoppable.PHASE_NAME, objects, logger);
-        }
-        catch (MuleException e)
-        {
-            logger.error("Exception found trying to stop objects. Shutdown will continue", e);
-        }
-    }
-
     public static void disposeIfNeeded(Object object, Logger logger)
     {
         disposeIfNeeded(Arrays.asList(object), logger);

@@ -8,7 +8,11 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
+import org.mule.api.lifecycle.Disposable;
+import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 
 public class ModuleValueResolver extends ConfigurationValueResolver
 {
@@ -47,13 +51,25 @@ public class ModuleValueResolver extends ConfigurationValueResolver
     public void initialise() throws InitialisationException
     {
         injectMuleContextIfNeeded(resolverSet);
+        injectMuleContextIfNeeded(resolver);
         resolverSet.initialise();
+
+        if (resolver instanceof Initialisable)
+        {
+            ((Initialisable) resolver).initialise();
+        }
     }
 
     @Override
     public void start() throws MuleException
     {
         resolverSet.start();
+
+        if (resolver instanceof Startable)
+        {
+            ((Startable) resolver).start();
+        }
+
         resolver = new LifecycleValueResolver(resolver);
 
         if (!resolver.isDynamic())
@@ -65,12 +81,22 @@ public class ModuleValueResolver extends ConfigurationValueResolver
     @Override
     public void stop() throws MuleException
     {
+        if (resolver instanceof Stoppable)
+        {
+            ((Stoppable) resolver).stop();
+        }
+
         resolverSet.stop();
     }
 
     @Override
     public void dispose()
     {
+        if (resolver instanceof Disposable)
+        {
+            ((Disposable) resolver).dispose();
+        }
+
         resolverSet.dispose();
     }
 }

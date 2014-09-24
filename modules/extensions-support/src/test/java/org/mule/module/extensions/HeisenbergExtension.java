@@ -7,8 +7,11 @@
 package org.mule.module.extensions;
 
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
+import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.api.annotation.Configurable;
 import org.mule.extensions.api.annotation.Extension;
@@ -27,7 +30,7 @@ import java.util.Set;
 
 @Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
 @Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
-public class HeisenbergExtension
+public class HeisenbergExtension implements Lifecycle
 {
 
     public static final String SCHEMA_LOCATION = "http://www.mulesoft.org/schema/mule/extension/heisenberg";
@@ -39,6 +42,11 @@ public class HeisenbergExtension
     public static final String EXTENSION_NAME = "heisenberg";
     public static final String EXTENSION_DESCRIPTION = "My Test Extension just to unit test";
     public static final String EXTENSION_VERSION = "1.0";
+
+    private int initialise = 0;
+    private int start = 0;
+    private int stop;
+    private int dispose = 0;
 
     @Configurable
     @Optional(defaultValue = HEISENBERG)
@@ -127,6 +135,30 @@ public class HeisenbergExtension
     public void hideMethInMessage(MuleMessage message)
     {
         message.setProperty("secretPackage", "meth", PropertyScope.INVOCATION);
+    }
+
+    @Override
+    public void initialise() throws InitialisationException
+    {
+        initialise++;
+    }
+
+    @Override
+    public void start() throws MuleException
+    {
+        start++;
+    }
+
+    @Override
+    public void stop() throws MuleException
+    {
+        stop++;
+    }
+
+    @Override
+    public void dispose()
+    {
+        dispose++;
     }
 
     public String getMyName()
@@ -237,5 +269,25 @@ public class HeisenbergExtension
     public void setCandidateDoors(Map<String, Door> candidateDoors)
     {
         this.candidateDoors = candidateDoors;
+    }
+
+    public int getInitialise()
+    {
+        return initialise;
+    }
+
+    public int getStart()
+    {
+        return start;
+    }
+
+    public int getStop()
+    {
+        return stop;
+    }
+
+    public int getDispose()
+    {
+        return dispose;
     }
 }

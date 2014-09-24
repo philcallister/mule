@@ -42,4 +42,21 @@ public class Door
     {
         this.previous = previous;
     }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Door)
+        {
+            return victim.equals(((Door) obj).victim);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return victim.hashCode();
+    }
 }

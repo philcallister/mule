@@ -7,6 +7,8 @@
 package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.MuleContext;
+import org.mule.api.context.MuleContextAware;
 import org.mule.extensions.introspection.api.Builder;
 import org.mule.extensions.introspection.api.DataQualifier;
 import org.mule.extensions.introspection.api.DataType;
@@ -212,6 +214,17 @@ public final class MuleExtensionUtils
         }
 
         return false;
+    }
+
+    public static void injectMuleContextIfNecessary(Collection<? extends Object> objects, MuleContext muleContext)
+    {
+        for (Object object : objects)
+        {
+            if (object instanceof MuleContextAware)
+            {
+                ((MuleContextAware) object).setMuleContext(muleContext);
+            }
+        }
     }
 
 }

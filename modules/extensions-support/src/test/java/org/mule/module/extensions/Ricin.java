@@ -31,4 +31,21 @@ public class Ricin
     {
         this.destination = destination;
     }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Ricin)
+        {
+            return microgramsPerKilo.equals(((Ricin) obj).microgramsPerKilo);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return microgramsPerKilo.hashCode();
+    }
 }

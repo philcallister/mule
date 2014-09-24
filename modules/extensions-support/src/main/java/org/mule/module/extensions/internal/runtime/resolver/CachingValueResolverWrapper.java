@@ -8,24 +8,16 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.LifecycleUtils;
-import org.mule.api.lifecycle.Stoppable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class CachingValueResolverWrapper implements ValueResolver, Stoppable, Disposable
+public class CachingValueResolverWrapper extends BaseValueResolverWrapper
 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CachingValueResolverWrapper.class);
-
-    private final ValueResolver delegate;
     private Object value;
 
     public CachingValueResolverWrapper(ValueResolver delegate)
     {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     @Override
@@ -52,13 +44,13 @@ public class CachingValueResolverWrapper implements ValueResolver, Stoppable, Di
     public void stop() throws MuleException
     {
         LifecycleUtils.stopIfNeeded(value);
-        LifecycleUtils.stopIfNeeded(delegate);
+        super.stop();
     }
 
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(value, LOGGER);
-        LifecycleUtils.disposeIfNeeded(delegate, LOGGER);
+        LifecycleUtils.disposeIfNeeded(value, logger);
+        super.dispose();
     }
 }

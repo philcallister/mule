@@ -10,6 +10,7 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
 
 import com.google.common.cache.CacheBuilder;
@@ -24,14 +25,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CachedResolverSetValueResolver implements ValueResolver, Stoppable, Disposable
+public class CachedResolverSetValueResolver implements ValueResolver, Startable, Stoppable, Disposable
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedResolverSetValueResolver.class);
 
     private final Class<?> prototypeClass;
     private final ResolverSet resolverSet;
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicBoolean stopped = new AtomicBoolean(true);
 
     private final LoadingCache<ResolverSetResult, Object> cache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)  //TODO: externalize this? make configurable?
@@ -70,10 +71,16 @@ public class CachedResolverSetValueResolver implements ValueResolver, Stoppable,
     }
 
     @Override
+    public void start() throws MuleException
+    {
+        stopped.set(false);
+    }
+
+    @Override
     public void stop() throws MuleException
     {
         stopped.set(true);
-        LifecycleUtils.stopIfNeeded(cache.asMap().values(), LOGGER);
+        LifecycleUtils.stopIfNeeded(cache.asMap().values());
     }
 
     @Override

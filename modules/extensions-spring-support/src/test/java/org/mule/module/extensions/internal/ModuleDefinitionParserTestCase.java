@@ -14,6 +14,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.runners.Parameterized.Parameter;
+import static org.junit.runners.Parameterized.Parameters;
 import org.mule.api.MuleEvent;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HeisenbergExtension;
@@ -22,17 +24,22 @@ import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.tck.junit4.ExtensionsFunctionalTestCase;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
 {
 
-    private static final String HEISENBERG_NAME = "heisenberg";
+    private static final String HEISENBERG_BYNAME = "heisenberg";
     private static final String HEISENBERG_BYREF = "heisenbergByRef";
     private static final String HEISENBERG_EXPRESSION = "expressionHeisenberg";
     private static final String HEISENBERG_EXPRESSION_BYREF = "expressionHeisenbergByRef";
@@ -58,6 +65,17 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
     private static final String SHOPPING_MALL = "Shopping Mall";
     private static final int DEATH_YEAR = 2011;
 
+    @Parameters
+    public static Collection<Object[]> data()
+    {
+        return Arrays.asList(new Object[][] {
+                {HEISENBERG_BYNAME}, {HEISENBERG_BYREF}, {HEISENBERG_EXPRESSION}, {HEISENBERG_EXPRESSION_BYREF}
+        });
+    }
+
+    @Parameter(0)
+    public String testConfig;
+
     @Override
     protected String getConfigFile()
     {
@@ -81,42 +99,39 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
     }
 
     @Test
-    public void heisenbergConfig() throws Exception
+    public void config() throws Exception
     {
-        lookupHeisenbergAndAssert(HEISENBERG_NAME);
-    }
-
-    @Test
-    public void heisenbergByRef() throws Exception
-    {
-        lookupHeisenbergAndAssert(HEISENBERG_BYREF);
-    }
-
-    @Test
-    public void expressionHeisenberg() throws Exception
-    {
-        lookupHeisenbergAndAssert(HEISENBERG_EXPRESSION);
-    }
-
-    @Test
-    public void expressionHeisenbergByRef() throws Exception
-    {
-        lookupHeisenbergAndAssert(HEISENBERG_EXPRESSION_BYREF);
+        HeisenbergExtension heisenberg = lookupHeisenberg(testConfig);
+        assertHeisenbergConfig(heisenberg);
     }
 
     @Test
     public void sameInstanceForEquivalentEvent() throws Exception
     {
-        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(HEISENBERG_EXPRESSION);
+        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(testConfig);
         MuleEvent event = getHeisenbergEvent();
         HeisenbergExtension heisenberg = (HeisenbergExtension) heisenbergResolver.resolve(event);
         assertThat(heisenberg, is(sameInstance(heisenbergResolver.resolve(event))));
     }
 
-    private void lookupHeisenbergAndAssert(String key) throws Exception
+    @Test
+    public void lifeCycle() throws Exception
+    {
+        HeisenbergExtension heisenberg = lookupHeisenberg(testConfig);
+        assertThat(heisenberg.getInitialise(), is(1));
+        assertThat(heisenberg.getStart(), is(1));
+
+        muleContext.stop();
+        assertThat(heisenberg.getStop(), is(1));
+
+        muleContext.dispose();
+        assertThat(heisenberg.getDispose(), is(1));
+    }
+
+    private HeisenbergExtension lookupHeisenberg(String key) throws Exception
     {
         ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(key);
-        assertHeisenbergConfig((HeisenbergExtension) heisenbergResolver.resolve(getHeisenbergEvent()));
+        return (HeisenbergExtension) heisenbergResolver.resolve(getHeisenbergEvent());
     }
 
     private MuleEvent getHeisenbergEvent() throws Exception
