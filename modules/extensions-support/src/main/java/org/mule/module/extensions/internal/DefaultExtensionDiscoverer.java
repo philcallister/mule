@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleRuntimeException;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.extensions.introspection.api.Extension;
@@ -15,7 +16,6 @@ import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder
 import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.util.ClassUtils;
 import org.mule.util.IOUtils;
-import org.mule.util.Preconditions;
 import org.mule.util.StringUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -37,8 +37,8 @@ final class DefaultExtensionDiscoverer implements ExtensionDiscoverer
     @Override
     public List<Extension> discover(ClassLoader classLoader, ExtensionDescriber describer)
     {
-        Preconditions.checkArgument(classLoader != null, "classloader cannot be null");
-        Preconditions.checkArgument(describer != null, "describer cannot be null");
+        checkArgument(classLoader != null, "classloader cannot be null");
+        checkArgument(describer != null, "describer cannot be null");
 
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try

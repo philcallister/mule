@@ -6,11 +6,10 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import org.mule.VoidMuleEvent;
+import static org.mule.util.ClassUtils.instanciateClass;
 import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
-import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -71,16 +70,15 @@ public class ResolverSetResult
 
     public <T> T toInstanceOf(Class<T> prototypeClass) throws Exception
     {
-        ObjectBuilder objectBuilder = new DefaultObjectBuilder();
-        objectBuilder.setPrototypeClass(prototypeClass);
+        T object = instanciateClass(prototypeClass);
 
         for (Map.Entry<ExtensionParameter, Object> entry : evaluationResult.entrySet())
         {
             Method setter = IntrospectionUtils.getSetter(prototypeClass, entry.getKey());
-            objectBuilder.addProperty(setter, new StaticValueResolver(entry.getValue()));
+            ReflectionUtils.invokeMethod(setter, object, entry.getValue());
         }
 
-        return (T) objectBuilder.build(VoidMuleEvent.getInstance());
+        return object;
     }
 
     @Override

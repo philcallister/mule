@@ -52,6 +52,8 @@
                     <xs:attribute type="mule:expression" use="optional" name="myName"></xs:attribute>
                     <xs:attribute type="mule:expression" use="optional" name="age"></xs:attribute>
                     <xs:attribute type="mule:expression" use="optional" name="enemies"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="org.mule.module.extensions.HealthStatusEnumType" use="required" name="initialHealth"></xs:attribute>
+                    <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" type="org.mule.module.extensions.HealthStatusEnumType" use="required" name="finalHealth"></xs:attribute>
                     <xs:attribute type="mule:expression" use="required" name="money"></xs:attribute>
                     <xs:attribute type="mule:expression" use="required" name="cancer"></xs:attribute>
                     <xs:attribute type="mule:expression" use="required" name="dateOfBirth"></xs:attribute>
@@ -191,6 +193,20 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
+    <xs:simpleType name="org.mule.module.extensions.HealthStatusEnumType">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="HEALTHY"></xs:enumeration>
+                    <xs:enumeration value="CANCER"></xs:enumeration>
+                    <xs:enumeration value="DEAD"></xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:propertyPlaceholderType"></xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
     <xs:simpleType name="integerType">
         <xs:union>
             <xs:simpleType>

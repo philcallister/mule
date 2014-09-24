@@ -11,6 +11,8 @@ import org.mule.tck.size.SmallTest;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.Test;
+
 @SmallTest
 public class ListValueResolverTestCase extends AbstractCollectionValueResolverTestCase
 {
@@ -25,5 +27,17 @@ public class ListValueResolverTestCase extends AbstractCollectionValueResolverTe
     protected Class<? extends Collection> getExpectedCollectionType()
     {
         return List.class;
+    }
+
+    @Test
+    public void ofList()
+    {
+        doAssertOf(List.class, ListValueResolver.class);
+    }
+
+    @Test
+    public void ofCollection()
+    {
+        doAssertOf(Collection.class, ListValueResolver.class);
     }
 }

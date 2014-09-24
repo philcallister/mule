@@ -8,7 +8,10 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimpleExpression;
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.context.MuleContextAware;
+import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.transformer.MessageTransformer;
 import org.mule.api.transformer.Transformer;
@@ -21,19 +24,22 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class EvaluateAndTransformValueResolver extends BaseValueResolverWrapper
+public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResolver implements MuleContextAware, Initialisable
 {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EvaluateAndTransformValueResolver.class);
     private static final TemplateParser PARSER = TemplateParser.createMuleStyleParser();
 
     private final String expression;
     private final DataType expectedType;
+    private ValueResolver delegate;
+    private MuleContext muleContext;
 
     public EvaluateAndTransformValueResolver(String expression, DataType expectedType)
     {
-        super(null);
-
         checkArgument(!StringUtils.isBlank(expression), "Expression cannot be blank or null");
         checkArgument(expectedType != null, "expected type cannot be null");
         this.expression = expression;
@@ -45,12 +51,6 @@ public class EvaluateAndTransformValueResolver extends BaseValueResolverWrapper
     {
         Object evaluated = delegate.resolve(event);
         return evaluated != null ? transform(evaluated, event) : null;
-    }
-
-    @Override
-    public boolean isDynamic()
-    {
-        return true;
     }
 
     private Object transform(Object object, MuleEvent event) throws Exception
@@ -102,6 +102,15 @@ public class EvaluateAndTransformValueResolver extends BaseValueResolverWrapper
                    ? new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage())
                    : new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
 
-        super.initialise();
+        if (delegate instanceof Initialisable)
+        {
+            ((Initialisable) delegate).initialise();
+        }
+    }
+
+    @Override
+    public void setMuleContext(MuleContext context)
+    {
+        muleContext = context;
     }
 }

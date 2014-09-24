@@ -6,8 +6,32 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import org.mule.extensions.introspection.api.DataQualifier;
+import org.mule.extensions.introspection.api.DataQualifierVisitor;
 import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
 
+/**
+ * Base implementation for a {@link DataQualifierVisitor} which adds the new
+ * method {@link #onSimpleType()} which is invoked by all the {@link DataQualifier}s
+ * which refer to a simple type. Those would be:
+ * <p/>
+ * <ul>
+ * <li>{@link #onBoolean()}</li>
+ * <li>{@link #onInteger()}</li>
+ * <li>{@link #onDouble()}</li>
+ * <li>{@link #onDecimal()}</li>
+ * <li>{@link #onString()}</li>
+ * <li>{@link #onShort()}</li>
+ * <li>{@link #onLong()}</li>
+ * <li>{@link #onByte()}</li>
+ * <li>{@link #onEnum()}</li>
+ * </ul>
+ * <p/>
+ * All other qualifiers delegate into {@link #defaultOperation()} by default, but they
+ * can be overridden at will
+ *
+ * @since 3.7.0
+ */
 public abstract class SimpleTypeDataQualifierVisitor extends BaseDataQualifierVisitor
 {
 

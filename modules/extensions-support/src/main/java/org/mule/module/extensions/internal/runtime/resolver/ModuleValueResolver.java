@@ -70,7 +70,7 @@ public class ModuleValueResolver extends ConfigurationValueResolver
             ((Startable) resolver).start();
         }
 
-        resolver = new LifecycleValueResolver(resolver);
+        resolver = new InitialLifecycleValueResolver(resolver);
 
         if (!resolver.isDynamic())
         {

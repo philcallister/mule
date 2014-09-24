@@ -16,6 +16,8 @@
                        dateOfDeath="2011-09-07T00:00:00-05:00"
                        money="1000000"
                        recipe="recipes"
+                       initialHealth="CANCER"
+                       finalHealth="DEAD"
                        candidateDoors="candidateDoors">
         <heisenberg:enemies>
             <heisenberg:enemy value="Gustavo Fring"/>
@@ -36,6 +38,8 @@
                        dateOfBirth="1959-09-07T00:00:00"
                        dateOfDeath="2011-09-07T00:00:00-05:00"
                        money="1000000"
+                       initialHealth="CANCER"
+                       finalHealth="DEAD"
                        enemies="enemies"
                        recipe="recipes"
                        ricinPacks="ricinPacks"
@@ -47,6 +51,8 @@
                        myName="#[myName]"
                        age="#[age]"
                        cancer="#[true]"
+                       initialHealth="#[initialHealth]"
+                       finalHealth="#[finalHealth]"
                        dateOfBirth="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfBirth().getTime()]"
                        dateOfDeath="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfDeath()]"
                        money="#[money]"
@@ -70,6 +76,8 @@
                        myName="#[myName]"
                        age="#[age]"
                        cancer="#[true]"
+                       initialHealth="#[initialHealth]"
+                       finalHealth="#[finalHealth]"
                        dateOfBirth="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfBirth().getTime()]"
                        dateOfDeath="#[org.mule.module.extensions.internal.ModuleDefinitionParserTestCase.getDateOfDeath()]"
                        money="#[money]"

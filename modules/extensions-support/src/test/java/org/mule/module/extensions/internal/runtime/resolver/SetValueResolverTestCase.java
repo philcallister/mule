@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.Test;
+
 @SmallTest
 public class SetValueResolverTestCase extends AbstractCollectionValueResolverTestCase
 {
@@ -26,5 +28,11 @@ public class SetValueResolverTestCase extends AbstractCollectionValueResolverTes
     protected Class<? extends Collection> getExpectedCollectionType()
     {
         return Set.class;
+    }
+
+    @Test
+    public void of()
+    {
+        doAssertOf(Set.class, SetValueResolver.class);
     }
 }

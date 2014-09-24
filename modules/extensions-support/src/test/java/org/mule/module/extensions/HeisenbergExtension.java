@@ -60,6 +60,12 @@ public class HeisenbergExtension implements Lifecycle
     private List<String> enemies = new LinkedList<>();
 
     @Configurable
+    private HealthStatus initialHealth;
+
+    @Configurable
+    private HealthStatus finalHealth;
+
+    @Configurable
     private BigDecimal money;
 
     @Configurable
@@ -289,5 +295,25 @@ public class HeisenbergExtension implements Lifecycle
     public int getDispose()
     {
         return dispose;
+    }
+
+    public HealthStatus getInitialHealth()
+    {
+        return initialHealth;
+    }
+
+    public void setInitialHealth(HealthStatus initialHealth)
+    {
+        this.initialHealth = initialHealth;
+    }
+
+    public HealthStatus getFinalHealth()
+    {
+        return finalHealth;
+    }
+
+    public void setFinalHealth(HealthStatus finalHealth)
+    {
+        this.finalHealth = finalHealth;
     }
 }

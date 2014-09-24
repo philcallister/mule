@@ -116,5 +116,4 @@ public class CachedResolverSetValueResolver implements ValueResolver, Startable,
             LifecycleUtils.disposeIfNeeded(value, LOGGER);
         }
     }
-
 }

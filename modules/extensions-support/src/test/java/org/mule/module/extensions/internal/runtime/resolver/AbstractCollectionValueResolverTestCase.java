@@ -9,6 +9,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -106,5 +107,11 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
     protected int getChildResolversCount()
     {
         return 10;
+    }
+
+    protected void doAssertOf(Class<? extends Collection> collectionType, Class<? extends ValueResolver> expectedResolverType)
+    {
+        ValueResolver resolver = CollectionValueResolver.of(mock(collectionType).getClass(), new ArrayList<ValueResolver>());
+        assertThat(resolver.getClass() == expectedResolverType, is(true));
     }
 }

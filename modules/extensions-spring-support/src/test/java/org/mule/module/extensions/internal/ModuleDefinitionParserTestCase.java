@@ -18,6 +18,7 @@ import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 import org.mule.api.MuleEvent;
 import org.mule.module.extensions.Door;
+import org.mule.module.extensions.HealthStatus;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.Ricin;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
@@ -64,6 +65,8 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
     private static final String WHITE_ADDRESS = "308 Negra Arroyo Lane";
     private static final String SHOPPING_MALL = "Shopping Mall";
     private static final int DEATH_YEAR = 2011;
+    private static final HealthStatus INITIAL_HEALTH = HealthStatus.CANCER;
+    private static final HealthStatus FINAL_HEALTH = HealthStatus.DEAD;
 
     @Parameters
     public static Collection<Object[]> data()
@@ -156,6 +159,8 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
         event.setFlowVariable("saul", SAUL);
         event.setFlowVariable("whiteAddress", WHITE_ADDRESS);
         event.setFlowVariable("shoppingMall", SHOPPING_MALL);
+        event.setFlowVariable("initialHealth", INITIAL_HEALTH);
+        event.setFlowVariable("finalHealth", FINAL_HEALTH);
 
         return event;
     }
@@ -214,6 +219,8 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
         assertEquals(HANK, enemies.get(1));
 
         assertTrue(heisenberg.isCancer());
+        assertThat(heisenberg.getInitialHealth(), is(INITIAL_HEALTH));
+        assertThat(heisenberg.getFinalHealth(), is(FINAL_HEALTH));
 
         Calendar dayOfBirth = Calendar.getInstance();
         dayOfBirth.setTime(heisenberg.getDateOfBirth());

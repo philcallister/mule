@@ -13,9 +13,13 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
+import org.mule.api.lifecycle.Disposable;
+import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
@@ -27,6 +31,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Default implementation of {@link ObjectBuilder}
+ *
+ * @since 3.7.0
+ */
 public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleContextAware
 {
 
@@ -36,6 +45,9 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
     private final Map<Method, ValueResolver> properties = new HashMap<>();
     private MuleContext muleContext;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ObjectBuilder setPrototypeClass(Class<?> prototypeClass)
     {
@@ -45,6 +57,9 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ObjectBuilder addProperty(Method method, ValueResolver resolver)
     {
@@ -55,12 +70,18 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isDynamic()
     {
         return MuleExtensionUtils.hasAnyDynamic(properties.values());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Object build(MuleEvent event) throws Exception
     {
@@ -74,6 +95,12 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
         return object;
     }
 
+    /**
+     * For each registered {@link ValueResolver}, it propagates
+     * the {link #muleContext} if it implements the {@link MuleContextAware}
+     * interface and invokes {@link Initialisable#initialise()} if that
+     * interface is also implemented by the resolver
+     */
     @Override
     public void initialise() throws InitialisationException
     {
@@ -88,24 +115,41 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
         LifecycleUtils.initialiseIfNeeded(properties.values());
     }
 
+    /**
+     * For each registered {@link ValueResolver} it invokes
+     * {@link Startable#start()} if the resolver implements that interface
+     */
     @Override
     public void start() throws MuleException
     {
         LifecycleUtils.startIfNeeded(properties.values());
     }
 
+    /**
+     * For each registered {@link ValueResolver} the
+     * {@link Stoppable#stop()} method is invoked
+     * if the resolver implements such interface
+     */
     @Override
     public void stop() throws MuleException
     {
         LifecycleUtils.stopIfNeeded(properties.values());
     }
 
+    /**
+     * For each registered {@link ValueResolver} the
+     * {@link Disposable#dispose()} method is invoked
+     * if the resolver implements such interface
+     */
     @Override
     public void dispose()
     {
         LifecycleUtils.disposeIfNeeded(properties.values(), LOGGER);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setMuleContext(MuleContext context)
     {
