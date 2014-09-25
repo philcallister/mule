@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mule.module.extensions.internal.util.ExtensionsTestUtils.HELLO_WORLD;
 import org.mule.tck.size.SmallTest;
 
 import org.junit.Before;
@@ -23,8 +24,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class CachingValueResolverWrapperTestCase extends BaseValueResolverWrapperTestCase
 {
 
-    private static final String VALUE = "Hello World!";
-
     @Override
     protected BaseValueResolverWrapper createResolver(ValueResolver delegate)
     {
@@ -35,7 +34,7 @@ public class CachingValueResolverWrapperTestCase extends BaseValueResolverWrappe
     public void doBefore() throws Exception
     {
         when(delegate.resolve(event))
-                .thenReturn(VALUE)
+                .thenReturn(HELLO_WORLD)
                 .thenReturn(null);
     }
 
@@ -44,7 +43,7 @@ public class CachingValueResolverWrapperTestCase extends BaseValueResolverWrappe
     {
         for (int i = 0; i < 10; i++)
         {
-            assertThat((String) resolver.resolve(event), is(VALUE));
+            assertThat((String) resolver.resolve(event), is(HELLO_WORLD));
         }
 
         verify(delegate, times(1)).resolve(event);

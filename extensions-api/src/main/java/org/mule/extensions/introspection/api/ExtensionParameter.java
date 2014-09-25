@@ -22,7 +22,7 @@ public interface ExtensionParameter extends Described
     /**
      * Returns the type of the operation
      *
-     * @return a not {@code null} {@link ImmutableDataType}
+     * @return a not {@code null} {@link DataType}
      */
     DataType getType();
 

@@ -98,7 +98,7 @@ public abstract class CollectionValueResolver implements ValueResolver, Lifecycl
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(resolvers, LOGGER);
+        LifecycleUtils.disposeAllIfNeeded(resolvers, LOGGER);
     }
 
     @Override

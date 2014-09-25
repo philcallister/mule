@@ -38,14 +38,13 @@ public class InitialLifecycleValueResolverTestCase extends BaseValueResolverWrap
     @Override
     protected BaseValueResolverWrapper createResolver(ValueResolver delegate)
     {
-        return new InitialLifecycleValueResolver(delegate);
+        return new InitialLifecycleValueResolver(delegate, muleContext);
     }
 
     @Test
     public void resolve() throws Exception
     {
         assertThat(resolver.resolve(event), is(resolvedValue));
-
         InOrder order = inOrder(resolvedValue);
         order.verify((MuleContextAware) resolvedValue).setMuleContext(muleContext);
         order.verify((Initialisable) resolvedValue).initialise();

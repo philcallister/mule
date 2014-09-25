@@ -144,7 +144,7 @@ public class DefaultObjectBuilder implements ObjectBuilder, Lifecycle, MuleConte
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(properties.values(), LOGGER);
+        LifecycleUtils.disposeAllIfNeeded(properties.values(), LOGGER);
     }
 
     /**

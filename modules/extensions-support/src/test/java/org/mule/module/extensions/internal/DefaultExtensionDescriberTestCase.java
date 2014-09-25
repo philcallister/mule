@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mule.extensions.api.annotation.Extension.DEFAULT_CONFIG_NAME;
 import static org.mule.extensions.api.annotation.Extension.MIN_MULE_VERSION;
+import static org.mule.extensions.introspection.api.DataQualifier.ENUM;
 import static org.mule.extensions.introspection.api.DataQualifier.POJO;
 import static org.mule.extensions.introspection.api.DataQualifier.BOOLEAN;
 import static org.mule.extensions.introspection.api.DataQualifier.DATE;
@@ -54,6 +55,7 @@ import org.mule.extensions.introspection.api.ExtensionOperation;
 import org.mule.extensions.introspection.api.ExtensionParameter;
 import org.mule.extensions.introspection.spi.ExtensionDescriberPostProcessor;
 import org.mule.module.extensions.Door;
+import org.mule.module.extensions.HealthStatus;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
 import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
@@ -192,7 +194,7 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertSame(conf, extension.getConfiguration(DEFAULT_CONFIG_NAME));
 
         List<ExtensionParameter> parameters = conf.getParameters();
-        assertEquals(11, parameters.size());
+        assertEquals(13, parameters.size());
 
         assertParameter(parameters.get(0), "myName", "", String.class, STRING, false, true, HEISENBERG);
         assertParameter(parameters.get(1), "age", "", Integer.class, INTEGER, false, true, AGE);
@@ -206,6 +208,9 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
         assertParameter(parameters.get(8), "ricinPacks", "", Set.class, LIST, false, true, null);
         assertParameter(parameters.get(9), "nextDoor", "", Door.class, POJO, false, true, null);
         assertParameter(parameters.get(10), "candidateDoors", "", Map.class, MAP, false, true, null);
+        assertParameter(parameters.get(11), "initialHealth", "", HealthStatus.class, ENUM, true, true, null);
+        assertParameter(parameters.get(12), "finalHealth", "", HealthStatus.class, ENUM, true, true, null);
+
     }
 
     private void assertExtensionProperties(Extension extension)
@@ -309,15 +314,14 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations(HeisenbergExtension.class)
-    private class HeisenbergPointer extends HeisenbergExtension
+    public static class HeisenbergPointer extends HeisenbergExtension
     {
-
     }
 
     @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations({HeisenbergExtension.class, NamedHeisenbergAlternateConfig.class})
-    private class HeisengergPointerPlusExternalConfig
+    public static class HeisengergPointerPlusExternalConfig
     {
 
     }
@@ -325,18 +329,18 @@ public class DefaultExtensionDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.api.annotation.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations({HeisenbergExtension.class, HeisenbergAlternateConfig.class})
-    private class HeisengergPointerPlusUnnamedExternalConfig
+    public static class HeisengergPointerPlusUnnamedExternalConfig
     {
 
     }
 
     @Configuration(name = EXTENDED_CONFIG_NAME, description = EXTENDED_CONFIG_DESCRIPTION)
-    private class NamedHeisenbergAlternateConfig extends HeisenbergAlternateConfig
+    public static class NamedHeisenbergAlternateConfig extends HeisenbergAlternateConfig
     {
 
     }
 
-    private class HeisenbergAlternateConfig
+    public static class HeisenbergAlternateConfig
     {
 
         @Configurable

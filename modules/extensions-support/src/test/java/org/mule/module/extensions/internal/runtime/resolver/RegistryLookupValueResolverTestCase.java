@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mule.module.extensions.internal.util.ExtensionsTestUtils.HELLO_WORLD;
 import org.mule.api.MuleEvent;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
@@ -26,7 +27,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class RegistryLookupValueResolverTestCase extends AbstractMuleTestCase
 {
 
-    private static final String VALUE = "Hello World!";
     private static final String KEY = "key";
 
     @Mock(answer = RETURNS_DEEP_STUBS)
@@ -37,7 +37,7 @@ public class RegistryLookupValueResolverTestCase extends AbstractMuleTestCase
     @Before
     public void before() throws Exception
     {
-        when(event.getMuleContext().getRegistry().get(KEY)).thenReturn(VALUE);
+        when(event.getMuleContext().getRegistry().get(KEY)).thenReturn(HELLO_WORLD);
         resolver = new RegistryLookupValueResolver(KEY);
     }
 
@@ -45,7 +45,7 @@ public class RegistryLookupValueResolverTestCase extends AbstractMuleTestCase
     public void cache() throws Exception
     {
         Object value = resolver.resolve(event);
-        assertThat((String) value, is(VALUE));
+        assertThat((String) value, is(HELLO_WORLD));
         verify(event.getMuleContext().getRegistry()).get(KEY);
     }
 

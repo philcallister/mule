@@ -46,10 +46,10 @@ public abstract class LifecycleUtils
 
     public static void disposeIfNeeded(Object object, Logger logger)
     {
-        disposeIfNeeded(Arrays.asList(object), logger);
+        disposeAllIfNeeded(Arrays.asList(object), logger);
     }
 
-    public static void disposeIfNeeded(Collection<Object> objects, Logger logger)
+    public static void disposeAllIfNeeded(Collection<? extends Object> objects, Logger logger)
     {
         try
         {

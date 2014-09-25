@@ -23,10 +23,13 @@ import org.mule.api.lifecycle.Stoppable;
  * will cache the result of the first invocation, the resolver's dynamism
  * is in effect neutralized.
  * <p/>
- * This class is in general terms thread safe, but since it doesn't perform
- * any locking (for performance reasons) it is possible that in the first invocation
- * the {@link #delegate} might be evaluated more than once. Because this wrapper
- * is not for using with dynamic resolvers, this should not be a problem.
+ * This class is thread safe. Many threads can invoke the {@link #resolve(MuleEvent)}
+ * method and the underlying {@link #delegate} is still guaranteed to be invoked only once
+ * and the return value to be consistent with that of the thread which first got access to it.
+ * <p/>
+ * This class can also be used without performance considerations since it's optimized to only
+ * perform thread contention until a value is cached. From then on, no locks will be used while
+ * remaining thread safe
  *
  * @since 3.7.0
  */
@@ -34,6 +37,7 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
 {
 
     private Object value;
+    private CachingDelegate cacheDelegate = new FirstTimeCachingDelegate();
 
     public CachingValueResolverWrapper(ValueResolver delegate)
     {
@@ -52,12 +56,7 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
     @Override
     public Object resolve(MuleEvent event) throws Exception
     {
-        if (value == null)
-        {
-            value = delegate.resolve(event);
-        }
-
-        return value;
+        return cacheDelegate.get(event);
     }
 
     /**
@@ -94,5 +93,37 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
     {
         LifecycleUtils.disposeIfNeeded(value, logger);
         super.dispose();
+    }
+
+    private interface CachingDelegate
+    {
+
+        Object get(MuleEvent event) throws Exception;
+    }
+
+    private class FirstTimeCachingDelegate implements CachingDelegate
+    {
+
+        @Override
+        public synchronized Object get(MuleEvent event) throws Exception
+        {
+            if (value == null)
+            {
+                value = delegate.resolve(event);
+                cacheDelegate = new FastCachingDelegate();
+            }
+
+            return value;
+        }
+    }
+
+    private class FastCachingDelegate implements CachingDelegate
+    {
+
+        @Override
+        public Object get(MuleEvent event) throws Exception
+        {
+            return value;
+        }
     }
 }

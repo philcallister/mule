@@ -101,11 +101,6 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
         delegate = isSimpleExpression(expression, PARSER)
                    ? new ExpressionLanguageValueResolver(expression, muleContext.getExpressionLanguage())
                    : new ExpressionTemplateValueResolver(expression, muleContext.getExpressionManager());
-
-        if (delegate instanceof Initialisable)
-        {
-            ((Initialisable) delegate).initialise();
-        }
     }
 
     @Override

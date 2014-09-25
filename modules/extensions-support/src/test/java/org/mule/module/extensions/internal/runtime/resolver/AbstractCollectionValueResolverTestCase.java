@@ -12,10 +12,13 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mule.module.extensions.internal.util.ExtensionsTestUtils.getResolver;
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.context.MuleContextAware;
+import org.mule.api.lifecycle.Lifecycle;
+import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 
 import java.util.ArrayList;
@@ -24,13 +27,23 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractCollectionValueResolverTestCase extends AbstractMuleTestCase
 {
 
-    private ValueResolver resolver;
+    private CollectionValueResolver resolver;
     private List<ValueResolver> childResolvers;
     private List<Integer> expectedValues;
+
+    @Mock
+    private MuleContext muleContext;
+
+    @Mock
+    private MuleEvent event;
 
     @Before
     public void before() throws Exception
@@ -40,8 +53,7 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
 
         for (int i = 0; i < getChildResolversCount(); i++)
         {
-            ValueResolver childResolver = mock(ValueResolver.class);
-            when(childResolver.resolve(any(MuleEvent.class))).thenReturn(i);
+            ValueResolver childResolver = getResolver(i, event, false, MuleContextAware.class, Lifecycle.class);
             childResolvers.add(childResolver);
             expectedValues.add(i);
         }
@@ -52,7 +64,7 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
     @Test
     public void resolve() throws Exception
     {
-        Collection<Object> resolved = (Collection<Object>) resolver.resolve(mock(MuleEvent.class));
+        Collection<Object> resolved = (Collection<Object>) resolver.resolve(event);
 
         assertThat(resolved, notNullValue());
         assertThat(resolved.size(), equalTo(getChildResolversCount()));
@@ -63,12 +75,9 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
     public void resolversAreCopied() throws Exception
     {
         int initialResolversCount = childResolvers.size();
+        childResolvers.add(ExtensionsTestUtils.getResolver(-1, event, false));
 
-        ValueResolver extra = mock(ValueResolver.class);
-        when(extra.resolve(any(MuleEvent.class))).thenReturn(-1);
-        childResolvers.add(extra);
-
-        Collection<Object> resolved = (Collection<Object>) resolver.resolve(mock(MuleEvent.class));
+        Collection<Object> resolved = (Collection<Object>) resolver.resolve(event);
         assertThat(resolved.size(), equalTo(initialResolversCount));
     }
 
@@ -81,6 +90,23 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
         Collection<Object> resolved = (Collection<Object>) resolver.resolve(mock(MuleEvent.class));
         assertThat(resolved, notNullValue());
         assertThat(resolved.size(), equalTo(0));
+    }
+
+    @Test
+    public void isNotDynamic()
+    {
+        assertThat(resolver.isDynamic(), is(false));
+    }
+
+    @Test
+    public void isDynamic() throws Exception
+    {
+        childResolvers = new ArrayList();
+        childResolvers.add(getResolver(null, event, false));
+        childResolvers.add(getResolver(null, event, true));
+
+        resolver = createCollectionResolver(childResolvers);
+        assertThat(resolver.isDynamic(), is(true));
     }
 
     @Test
@@ -99,6 +125,36 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
 
         assertThat(resolved.size(), equalTo(originalSize + 1));
     }
+
+    @Test
+    public void initialise() throws Exception
+    {
+        resolver.setMuleContext(muleContext);
+        resolver.initialise();
+        ExtensionsTestUtils.verifyAllInitialised(childResolvers, muleContext);
+    }
+
+    @Test
+    public void start() throws Exception
+    {
+        resolver.start();
+        ExtensionsTestUtils.verifyAllStarted(childResolvers);
+    }
+
+    @Test
+    public void stop() throws Exception
+    {
+        resolver.stop();
+        ExtensionsTestUtils.verifyAllStopped(childResolvers);
+    }
+
+    @Test
+    public void dispose() throws Exception
+    {
+        resolver.dispose();
+        ExtensionsTestUtils.verifyAllDisposed(childResolvers);
+    }
+
 
     protected abstract CollectionValueResolver createCollectionResolver(List<ValueResolver> childResolvers);
 

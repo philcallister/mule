@@ -6,10 +6,12 @@
  */
 package org.mule.module.extensions;
 
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
+import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.transport.PropertyScope;
@@ -30,7 +32,7 @@ import java.util.Set;
 
 @Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
 @Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
-public class HeisenbergExtension implements Lifecycle
+public class HeisenbergExtension implements Lifecycle, MuleContextAware
 {
 
     public static final String SCHEMA_LOCATION = "http://www.mulesoft.org/schema/mule/extension/heisenberg";
@@ -48,6 +50,8 @@ public class HeisenbergExtension implements Lifecycle
     private int stop;
     private int dispose = 0;
 
+    private MuleContext muleContext;
+
     @Configurable
     @Optional(defaultValue = HEISENBERG)
     private String myName;
@@ -58,12 +62,6 @@ public class HeisenbergExtension implements Lifecycle
 
     @Configurable
     private List<String> enemies = new LinkedList<>();
-
-    @Configurable
-    private HealthStatus initialHealth;
-
-    @Configurable
-    private HealthStatus finalHealth;
 
     @Configurable
     private BigDecimal money;
@@ -95,6 +93,13 @@ public class HeisenbergExtension implements Lifecycle
     @Configurable
     @Optional
     private Map<String, Door> candidateDoors;
+
+    @Configurable
+    private HealthStatus initialHealth;
+
+    @Configurable
+    private HealthStatus finalHealth;
+
 
     @Operation
     public String sayMyName()
@@ -315,5 +320,16 @@ public class HeisenbergExtension implements Lifecycle
     public void setFinalHealth(HealthStatus finalHealth)
     {
         this.finalHealth = finalHealth;
+    }
+
+    @Override
+    public void setMuleContext(MuleContext context)
+    {
+        muleContext = context;
+    }
+
+    public MuleContext getMuleContext()
+    {
+        return muleContext;
     }
 }

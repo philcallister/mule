@@ -9,18 +9,20 @@ package org.mule.module.extensions.internal.runtime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.module.extensions.HealthStatus;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
+import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +42,15 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
 
     @Mock
     private MuleEvent event;
-    private ObjectBuilder builder;
+
+    @Mock
+    private MuleContext muleContext;
+
+    private DefaultObjectBuilder builder;
     private Method nameSetter;
     private Method ageSetter;
     private Method healthSetter;
+    private List<ValueResolver> resolvers = new ArrayList<>();
 
     @Before
     public void before()
@@ -102,6 +109,35 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
         assertThat(builder.isDynamic(), is(true));
     }
 
+    @Test
+    public void initialise() throws Exception
+    {
+        builder.setMuleContext(muleContext);
+        builder.initialise();
+        ExtensionsTestUtils.verifyAllInitialised(resolvers, muleContext);
+    }
+
+    @Test
+    public void start() throws Exception
+    {
+        builder.start();
+        ExtensionsTestUtils.verifyAllStarted(resolvers);
+    }
+
+    @Test
+    public void stop() throws Exception
+    {
+        builder.stop();
+        ExtensionsTestUtils.verifyAllStopped(resolvers);
+    }
+
+    @Test
+    public void dispose() throws Exception
+    {
+        builder.dispose();
+        ExtensionsTestUtils.verifyAllDisposed(resolvers);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void buildInterface() throws Exception
     {
@@ -139,9 +175,8 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
 
     private ValueResolver getResolver(Object value, boolean dynamic) throws Exception
     {
-        ValueResolver resolver = mock(ValueResolver.class);
-        when(resolver.resolve(event)).thenReturn(value);
-        when(resolver.isDynamic()).thenReturn(dynamic);
+        ValueResolver resolver = ExtensionsTestUtils.getResolver(value, event, dynamic);
+        resolvers.add(resolver);
 
         return resolver;
     }

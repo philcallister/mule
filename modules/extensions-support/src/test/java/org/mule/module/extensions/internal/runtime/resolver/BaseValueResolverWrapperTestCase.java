@@ -6,7 +6,6 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
@@ -17,12 +16,12 @@ import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
+import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -61,11 +60,9 @@ public abstract class BaseValueResolverWrapperTestCase extends AbstractMuleTestC
         ValueResolver delegate = getDelegateImplementing(MuleContextAware.class, Initialisable.class);
         resolver = createResolver(delegate);
         resolver.setMuleContext(muleContext);
-
         resolver.initialise();
-        InOrder order = inOrder(delegate);
-        order.verify((MuleContextAware) delegate).setMuleContext(muleContext);
-        order.verify((Initialisable) delegate).initialise();
+
+        ExtensionsTestUtils.verifyInitialisation(delegate, muleContext);
     }
 
     @Test

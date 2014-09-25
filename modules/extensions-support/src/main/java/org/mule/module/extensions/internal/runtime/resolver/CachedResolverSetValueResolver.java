@@ -10,7 +10,6 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.LifecycleUtils;
-import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
 
 import com.google.common.cache.CacheBuilder;
@@ -20,73 +19,131 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CachedResolverSetValueResolver implements ValueResolver, Startable, Stoppable, Disposable
+/**
+ * A {@link ValueResolver} which continuously evaluates the same
+ * {@link ResolverSet} and then uses the resulting {@link ResolverSetResult}
+ * to build an instance of a given type.
+ * <p/>
+ * Although each invocation to {@link #resolve(MuleEvent)} is guaranteed to end up
+ * in an invocation to {@link #resolverSet#resolve(MuleEvent)}, the resulting
+ * {@link ResolverSetResult} might not end up generating a new instance through
+ * {@link ResolverSetResult#toInstanceOf(Class)}. This is so because
+ * {@link ResolverSetResult} instances are put in a {@link LoadingCache} to
+ * guarantee that equivalent evaluations of the {@code resolverSet} return the same
+ * instance. That cache will automatically expire entries that are not used for
+ * an interval configured using {@code expirationInterval}
+ * and {@code expirationTimeUnit}.
+ * <p/>
+ * When instances are evicted from the cache, the {@link Stoppable#stop()} and
+ * {@link Disposable#dispose()} methods are invoked on them if they implement the
+ * corresponding interfaces
+ *
+ * @since 3.7.0
+ */
+public class CachedResolverSetValueResolver implements ValueResolver, Stoppable, Disposable
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedResolverSetValueResolver.class);
 
     private final Class<?> prototypeClass;
     private final ResolverSet resolverSet;
-    private final AtomicBoolean stopped = new AtomicBoolean(true);
 
-    private final LoadingCache<ResolverSetResult, Object> cache = CacheBuilder.newBuilder()
-            .expireAfterAccess(1, TimeUnit.MINUTES)  //TODO: externalize this? make configurable?
-            .removalListener(new EvictionListener())
-            .build(new CacheLoader<ResolverSetResult, Object>()
-            {
-                @Override
-                public Object load(ResolverSetResult key) throws Exception
-                {
-                    return key.toInstanceOf(prototypeClass);
-                }
-            });
+    private final LoadingCache<ResolverSetResult, Object> cache;
 
-    public CachedResolverSetValueResolver(Class<?> prototypeClass, ResolverSet resolverSet)
+    /**
+     * Creates a new instance
+     *
+     * @param prototypeClass     the {@link Class} of objects that this resolver is to produce
+     * @param resolverSet        the {@link ResolverSet} that's going to be evaluated
+     * @param expirationInterval the interval for which {@link ResolverSetResult}s are to be cached
+     * @param expirationTimeUnit the {@link TimeUnit} corresponding to {@code expirationInterval}
+     */
+    public CachedResolverSetValueResolver(Class<?> prototypeClass, ResolverSet resolverSet, long expirationInterval, TimeUnit expirationTimeUnit)
     {
         this.prototypeClass = prototypeClass;
         this.resolverSet = resolverSet;
+        cache = buildCache(expirationInterval, expirationTimeUnit);
+
     }
 
+    private LoadingCache<ResolverSetResult, Object> buildCache(long expirationInterval, TimeUnit expirationTimeUnit)
+    {
+        return CacheBuilder.newBuilder()
+                .expireAfterAccess(expirationInterval, expirationTimeUnit)
+                .removalListener(new EvictionListener())
+                .build(new CacheLoader<ResolverSetResult, Object>()
+                {
+                    @Override
+                    public Object load(ResolverSetResult key) throws Exception
+                    {
+                        return key.toInstanceOf(prototypeClass);
+                    }
+                });
+    }
+
+    /**
+     * Evaluates {@link #resolverSet} using the given {@code event} and returns
+     * an instance of {@link #prototypeClass} produce with the result
+     *
+     * @param event a {@link MuleEvent}
+     * @return the resolved value
+     */
     @Override
     public Object resolve(MuleEvent event) throws Exception
     {
-        if (stopped.get())
-        {
-            throw new IllegalStateException("Cannot resolve value since this resolver is stopped");
-        }
-
         ResolverSetResult result = resolverSet.resolve(event);
         return cache.getUnchecked(result);
     }
 
+    /**
+     * Whether or not {@link #resolverSet} is dynamic
+     */
     @Override
     public boolean isDynamic()
     {
         return resolverSet.isDynamic();
     }
 
-    @Override
-    public void start() throws MuleException
-    {
-        stopped.set(false);
-    }
-
+    /**
+     * invokes {@link Stoppable#stop()} on all the cached values
+     * that implement such interface
+     *
+     * @throws MuleException
+     */
     @Override
     public void stop() throws MuleException
     {
-        stopped.set(true);
         LifecycleUtils.stopIfNeeded(cache.asMap().values());
     }
 
+    /**
+     * invokes {@link Disposable#dispose()} on all the cached values
+     * that implement such interface
+     *
+     * @throws MuleException
+     */
     @Override
     public void dispose()
     {
-        LifecycleUtils.disposeIfNeeded(cache.asMap().values(), LOGGER);
+        LifecycleUtils.disposeAllIfNeeded(cache.asMap().values(), LOGGER);
+    }
+
+    /**
+     * Forces the cache to remove elements eligible for eviction.
+     * This method should not be manually invoked on regular basis.
+     * It's just for management operations and testing. The cache will perform
+     * automatic cleanup when necessary.
+     * <p/>
+     * Invoking this method does not guarantee that any elements will be evicted
+     * from the cache
+     */
+    public void cleanUpCache()
+    {
+        cache.cleanUp();
     }
 
     private class EvictionListener implements RemovalListener<ResolverSetResult, Object>
@@ -96,7 +153,7 @@ public class CachedResolverSetValueResolver implements ValueResolver, Startable,
         public void onRemoval(RemovalNotification<ResolverSetResult, Object> notification)
         {
             Object value = notification.getValue();
-            if (value == null || stopped.get())
+            if (value == null)
             {
                 return;
             }

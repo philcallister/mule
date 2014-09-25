@@ -131,6 +131,13 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
         assertThat(heisenberg.getDispose(), is(1));
     }
 
+    @Test
+    public void muleContextInjected() throws Exception
+    {
+        HeisenbergExtension heisenberg = lookupHeisenberg(testConfig);
+        assertThat(heisenberg.getMuleContext(), is(muleContext));
+    }
+
     private HeisenbergExtension lookupHeisenberg(String key) throws Exception
     {
         ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(key);

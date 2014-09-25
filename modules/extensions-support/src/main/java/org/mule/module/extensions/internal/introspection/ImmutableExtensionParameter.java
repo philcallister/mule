@@ -14,6 +14,8 @@ import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 /**
  * Immutable implementation of {@link org.mule.extensions.introspection.api.ExtensionParameter}
  *
@@ -88,4 +90,9 @@ final class ImmutableExtensionParameter extends AbstractImmutableDescribed imple
         return defaultValue;
     }
 
+    @Override
+    public String toString()
+    {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }

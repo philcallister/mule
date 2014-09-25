@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.context.MuleContextAware;
@@ -29,9 +30,18 @@ import org.mule.api.lifecycle.Startable;
 public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
 {
 
-    public InitialLifecycleValueResolver(ValueResolver delegate)
+    /**
+     * Creates a new instance
+     *
+     * @param delegate    the delegate {@link ValueResolver}
+     * @param muleContext a not {code null} {@link ValueResolver}
+     * @throws IllegalArgumentException if either {@code delegate} or {@code muleContext} are {@code null}
+     */
+    public InitialLifecycleValueResolver(ValueResolver delegate, MuleContext muleContext)
     {
         super(delegate);
+        checkArgument(muleContext != null, "muleContext cannot be null");
+        setMuleContext(muleContext);
     }
 
     /**

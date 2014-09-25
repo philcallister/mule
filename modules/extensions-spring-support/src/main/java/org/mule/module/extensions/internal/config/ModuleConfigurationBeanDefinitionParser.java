@@ -8,7 +8,7 @@ package org.mule.module.extensions.internal.config;
 
 import org.mule.extensions.introspection.api.Extension;
 import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.module.extensions.internal.runtime.resolver.ModuleValueResolver;
+import org.mule.module.extensions.internal.runtime.resolver.ModuleConfigurationValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -33,6 +33,6 @@ public class ModuleConfigurationBeanDefinitionParser extends ExtensionConfigurat
     @Override
     protected Class<? extends ValueResolver> getResolverClass()
     {
-        return ModuleValueResolver.class;
+        return ModuleConfigurationValueResolver.class;
     }
 }
