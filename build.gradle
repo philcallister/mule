@@ -2,10 +2,12 @@ import org.mule.gradle.ContentsVerifierTask
 
 project.ext {
     dummyProjects = [ project(":modules"), project(":transports"), project(":tests") ]
+    jdkVersion = 1.7
 }
 
 allprojects {
     apply plugin: 'maven'
+    apply plugin: 'idea'
 
     group = 'org.mule'
     version = '4.0-SNAPSHOT'
@@ -19,9 +21,8 @@ allprojects {
 subprojects {
     apply plugin: 'java'
 
-
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = jdkVersion
+    targetCompatibility = jdkVersion
 
     tasks.withType(JavaCompile) {
         options.encoding = 'ISO-8859-1'
@@ -69,6 +70,14 @@ subprojects {
             'xmlunit:xmlunit:1.1'
     }
 }
+
+idea {
+    project {
+        jdkName = jdkVersion
+        languageLevel = jdkVersion
+    }
+}
+
 
 // Used in specific projects that need to export test classes
 def exportTestFixture(project) {

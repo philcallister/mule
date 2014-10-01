@@ -18,11 +18,11 @@ dependencies {
         "com.icegreen:greenmail:1.3",
         "org.apache.ant:ant:1.7.0",
         project(path: ':transports:email', configuration: 'testFixtures'),
-        project(path: ':modules:spring-security', configuration: 'testFixtures')
+        project(path: ':modules:spring-security', configuration: 'testFixtures'),
         project(path: ':modules:annotations', configuration: 'testFixtures')
 }
 
 test {
-    maxHeapSize = '1024m'
-    jvmArgs '-XX:MaxPermSize=256m'
+    maxHeapSize = '512m'
+    jvmArgs '-XX:MaxPermSize=128m'
 }
