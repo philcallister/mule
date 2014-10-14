@@ -22,6 +22,8 @@ import org.mule.api.endpoint.OutboundEndpoint;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.store.ListableObjectStore;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
+import org.mule.tck.junit4.FlakinessDetectorTestRunner;
+import org.mule.tck.junit4.FlakyTest;
 import org.mule.tck.probe.JUnitProbe;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Prober;
@@ -29,11 +31,13 @@ import org.mule.util.store.SimpleMemoryObjectStore;
 
 import java.io.ByteArrayInputStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(FlakinessDetectorTestRunner.class)
 public class UntilSuccessfulTestCase extends AbstractMuleContextTestCase
 {
+
     public static class ConfigurableMessageProcessor implements MessageProcessor
     {
         private volatile int eventCount;
@@ -170,7 +174,7 @@ public class UntilSuccessfulTestCase extends AbstractMuleContextTestCase
     }
 
     @Test
-    @Ignore
+    @FlakyTest(times=100)
     public void testPermanentDeliveryFailureDLQ() throws Exception
     {
         targetMessageProcessor.setNumberOfFailuresToSimulate(Integer.MAX_VALUE);
